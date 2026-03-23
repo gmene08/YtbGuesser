@@ -1,0 +1,15 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: video-guesser-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: videoguesser_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3310:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
