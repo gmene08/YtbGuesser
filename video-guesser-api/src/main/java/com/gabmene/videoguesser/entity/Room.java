@@ -43,7 +43,7 @@ public class Room {
     @JoinColumn(name="owner_id")
     private User owner;
 
-    // helper method for testing
+    // helper method
     public void addUser(User user) {
         if (users == null) {
             users = new ArrayList<>();

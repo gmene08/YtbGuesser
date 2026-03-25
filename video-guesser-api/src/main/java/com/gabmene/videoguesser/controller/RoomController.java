@@ -1,5 +1,6 @@
 package com.gabmene.videoguesser.controller;
 
+import com.gabmene.videoguesser.dto.JoinRoomRequestDTO;
 import com.gabmene.videoguesser.dto.RoomResponseDTO;
 import com.gabmene.videoguesser.entity.Room;
 import com.gabmene.videoguesser.service.RoomService;
@@ -19,5 +20,11 @@ public class RoomController {
     public ResponseEntity<RoomResponseDTO> createRoom(@RequestBody Room room, @PathVariable Integer ownerId) {
         Room newRoom = roomService.createRoom(room, ownerId);
         return ResponseEntity.ok(new RoomResponseDTO(newRoom));
+    }
+
+    @PostMapping("/join/{roomCode}")
+    public ResponseEntity<RoomResponseDTO> joinRoom(@PathVariable String roomCode, @RequestBody JoinRoomRequestDTO request) {
+        Room roomJoined = roomService.joinRoom(roomCode, request);
+        return ResponseEntity.ok(new RoomResponseDTO(roomJoined));
     }
 }

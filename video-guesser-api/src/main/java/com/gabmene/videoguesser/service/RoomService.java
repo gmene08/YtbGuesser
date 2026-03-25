@@ -1,5 +1,6 @@
 package com.gabmene.videoguesser.service;
 
+import com.gabmene.videoguesser.dto.JoinRoomRequestDTO;
 import com.gabmene.videoguesser.entity.Room;
 import com.gabmene.videoguesser.entity.User;
 import com.gabmene.videoguesser.enums.RoomStatus;
@@ -9,6 +10,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -46,5 +48,35 @@ public class RoomService {
         } while (roomRepository.existsByCode(code));
 
         return code;
+    }
+
+    @Transactional
+    public Room joinRoom(String roomCode, JoinRoomRequestDTO user) {
+
+        //find room by code
+        Room roomJoined = roomRepository.findByCode(roomCode)
+                .orElseThrow(() -> new RuntimeException("Room not found"));
+
+        // find user by id
+        User userJoining = userRepository.findById(user.getUserId()).orElseThrow(()-> new RuntimeException("User not found"));
+
+        // validate room max player count
+        if(roomJoined.getUsers().size() >= roomJoined.getMaxPlayers()) {
+            throw new RuntimeException("Room is full");
+        }
+        //validate room status
+        if(roomJoined.getStatus() != RoomStatus.WAITING) {
+            throw new RuntimeException("Room has already started ");
+        }
+        //validate if the user is already in the room
+        if (roomJoined.getUsers().contains(userJoining)) {
+            throw new RuntimeException("User is already in the room");
+        }
+
+        // add user to the room
+        roomJoined.addUser(userJoining);
+        roomRepository.save(roomJoined);
+
+    return roomJoined;
     }
 }
