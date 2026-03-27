@@ -1,6 +1,7 @@
 package com.gabmene.videoguesser.service;
 
 import com.gabmene.videoguesser.dto.JoinRoomRequestDTO;
+import com.gabmene.videoguesser.dto.StartRoomRequestDTO;
 import com.gabmene.videoguesser.entity.Room;
 import com.gabmene.videoguesser.entity.User;
 import com.gabmene.videoguesser.enums.RoomStatus;
@@ -53,7 +54,7 @@ public class RoomService {
     @Transactional
     public Room joinRoom(String roomCode, JoinRoomRequestDTO user) {
 
-        //find room by code
+        // find room by code
         Room roomJoined = roomRepository.findByCode(roomCode)
                 .orElseThrow(() -> new RuntimeException("Room not found"));
 
@@ -64,11 +65,11 @@ public class RoomService {
         if(roomJoined.getUsers().size() >= roomJoined.getMaxPlayers()) {
             throw new RuntimeException("Room is full");
         }
-        //validate room status
+        // validate room status
         if(roomJoined.getStatus() != RoomStatus.WAITING) {
             throw new RuntimeException("Room has already started ");
         }
-        //validate if the user is already in the room
+        // validate if the user is already in the room
         if (roomJoined.getUsers().contains(userJoining)) {
             throw new RuntimeException("User is already in the room");
         }
@@ -78,5 +79,28 @@ public class RoomService {
         roomRepository.save(roomJoined);
 
     return roomJoined;
+    }
+
+    @Transactional
+    public Room startRoom(String roomCode, StartRoomRequestDTO request) {
+
+        // find the room
+        Room roomStarting = roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not found"));
+
+        // validations
+        if(!roomStarting.getOwner().getId().equals(request.getUserId())) {
+            throw new RuntimeException("Only the owner can start the room");
+        }
+        if(roomStarting.getStatus() != RoomStatus.WAITING) {
+            throw new RuntimeException("Room has already started");
+        }
+        if(roomStarting.getUsers().size() < 2) {
+            throw new RuntimeException("Room needs at least 2 players to start");
+        }
+
+        roomStarting.setStatus(RoomStatus.PLAYING);
+        roomRepository.save(roomStarting);
+
+        return roomStarting;
     }
 }

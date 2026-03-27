@@ -11,6 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Collections;
 import java.util.List;
 
 @Getter
@@ -23,19 +24,25 @@ public class RoomResponseDTO {
     private String code;
     private String status;
     private Integer maxPlayers;
-    private List<String> users;
+    private List<String> players;
     private String owner;
     private Integer currentPlayers;
 
     public RoomResponseDTO(Room room) {
         this.id = room.getId();
         this.code = room.getCode();
-        this.status = this.status = room.getStatus() != null ? room.getStatus().name() : null;;
+        this.status = room.getStatus() != null ? room.getStatus().name() : null;;
         this.maxPlayers = room.getMaxPlayers();
-        this.users = (room.getUsers() != null)
+
+        this.owner = room.getOwner() != null ? room.getOwner().getNickname() : null;
+
+        // if the room has players, get their nicknames, otherwise get the owner's nickname'
+        //if no owner, return an empty list
+        this.players = (room.getUsers() != null && !room.getUsers().isEmpty())
                 ? room.getUsers().stream().map(User::getNickname).toList()
-                : List.of(room.getOwner().getNickname()); // Owner is always in the room
-        this.owner = room.getOwner().getNickname();
-        this.currentPlayers = !room.getUsers().isEmpty() ? room.getUsers().size() : 0;
+                : (this.owner != null ? List.of(this.owner) : List.of());
+
+
+        this.currentPlayers = this.players.size();
     }
 }
