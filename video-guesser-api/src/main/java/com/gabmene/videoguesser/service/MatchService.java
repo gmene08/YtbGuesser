@@ -27,14 +27,17 @@ public class MatchService {
         newMatch.setRoom(roomStarting);
         newMatch.setCurrentRound(1);
 
+        // set total rounds, if not set, default to 5
         newMatch.setNumberOfRounds(request.getNumberOfRounds() != null ?
                 request.getNumberOfRounds()
                 : 5);
 
+        // set categories, if not set, default to all categories
         List<MatchCategory> selectedCategories = request.getCategory() != null
                 ? request.getCategory()
                 : List.of(MatchCategory.ALL);
 
+        // get categories from the database
         List<Category> categories = selectedCategories.stream()
                 .map(enumCat -> categoryRepository.findById(enumCat.getId())
                         .orElseThrow(()-> new RuntimeException("Category not found")))
