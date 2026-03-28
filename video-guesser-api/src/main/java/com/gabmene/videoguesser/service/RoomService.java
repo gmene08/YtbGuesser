@@ -5,13 +5,12 @@ import com.gabmene.videoguesser.dto.StartRoomRequestDTO;
 import com.gabmene.videoguesser.entity.Room;
 import com.gabmene.videoguesser.entity.User;
 import com.gabmene.videoguesser.enums.RoomStatus;
+import com.gabmene.videoguesser.repository.CategoryRepository;
 import com.gabmene.videoguesser.repository.RoomRepository;
 import com.gabmene.videoguesser.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
-import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -19,18 +18,22 @@ import java.util.Random;
 public class RoomService {
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
+    private final MatchService matchService;
 
     @Transactional
     public Room createRoom(Room room, Integer ownerId) {
+        // search owner
         User owner = userRepository.findById(ownerId).orElseThrow(()-> new RuntimeException("User not found"));
 
+        // config room
         room.setCode(generateUniqueCode());
-        room.setOwner(owner);
         room.setStatus(RoomStatus.WAITING);
+        room.setOwner(owner);
+        room.getUsers().add(owner); // add the owner to the users list
 
+        // synchronous save
         Room savedRoom = roomRepository.save(room);
         owner.setRoom(savedRoom);
-        userRepository.save(owner);
 
         return savedRoom;
     }
@@ -98,9 +101,14 @@ public class RoomService {
             throw new RuntimeException("Room needs at least 2 players to start");
         }
 
+        // create the match
+        matchService.createMatch(roomStarting, request);
+
+
         roomStarting.setStatus(RoomStatus.PLAYING);
         roomRepository.save(roomStarting);
 
         return roomStarting;
     }
+
 }

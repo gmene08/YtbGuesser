@@ -37,7 +37,7 @@ public class Room {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "room",fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH, CascadeType.DETACH})
-    private List<User> users;
+    private List<User> users = new ArrayList<>();
 
     @ManyToOne
     @JoinColumn(name="owner_id")
