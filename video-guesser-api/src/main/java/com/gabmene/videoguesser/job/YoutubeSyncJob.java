@@ -22,6 +22,11 @@ public class YoutubeSyncJob {
         for (MatchCategory categoryEnum : MatchCategory.values()) {
             System.out.println("Getting videos from category: " + categoryEnum.name());
 
+            // skip the 'ALL' category - Don't want to save the videos with 'ALL' as a category in the database
+            if (categoryEnum == MatchCategory.ALL) {
+                continue;
+            }
+
             // create a new category object based on the enum value
             Category category = new Category();
             category.setName(categoryEnum);
