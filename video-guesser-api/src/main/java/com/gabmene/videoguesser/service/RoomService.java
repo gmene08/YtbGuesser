@@ -2,6 +2,7 @@ package com.gabmene.videoguesser.service;
 
 import com.gabmene.videoguesser.dto.JoinRoomRequestDTO;
 import com.gabmene.videoguesser.dto.StartRoomRequestDTO;
+import com.gabmene.videoguesser.entity.Match;
 import com.gabmene.videoguesser.entity.Room;
 import com.gabmene.videoguesser.entity.User;
 import com.gabmene.videoguesser.enums.RoomStatus;
@@ -102,8 +103,7 @@ public class RoomService {
         }
 
         // create the match
-        matchService.createMatch(roomStarting, request);
-
+        Match match = matchService.createMatch(roomStarting, request);
 
         roomStarting.setStatus(RoomStatus.PLAYING);
         roomRepository.save(roomStarting);

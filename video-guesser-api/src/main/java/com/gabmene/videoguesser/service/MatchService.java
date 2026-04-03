@@ -20,6 +20,7 @@ public class MatchService {
 
     private final CategoryRepository categoryRepository;
     private final MatchRepository matchRepository;
+    private final RoundService roundService;
 
     @Transactional
     public Match createMatch(Room roomStarting, StartRoomRequestDTO request){
@@ -38,14 +39,24 @@ public class MatchService {
                 : List.of(MatchCategory.ALL);
 
         // get categories from the database
-        List<Category> categories = selectedCategories.stream()
-                .map(enumCat -> categoryRepository.findById(enumCat.getId())
-                        .orElseThrow(()-> new RuntimeException("Category not found")))
-                .toList();
+        List<Category> categories;
+        if (selectedCategories.contains(MatchCategory.ALL)) { // if ALL is selected, get all categories from the database
+            categories = categoryRepository.findAll();
+        }else { // otherwise, get only the selected categories
+            // get categories from the database
+            categories = selectedCategories.stream()
+                    .map(enumCat -> categoryRepository.findById(enumCat.getId())
+                            .orElseThrow(() -> new RuntimeException("Category not found")))
+                    .toList();
+        }
 
         newMatch.setCategories(categories);
         newMatch.setStatus(MatchStatus.PLAYING);
 
-        return matchRepository.save(newMatch);
+        Match savedMatch = matchRepository.save(newMatch);
+
+        roundService.createRound(savedMatch, 1);
+
+        return savedMatch;
     }
 }

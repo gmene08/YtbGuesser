@@ -8,10 +8,14 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface VideoRepository extends JpaRepository<Video,Integer> {
 
     @Query("SELECT v.youtubeId from Video v WHERE v.youtubeId IN :ids")
     List<String> findExistingYoutubeIds(@Param("ids") Collection<String> ids);
+
+    @Query(value = "SELECT * FROM video v WHERE v.category_id IN :categoryIds ORDER BY RAND() LIMIT 1", nativeQuery = true)
+    Optional<Video> findRandomVideoByCategories(@Param("categoryIds") List<Integer> categoryIds);
 }

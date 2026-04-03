@@ -13,7 +13,7 @@ public class YoutubeSyncJob {
 
     private final VideoService videoService;
 
-    @Scheduled(fixedDelay = 60000)
+
     public void syncVideosJob() {
 
         System.out.println("Initializing Youtube Sync Job");
