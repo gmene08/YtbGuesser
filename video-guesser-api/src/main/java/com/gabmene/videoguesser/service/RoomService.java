@@ -102,8 +102,7 @@ public class RoomService {
             throw new RuntimeException("Room needs at least 2 players to start");
         }
 
-        // create the match
-        Match match = matchService.createMatch(roomStarting, request);
+        matchService.createMatch(roomStarting, request);
 
         roomStarting.setStatus(RoomStatus.PLAYING);
         roomRepository.save(roomStarting);

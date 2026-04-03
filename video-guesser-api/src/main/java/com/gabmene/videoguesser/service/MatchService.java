@@ -38,12 +38,11 @@ public class MatchService {
                 ? request.getCategory()
                 : List.of(MatchCategory.ALL);
 
-        // get categories from the database
+        // get categories from the database - if ALL is selected, get all categories
         List<Category> categories;
-        if (selectedCategories.contains(MatchCategory.ALL)) { // if ALL is selected, get all categories from the database
+        if (selectedCategories.contains(MatchCategory.ALL)) {
             categories = categoryRepository.findAll();
-        }else { // otherwise, get only the selected categories
-            // get categories from the database
+        } else {
             categories = selectedCategories.stream()
                     .map(enumCat -> categoryRepository.findById(enumCat.getId())
                             .orElseThrow(() -> new RuntimeException("Category not found")))

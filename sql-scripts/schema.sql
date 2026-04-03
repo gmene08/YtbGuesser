@@ -31,6 +31,15 @@ ENGINE = InnoDB
 AUTO_INCREMENT = 6
 DEFAULT CHARACTER SET = utf8mb3;
 
+-- -----------------------------------------------------
+-- INSERTS DEFAULT DA TABELA CATEGORY
+-- -----------------------------------------------------
+INSERT INTO `videoguesser_db`.`category` (`id`, `name`, `slug`) VALUES
+(1, 'GAMING', 'gaming'),
+(2, 'SPORTS', 'sports'),
+(3, 'MUSIC', 'music'),
+(4, 'VLOG', 'vlog');
+
 
 -- -----------------------------------------------------
 -- Table `videoguesser_db`.`user`
