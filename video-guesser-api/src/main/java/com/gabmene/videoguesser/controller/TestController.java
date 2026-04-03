@@ -16,13 +16,13 @@ public class TestController {
     @GetMapping("/test-youtube")
     public String testYoutubeFetch() {
         try {
-            // 1. Criamos uma categoria "mock" (simulada) para passar pro Service
-            Category testCategory = new Category();
-            testCategory.setId(1); // O ID que ela teria no banco
-            testCategory.setName(MatchCategory.GAMING); // O enum que você definiu
 
-            // 2. Chamamos o seu método novo!
-            videoService.fetchAndSaveVideosByCategory(testCategory);
+            Category testCategory = new Category();
+            testCategory.setId(1);
+            testCategory.setName(MatchCategory.GAMING);
+
+
+            //videoService.fetchAndSaveVideosByCategory(testCategory);
 
             return "Sucesso! Vai lá olhar a tabela 'video' no seu banco de dados!";
         } catch (Exception e) {

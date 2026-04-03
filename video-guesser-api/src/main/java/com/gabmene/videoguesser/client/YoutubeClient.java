@@ -14,7 +14,9 @@ public interface YoutubeClient {
             @RequestParam("part") String part,
             @RequestParam("maxResults")int maxResults,
             @RequestParam("type") String type,
+            @RequestParam("videoDuration") String videoDuration,
             @RequestParam("q") String query,
+            @RequestParam(value="pageToken", required = false) String pageToken,
             @RequestParam("key") String apiKey
     );
 

@@ -10,5 +10,6 @@ import java.util.List;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class YoutubeSearchResponseDTO {
+    private String nextPageToken;
     private List<YoutubeItemDTO> items;
 }

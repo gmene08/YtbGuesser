@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -27,26 +28,51 @@ public class VideoService {
     private String apiKey;
 
     @Transactional
-    public void fetchAndSaveVideosByCategory(Category category){
+    public String fetchAndSaveVideosByCategory(Category category, String pageToken){
+        // searching for videos by category
+        YoutubeSearchResponseDTO response = youtubeClient.searchVideos("snippet", 50, "video","medium", category.getName().name(), pageToken,apiKey);
+        if(response == null || response.getItems() == null || response.getItems().isEmpty()) {
+            throw new RuntimeException("No videos found for category: " + category.getName());
+        }
 
-        // search for videos using 'search' API
-        List<Video> videosToSave = fetchBaseVideos(category);
+        // transform the response to a list of videos
+        List<Video> videosToSave = fetchBaseVideos(response, category, pageToken);
+
+        // remove existing videos with the same youtubeId and videos that are already in the database
+        videosToSave = filterUniqueAndNewVideos(videosToSave);
+
+        // if there are no new videos, return the next page token
+        if (videosToSave.isEmpty()) {
+            return response.getNextPageToken();
+        }
 
         // get the statistics for each video using 'videos' API and merge the view counts with the videos
         enrichVideosWithViewCounts(videosToSave);
 
         // save the videos to the database
         videoRepository.saveAll(videosToSave);
+
+        return response.getNextPageToken(); // return the next page token if there is one
     }
 
-    private List<Video> fetchBaseVideos(Category category) {
-        // searching for videos by category
-        YoutubeSearchResponseDTO response = youtubeClient.searchVideos("snippet", 50, "video", category.getName().name(), apiKey);
-        if(response == null || response.getItems() == null || response.getItems().isEmpty()) {
-            throw new RuntimeException("No videos found for category: " + category.getName());
-        }
+    private List<Video> filterUniqueAndNewVideos(List<Video> videosToSave) {
 
-        // transform the response to a list of videos
+        // Transform the list of videos into a map of unique videos
+        Map<String, Video> uniqueVideosMap = videosToSave.stream().collect(Collectors
+                .toMap(Video::getYoutubeId, video -> video, (v1, v2) -> v1));
+
+        // get the videoIds from the map
+        List<String> videoIds = uniqueVideosMap.keySet().stream().toList();
+
+        // get the existing videos from the database using the videoIds
+        List<String> existingVideoIdsInDb = videoRepository.findExistingYoutubeIds(videoIds);
+
+        // remove the existing videos from the uniqueVideosMap and return the remaining videos in a list
+        return uniqueVideosMap.values().stream().filter(video -> !existingVideoIdsInDb.contains(video.getYoutubeId())).toList();
+    }
+
+    private List<Video> fetchBaseVideos(YoutubeSearchResponseDTO response,Category category, String pageToken) {
+
         return response.getItems().stream().map(item -> {
             Video video = new Video();
             video.setYoutubeId(item.getId().getVideoId());
@@ -54,6 +80,7 @@ public class VideoService {
             video.setChannelName(item.getSnippet().getChannelTitle());
             video.setCategory(category);
             video.setThumbnailUrl("https://img.youtube.com/vi/" + item.getId().getVideoId() + "/hqdefault.jpg");
+            video.setUpdatedAt(LocalDateTime.now());
             return video;
         }).toList();
     }

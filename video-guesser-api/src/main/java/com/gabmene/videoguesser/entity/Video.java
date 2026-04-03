@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigInteger;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name="video")
@@ -38,4 +39,7 @@ public class Video {
     @ManyToOne (fetch = FetchType.LAZY)
     @JoinColumn(name="category_id")
     private Category category;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 }
