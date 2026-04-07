@@ -1,0 +1,21 @@
+/* You can add global styles to this file, and also import other style files */
+
+@import 'tailwindcss';
+
+@font-face {
+  font-family: 'Youtube Sans';
+  src: url('../public/fonts/YouTubeSansRegular.otf');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face{
+  font-family: 'Youtube Sans';
+  src: url('../public/fonts/YouTubeSansBlack.otf');
+  font-weight: bold;
+  font-style: normal;
+}
+
+@theme{
+  --font-sans:"Youtube Sans", sans-serif;
+}
