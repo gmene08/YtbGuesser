@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Auth } from '../../auth';
 
 @Component({
   selector: 'app-home',
@@ -14,6 +15,8 @@ export class Home {
   guestNickname: string = '';
   loginNickname: string = '';
   loginPassword: string = '';
+
+  constructor(private auth: Auth) {}
 
   toggleGuestInput() {
     this.showGuestInput = !this.showGuestInput;
@@ -38,9 +41,13 @@ export class Home {
     if (!this.guestNickname) {
       alert('Please enter a nickname');
     }
-    console.log('play as guest: ' + this.guestNickname);
 
-    // TODO: call backend to play as guest
+    this.auth.createGuest(this.guestNickname).subscribe(response => {
+      console.log("Guest created successfully", response);
+    }, error => {
+      console.error("Error creating guest", error);
+      alert("Error creating guest");
+    });
   }
 
   loginWithAccount(){

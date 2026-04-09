@@ -28,8 +28,16 @@ public class UserController {
         return ResponseEntity.ok(userResponseDTOS);
     }
 
-    @PostMapping
-    public ResponseEntity<UserResponseDTO> createUser(@RequestBody User user) {
+    @PostMapping("/guest")
+    public ResponseEntity<UserResponseDTO> createGuest(@RequestBody User user) {
+        user.setIsGuest(true);
+        User savedUser = userService.save(user);
+        return ResponseEntity.ok(new UserResponseDTO(savedUser));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<UserResponseDTO> registerUser(@RequestBody User user) {
+        user.setIsGuest(false);
         User savedUser = userService.save(user);
         return ResponseEntity.ok(new UserResponseDTO(savedUser));
     }
