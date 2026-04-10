@@ -12,4 +12,8 @@ export class Auth {
   createGuest(nickname: string){
     return this.http.post(`${this.apiUrl}/guest`, { nickname: nickname });
   }
+
+  login(nickname: string, password: string){
+    return this.http.post(`${this.apiUrl}/login`, { nickname: nickname, password: password });
+  }
 }

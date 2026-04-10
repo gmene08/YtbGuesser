@@ -54,6 +54,12 @@ export class Home {
     if (!this.loginNickname || !this.loginPassword) {
       alert('Please enter a nickname and password');
     }
-    console.log('play with account: ' + this.loginNickname + ', ' + this.loginPassword);
+
+    this.auth.login(this.loginNickname, this.loginPassword).subscribe(response => {
+      console.log("Login successful", response);
+    }, error => {
+      console.error("Error logging in", error);
+      alert("Error logging in");
+    })
   }
 }

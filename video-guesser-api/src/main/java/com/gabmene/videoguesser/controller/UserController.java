@@ -35,6 +35,12 @@ public class UserController {
         return ResponseEntity.ok(new UserResponseDTO(savedUser));
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<UserResponseDTO> loginUser(@RequestBody User user) {
+        User userLogin = userService.loginUser(user.getNickname(), user.getPassword());
+        return ResponseEntity.ok(new UserResponseDTO(userLogin));
+    }
+
     @PostMapping("/register")
     public ResponseEntity<UserResponseDTO> registerUser(@RequestBody User user) {
         user.setIsGuest(false);
