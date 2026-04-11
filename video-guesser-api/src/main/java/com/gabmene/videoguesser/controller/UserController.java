@@ -30,8 +30,13 @@ public class UserController {
 
     @PostMapping("/guest")
     public ResponseEntity<UserResponseDTO> createGuest(@RequestBody User user) {
-        user.setIsGuest(true);
-        User savedUser = userService.save(user);
+        User savedUser = userService.createGuest(user);
+        return ResponseEntity.ok(new UserResponseDTO(savedUser));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<UserResponseDTO> registerUser(@RequestBody User user) {
+        User savedUser = userService.createUser(user);
         return ResponseEntity.ok(new UserResponseDTO(savedUser));
     }
 
@@ -39,13 +44,6 @@ public class UserController {
     public ResponseEntity<UserResponseDTO> loginUser(@RequestBody User user) {
         User userLogin = userService.loginUser(user.getNickname(), user.getPassword());
         return ResponseEntity.ok(new UserResponseDTO(userLogin));
-    }
-
-    @PostMapping("/register")
-    public ResponseEntity<UserResponseDTO> registerUser(@RequestBody User user) {
-        user.setIsGuest(false);
-        User savedUser = userService.save(user);
-        return ResponseEntity.ok(new UserResponseDTO(savedUser));
     }
 
     @GetMapping("/{id}")

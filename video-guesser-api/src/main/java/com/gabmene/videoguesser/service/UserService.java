@@ -19,6 +19,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
+
     public List<User> findAll() {
         return userRepository.findAll();
     }
@@ -27,10 +28,32 @@ public class UserService {
         return userRepository.findById(id).orElseThrow(()-> new RuntimeException("User not found"));
     }
 
+    @Transactional
+    public User createUser(User user) {
+        if (userRepository.existsByNickname(user.getNickname())) {
+            throw new RuntimeException("Nickname already exists");
+        }
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
+        BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+        user.setPassword(encoder.encode(user.getPassword()));
+        user.setIsGuest(false);
+        return userRepository.save(user);
+    }
+
+    @Transactional
+    public User createGuest(User user) {
+        if (userRepository.existsByNickname(user.getNickname())) {
+            throw new RuntimeException("Nickname already exists");
+        }
+        user.setIsGuest(true);
+        return userRepository.save(user);
+    }
+
     public User loginUser(String nickname, String password){
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-        String hashedPassword = encoder.encode(password);
         User user= userRepository.findByNickname(nickname).orElseThrow(()-> new RuntimeException("Wrong nickname"));
         if(encoder.matches(password, user.getPassword())){
             System.out.println("User: " + user.getNickname() +" logged in successfully");
