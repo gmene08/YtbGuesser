@@ -12,6 +12,8 @@ import com.gabmene.videoguesser.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 import java.util.Random;
 
 @Service
@@ -22,15 +24,26 @@ public class RoomService {
     private final MatchService matchService;
 
     @Transactional
-    public Room createRoom(Room room, Integer ownerId) {
-        // search owner
+    public Room createRoom(Integer ownerId) {
+        // search ownerId
         User owner = userRepository.findById(ownerId).orElseThrow(()-> new RuntimeException("User not found"));
+
+        // check if the ownerId already has a room, if so, return it
+        Room existingRoom = roomRepository.findByOwner(owner).orElse(null);
+        if(existingRoom != null) {
+            return existingRoom;
+        }
+
+        Room room = new Room();
 
         // config room
         room.setCode(generateUniqueCode());
         room.setStatus(RoomStatus.WAITING);
+        room.setMaxPlayers(5);
+
         room.setOwner(owner);
-        room.getUsers().add(owner); // add the owner to the users list
+        room.setUsers(new java.util.ArrayList<>());
+        room.getUsers().add(owner); // add the ownerId to the users list
 
         // synchronous save
         Room savedRoom = roomRepository.save(room);
@@ -53,6 +66,10 @@ public class RoomService {
         } while (roomRepository.existsByCode(code));
 
         return code;
+    }
+
+    public Room findRoomByCode(String roomCode) {
+        return roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not found"));
     }
 
     @Transactional
@@ -93,7 +110,7 @@ public class RoomService {
 
         // validations
         if(!roomStarting.getOwner().getId().equals(request.getUserId())) {
-            throw new RuntimeException("Only the owner can start the room");
+            throw new RuntimeException("Only the ownerId can start the room");
         }
         if(roomStarting.getStatus() != RoomStatus.WAITING) {
             throw new RuntimeException("Room has already started");
@@ -108,6 +125,51 @@ public class RoomService {
         roomRepository.save(roomStarting);
 
         return roomStarting;
+    }
+
+    @Transactional
+    public Room leaveRoom(String roomCode, Integer userLeavingId) {
+
+        // find the room
+        Room roomLeaving = roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not found"));
+
+        // find the user
+        User userLeaving = userRepository.findById(userLeavingId).orElseThrow(()-> new RuntimeException("User not found"));
+
+        if(userLeaving.getRoom() == null) {
+            throw new RuntimeException("User is not in a room");
+        }
+
+        if(!roomLeaving.getUsers().contains(userLeaving)) {
+            throw new RuntimeException("User is not in the room");
+        }
+
+        List<User> playersInRoom = roomLeaving.getUsers();
+        User roomOwner = roomLeaving.getOwner();
+
+        // remove the user from the match
+        playersInRoom.remove(userLeaving);
+        userLeaving.setRoom(null);
+        userRepository.save(userLeaving);
+
+        if(playersInRoom.isEmpty()) {
+
+            roomRepository.delete(roomLeaving);
+            return null;
+
+        }
+        else if(roomOwner.equals(userLeaving)) {
+            roomLeaving.setOwner(null);
+
+            int randomPlayerIndex = (int) (Math.random() * playersInRoom.size());
+            User newOwner = playersInRoom.get(randomPlayerIndex);
+
+            roomLeaving.setOwner(newOwner);
+
+        }
+
+        roomRepository.save(roomLeaving);
+        return roomLeaving;
     }
 
 }

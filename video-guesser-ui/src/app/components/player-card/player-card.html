@@ -1,0 +1,19 @@
+<div class="bg-red-50 border border-red-200 text-gray-800 rounded-lg p-4 font-bold shadow-sm flex items-center justify-between group">
+
+  <div class="flex items-center gap-2">
+    @if(playerId() === ownerId()) {
+      <span title="Room Owner" class="text-xl">👑</span>
+    }
+    <span class="truncate">{{ playerNickname() }}</span>
+  </div>
+
+  @if(ownerId().toString() === currentUserId && playerId() !== ownerId()) {
+
+    <button title="Kick Player" class="text-red-400 hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+        <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm3 10.5a.75.75 0 000-1.5H9a.75.75 0 000 1.5h6z" clip-rule="evenodd" />
+      </svg>
+    </button>
+
+  }
+</div>

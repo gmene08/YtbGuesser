@@ -1,0 +1,54 @@
+<div class="flex flex-col gap-8 items-center">
+  <h2 class="text-2xl font-bold text-gray-800">Welcome {{userNickname()}}!</h2>
+
+  <div class="flex flex-col gap-2 items-center">
+    <div class="h-6 w-full flex justify-center items-center">
+      @if (errorMessage()) {
+        <span class="text-red-500 text-sm font-semibold animate-pulse">
+          {{ errorMessage() }}
+        </span>
+      }
+    </div>
+
+    @if (!showJoinRoomCodeInput) {
+      <div class="flex flex-col gap-4 items-center w-full">
+        <button
+          (click)="createRoom()"
+          class="w-full min-w-[250px] px-6 py-4 bg-red-600 hover:bg-red-700 text-white text-lg font-bold rounded-lg shadow-md transition"
+        >
+          Create Room
+        </button>
+
+        <button
+          (click)="toggleJoinRoomInput()"
+          class="w-full min-w-[250px] px-6 py-4 bg-gray-800 hover:bg-gray-900 text-white text-lg font-bold rounded-lg shadow-md transition"
+        >
+          Join Room
+        </button>
+      </div>
+    } @else {
+      <div class="flex flex-col gap-4 items-center w-full">
+        <input
+          type="text"
+          [(ngModel)]="joinRoomCode"
+          placeholder="Enter room code..."
+          class="w-full min-w-[250px] px-4 py-3 border border-gray-300 rounded focus:border-red-600 focus:ring-1 focus:ring-red-600 outline-none transition text-gray-800 text-center uppercase tracking-widest font-bold"
+        />
+
+        <button
+          (click)="joinRoom()"
+          class="w-full min-w-[250px] px-6 py-4 bg-red-600 hover:bg-red-700 text-white text-lg font-bold rounded-lg shadow-md transition"
+        >
+          Join Room
+        </button>
+
+        <button
+          (click)="toggleJoinRoomInput()"
+          class="text-sm text-gray-400 hover:text-red-600 underline transition"
+        >
+          cancel & go back
+        </button>
+      </div>
+    }
+  </div>
+</div>

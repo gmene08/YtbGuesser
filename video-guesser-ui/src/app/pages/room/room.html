@@ -1,0 +1,43 @@
+<div class="min-h-screen bg-white flex flex-col text-red-700 font-youtube">
+  <div class="flex justify-between items-center px-8 py-4 bg-white border-b border-gray-200">
+    <div class="font-bold text-2xl tracking-tighter">Yg.</div>
+    <div class="space-x-4"></div>
+  </div>
+
+  <div class="flex-grow flex flex-col items-center justify-start pt-10 text-start px-4">
+    <div class="font-bold tracking-tight flex flex-col items-center gap-14">
+      <h1
+        class="flex flex-col items-center text-5xl md:text-5xl font-bold tracking-tight text-red-700"
+      >
+        Room <span class="text-gray-800">{{ roomCode() }}</span>
+      </h1>
+
+      <div class="flex flex-col items-center gap-5">
+        <p class="text-3xl">
+          {{ roomData()?.players?.length || 0 }} / {{ roomData()?.maxPlayers }} players
+        </p>
+
+        <div class="w-full grid grid-rows-2 md:grid-cols-1 gap-4 mt-2">
+
+          @if (roomData(); as room) {
+            @for (player of room.players; track player.id) {
+              <app-player-card
+                [playerNickname]="player.nickname"
+                [playerId]="player.id"
+                [ownerId]="room.ownerId"
+              >
+              </app-player-card>
+            } @empty {
+              <div class="col-span-full text-center text-gray-400 italic">
+                Ninguém entrou na sala ainda...
+              </div>
+            }
+          }
+        </div>
+        <button (click)="leaveRoom()" class="mt-4 ")>
+          <a>Leave Room</a>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

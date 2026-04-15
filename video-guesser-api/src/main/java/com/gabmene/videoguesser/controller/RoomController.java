@@ -18,8 +18,8 @@ public class RoomController {
     private final RoomService roomService;
 
     @PostMapping("/{ownerId}")
-    public ResponseEntity<RoomResponseDTO> createRoom(@RequestBody Room room, @PathVariable Integer ownerId) {
-        Room newRoom = roomService.createRoom(room, ownerId);
+    public ResponseEntity<RoomResponseDTO> createRoom(@PathVariable Integer ownerId) {
+        Room newRoom = roomService.createRoom(ownerId);
         return ResponseEntity.ok(new RoomResponseDTO(newRoom));
     }
 
@@ -33,5 +33,17 @@ public class RoomController {
     public ResponseEntity<RoomResponseDTO> startRoom(@PathVariable String roomCode, @RequestBody StartRoomRequestDTO request) {
         Room roomStarted = roomService.startRoom(roomCode, request);
         return ResponseEntity.ok(new RoomResponseDTO(roomStarted));
+    }
+
+    @GetMapping("/{roomCode}")
+    public ResponseEntity<RoomResponseDTO> getRoom(@PathVariable String roomCode) {
+        Room room = roomService.findRoomByCode(roomCode);
+        return ResponseEntity.ok(new RoomResponseDTO(room));
+    }
+
+    @PostMapping("/leave/{roomCode}")
+    public ResponseEntity<Void> leaveRoom(@PathVariable String roomCode, @RequestBody JoinRoomRequestDTO request) {
+        Room roomLeaving = roomService.leaveRoom(roomCode, request.getUserId());
+        return ResponseEntity.ok().build();
     }
 }
