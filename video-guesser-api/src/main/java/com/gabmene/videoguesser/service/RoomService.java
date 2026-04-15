@@ -130,10 +130,8 @@ public class RoomService {
     @Transactional
     public Room leaveRoom(String roomCode, Integer userLeavingId) {
 
-        // find the room
         Room roomLeaving = roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not found"));
 
-        // find the user
         User userLeaving = userRepository.findById(userLeavingId).orElseThrow(()-> new RuntimeException("User not found"));
 
         if(userLeaving.getRoom() == null) {
@@ -152,6 +150,7 @@ public class RoomService {
         userLeaving.setRoom(null);
         userRepository.save(userLeaving);
 
+        // if the room is empty, delete it - if the owner leaves, assign a new owner
         if(playersInRoom.isEmpty()) {
 
             roomRepository.delete(roomLeaving);
@@ -170,6 +169,23 @@ public class RoomService {
 
         roomRepository.save(roomLeaving);
         return roomLeaving;
+    }
+
+    @Transactional
+    public Room kickPlayer(Integer userId, Integer targetUserId, String roomCode){
+        Room room = roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not found"));
+
+        // validate if the user is the owner
+        if(room.getOwner().getId() != userId) {
+            throw new RuntimeException("Only the owner can kick a player");
+        }
+
+        // validate if the user is trying to kick themselves
+        if (userId.equals(targetUserId)) {
+            throw new RuntimeException("You cannot kick yourself");
+        }
+
+        return leaveRoom(roomCode, targetUserId);
     }
 
 }

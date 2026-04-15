@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { RoomService } from '../../services/room';
+import { PlayerResponse, RoomService } from '../../services/room';
 import { RoomResponse } from '../../services/room';
 import { PlayerCard } from '../../components/player-card/player-card';
 
@@ -29,17 +29,9 @@ export class Room implements OnInit {
       // Get room data from the server
       this.roomService.getRoomByCode(code).subscribe({
         next: (response) => {
-          // Sort players so that the owner is always first
-          const sortedPlayers = [...response.players].sort(
-            (a, b)=>{
-              if (a.id === response.ownerId) return -1;
-              if (b.id === response.ownerId) return 1;
-              return 0;
-            }
-          )
           this.roomData.set({
             ...response,
-            players: sortedPlayers
+            players: this.sortPlayers([...response.players], response.ownerId) // Sort players by ownerId - Owner is always first
           });
           console.log('Room data: ', response);
         },
@@ -64,5 +56,33 @@ export class Room implements OnInit {
         alert('Error leaving room');
       }
     })
+  }
+
+  kickPlayer(roomCode: string,playerId: number){
+    this.roomService.kickPlayer(roomCode,playerId).subscribe({
+      next: (response) =>{
+        this.roomData.set(
+          {
+            ...response,
+            players: this.sortPlayers([...response.players], response.ownerId)
+          }
+        );
+        console.log('Player kicked');
+      },
+      error: (error) =>{
+        console.error('Error kicking player: ', error);
+        alert('Error kicking player');
+      }
+    })
+  }
+
+  sortPlayers(players: PlayerResponse[], currentOwnerId: number){
+    return players.sort(
+      (a, b)=>{
+        if (a.id === currentOwnerId) return -1;
+        if (b.id === currentOwnerId) return 1;
+        return 0;
+      }
+    )
   }
 }

@@ -41,9 +41,15 @@ public class RoomController {
         return ResponseEntity.ok(new RoomResponseDTO(room));
     }
 
-    @PostMapping("/leave/{roomCode}")
-    public ResponseEntity<Void> leaveRoom(@PathVariable String roomCode, @RequestBody JoinRoomRequestDTO request) {
-        Room roomLeaving = roomService.leaveRoom(roomCode, request.getUserId());
+    @DeleteMapping("/leave/{roomCode}")
+    public ResponseEntity<Void> leaveRoom(@PathVariable String roomCode, @RequestParam Integer userId) {
+        Room roomLeaving = roomService.leaveRoom(roomCode, userId);
         return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{roomCode}/kick/{targetUserId}")
+    public ResponseEntity<RoomResponseDTO> kickPlayer(@PathVariable String roomCode, @PathVariable Integer targetUserId, @RequestParam Integer userId) {
+        Room roomUpdated = roomService.kickPlayer(userId, targetUserId, roomCode);
+        return ResponseEntity.ok(new RoomResponseDTO(roomUpdated));
     }
 }

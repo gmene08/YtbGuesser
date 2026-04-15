@@ -25,6 +25,7 @@
                 [playerNickname]="player.nickname"
                 [playerId]="player.id"
                 [ownerId]="room.ownerId"
+                (onKickPlayer)="kickPlayer(room.code, $event)"
               >
               </app-player-card>
             } @empty {
@@ -34,7 +35,7 @@
             }
           }
         </div>
-        <button (click)="leaveRoom()" class="mt-4 ")>
+        <button (click)="leaveRoom()" class="mt-4 ">
           <a>Leave Room</a>
         </button>
       </div>

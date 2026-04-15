@@ -1,4 +1,4 @@
-import { Component, input, signal } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 
 @Component({
   selector: 'app-player-card',
@@ -14,4 +14,10 @@ export class PlayerCard {
   ownerId = input.required<number>();
 
   currentUserId = sessionStorage.getItem('userId');
+
+  onKickPlayer = output<number>();
+
+  handleKickPlayer(){
+    this.onKickPlayer.emit(this.playerId());
+   }
 }
