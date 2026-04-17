@@ -5,6 +5,7 @@ import { Component, input, output } from '@angular/core';
   imports: [],
   templateUrl: './player-card.html',
   styleUrl: './player-card.css',
+  standalone: true,
 })
 export class PlayerCard {
   playerNickname = input.required<string>();
@@ -17,7 +18,7 @@ export class PlayerCard {
 
   onKickPlayer = output<number>();
 
-  handleKickPlayer(){
+  handleKickPlayer() {
     this.onKickPlayer.emit(this.playerId());
-   }
+  }
 }

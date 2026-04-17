@@ -9,6 +9,7 @@ import { PlayerCard } from '../../components/player-card/player-card';
   imports: [PlayerCard],
   templateUrl: './room.html',
   styleUrl: './room.css',
+  standalone: true,
 })
 export class Room implements OnInit {
   private roomService = inject(RoomService);
@@ -20,69 +21,90 @@ export class Room implements OnInit {
   roomCode = signal<string>('');
 
   ngOnInit(): void {
+
+    // Redirect to home if not logged in
+    if (sessionStorage.getItem('userId') === null) {
+      this.rt.navigate(['/']);
+      return;
+    }
+
     // Get the room code from the URL
     const code = this.router.snapshot.paramMap.get('code');
     if (code) {
-      this.roomCode.set(code);
-      console.log('Room code: ', code);
-
-      // Get room data from the server
-      this.roomService.getRoomByCode(code).subscribe({
-        next: (response) => {
-          this.roomData.set({
-            ...response,
-            players: this.sortPlayers([...response.players], response.ownerId) // Sort players by ownerId - Owner is always first
-          });
-          console.log('Room data: ', response);
-        },
-        error: (error) => {
-          console.error('Error fetching room data: ', error);
-        },
-      });
+      this.loadRoomData(code);
     } else {
       console.error('Room code not found in URL');
+      this.rt.navigate(['/']);
+      return;
     }
+
   }
 
-  leaveRoom(){
+  loadRoomData(code: string) {
+    this.roomCode.set(code);
+    console.log('Room code: ', code);
+
+    // Get room data from the server
+    this.roomService.getRoomByCode(code).subscribe({
+      next: (response) => {
+        const room ={
+          ...response,
+          players: this.sortPlayers([...response.players], response.ownerId), // Sort players by ownerId - Owner is always first
+        };
+        // Set room data in the signal
+        this.roomData.set(room);
+
+        // Redirect to home if the user is not in the room
+        if(!room.players.some(player => player.id.toString() === sessionStorage.getItem('userId'))){
+          this.rt.navigate(['/']);
+          return;
+        }
+
+        console.log('Room data: ', response);
+      },
+      error: (error) => {
+        console.error('Error fetching room data: ', error);
+        this.rt.navigate(['/']);
+        return;
+      },
+    });
+  }
+
+  leaveRoom() {
     this.roomService.leaveRoom(this.roomCode()).subscribe({
       // Go to the home page
-      next: (response) =>{
+      next: (response) => {
         console.log('User left room');
         this.rt.navigate(['/']);
       },
-      error: (error) =>{
+      error: (error) => {
         console.error('Error leaving room: ', error);
         alert('Error leaving room');
-      }
-    })
+      },
+    });
   }
 
-  kickPlayer(roomCode: string,playerId: number){
-    this.roomService.kickPlayer(roomCode,playerId).subscribe({
-      next: (response) =>{
-        this.roomData.set(
-          {
-            ...response,
-            players: this.sortPlayers([...response.players], response.ownerId)
-          }
-        );
+  kickPlayer(roomCode: string, playerId: number) {
+    this.roomService.kickPlayer(roomCode, playerId).subscribe({
+      next: (response) => {
+        this.roomData.set({
+          ...response,
+          players: this.sortPlayers([...response.players], response.ownerId),
+        });
         console.log('Player kicked');
       },
-      error: (error) =>{
+      error: (error) => {
         console.error('Error kicking player: ', error);
         alert('Error kicking player');
-      }
-    })
+      },
+    });
   }
 
-  sortPlayers(players: PlayerResponse[], currentOwnerId: number){
-    return players.sort(
-      (a, b)=>{
-        if (a.id === currentOwnerId) return -1;
-        if (b.id === currentOwnerId) return 1;
-        return 0;
-      }
-    )
+  sortPlayers(players: PlayerResponse[], currentOwnerId: number) {
+    return players.sort((a, b) => {
+      if (a.id === currentOwnerId) return -1;
+      if (b.id === currentOwnerId) return 1;
+      return 0;
+    });
   }
 }
