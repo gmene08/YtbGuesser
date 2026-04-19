@@ -1,44 +1,64 @@
-<div class="min-h-screen bg-white flex flex-col text-red-700 font-youtube">
+<div class="min-h-screen flex flex-col bg-gray-50">
   <div class="flex justify-between items-center px-8 py-4 bg-white border-b border-gray-200">
     <div class="font-bold text-2xl tracking-tighter">Yg.</div>
-    <div class="space-x-4"></div>
   </div>
 
-  <div class="flex-grow flex flex-col items-center justify-start pt-10 text-start px-4">
-    <div class="font-bold tracking-tight flex flex-col items-center gap-14">
-      <h1
-        class="flex flex-col items-center text-5xl md:text-5xl font-bold tracking-tight text-red-700"
+  <div class="flex-grow p-12">
+    <header class="flex flex-col items-center gap-1 mb-20 group">
+      <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-red-700 uppercase">room</h1>
+      <button
+        (click)="copyCode()"
+        class="relative text-5xl md:text-6xl font-black text-gray-800 tracking-tighter mt-2 hover:text-gray-600 hover:scale-105 transition-all outline-none"
+        title="Click to copy code"
       >
-        Room <span class="text-gray-800">{{ roomCode() }}</span>
-      </h1>
+        {{ roomData()?.code }}
 
-      <div class="flex flex-col items-center gap-5">
-        <p class="text-3xl">
-          {{ roomData()?.players?.length || 0 }} / {{ roomData()?.maxPlayers }} players
-        </p>
+      </button>
+      <span
+        class="text-sm font-semibold text-gray-400 mt-1"
+      >
+        @if(isCodeCopied()){
+          Copied!
+        }@else{
+          click to copy
+        }
+      </span>
+    </header>
 
-        <div class="w-full grid grid-rows-2 md:grid-cols-1 gap-4 mt-2">
+    <main
+      class="flex gap-0 flex-row mt-8 w-full max-w-5xl mx-auto border-2 border-gray-200 rounded-[2rem] overflow-hidden bg-white shadow-2xl"
+    >
+      <section
+        class="flex flex-col flex-grow pt-10 p-4 gap-4 items-center text-red-700 justify-between"
+      >
+        <div class="flex flex-col w-full gap-10">
+          <p class="text-3xl font-bold text-center">
+            {{ roomData()?.players?.length }} / {{ roomData()?.maxPlayers }} players
+          </p>
 
-          @if (roomData(); as room) {
-            @for (player of room.players; track player.id) {
-              <app-player-card
-                [playerNickname]="player.nickname"
-                [playerId]="player.id"
-                [ownerId]="room.ownerId"
-                (onKickPlayer)="kickPlayer(room.code, $event)"
-              >
-              </app-player-card>
-            } @empty {
-              <div class="col-span-full text-center text-gray-400 italic">
-                Ninguém entrou na sala ainda...
-              </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            @if (roomData(); as room) {
+              @for (player of room.players; track player.id) {
+                <app-player-card
+                  [isOwner]="isUserOwner()"
+                  [ownerId]="room.ownerId"
+                  [playerId]="player.id"
+                  [playerNickname]="player.nickname"
+                  (onKickPlayer)="kickPlayer(room.code, $event)"
+                ></app-player-card>
+              }
             }
-          }
+          </div>
         </div>
-        <button (click)="leaveRoom()" class="mt-4 ">
-          <a>Leave Room</a>
-        </button>
-      </div>
-    </div>
+
+        <div>
+          <button (click)="leaveRoom()" class=" w-full p-4 bg-gray-700 hover:bg-gray-800 text-white text-lg font-bold rounded-lg shadow-md transition">leave room</button>
+        </div>
+      </section>
+
+      <aside class="w-96 bg-gray-50 border-l-4 border-gray-200">
+        <app-room-settings [room]="roomData()" [isOwner]="isUserOwner()"></app-room-settings>
+      </aside>
+    </main>
   </div>
 </div>

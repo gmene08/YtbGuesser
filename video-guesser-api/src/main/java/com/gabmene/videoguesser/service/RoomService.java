@@ -1,12 +1,10 @@
 package com.gabmene.videoguesser.service;
 
 import com.gabmene.videoguesser.dto.JoinRoomRequestDTO;
-import com.gabmene.videoguesser.dto.StartRoomRequestDTO;
-import com.gabmene.videoguesser.entity.Match;
+import com.gabmene.videoguesser.dto.MatchConfigDTO;
 import com.gabmene.videoguesser.entity.Room;
 import com.gabmene.videoguesser.entity.User;
 import com.gabmene.videoguesser.enums.RoomStatus;
-import com.gabmene.videoguesser.repository.CategoryRepository;
 import com.gabmene.videoguesser.repository.RoomRepository;
 import com.gabmene.videoguesser.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -25,10 +23,10 @@ public class RoomService {
 
     @Transactional
     public Room createRoom(Integer ownerId) {
-        // search ownerId
+        // search owner
         User owner = userRepository.findById(ownerId).orElseThrow(()-> new RuntimeException("User not found"));
 
-        // check if the ownerId already has a room, if so, return it
+        // if the owner already is the owner of another room, return the existing room
         Room existingRoom = roomRepository.findByOwner(owner).orElse(null);
         if(existingRoom != null) {
             return existingRoom;
@@ -82,6 +80,17 @@ public class RoomService {
         // find user by id
         User userJoining = userRepository.findById(user.getUserId()).orElseThrow(()-> new RuntimeException("User not found"));
 
+
+        // validate if the user is already in the room
+        if (roomJoined.getUsers().contains(userJoining)) {
+            return roomJoined;
+        }
+
+        // validate if the user is already in a room
+        if(userJoining.getRoom() != null) {
+            throw new RuntimeException("User is already in another room");
+        }
+
         // validate room max player count
         if(roomJoined.getUsers().size() >= roomJoined.getMaxPlayers()) {
             throw new RuntimeException("Room is full");
@@ -89,10 +98,6 @@ public class RoomService {
         // validate room status
         if(roomJoined.getStatus() != RoomStatus.WAITING) {
             throw new RuntimeException("Room has already started ");
-        }
-        // validate if the user is already in the room
-        if (roomJoined.getUsers().contains(userJoining)) {
-            throw new RuntimeException("User is already in the room");
         }
 
         // add user to the room
@@ -103,7 +108,7 @@ public class RoomService {
     }
 
     @Transactional
-    public Room startRoom(String roomCode, StartRoomRequestDTO request) {
+    public Room startRoom(String roomCode, MatchConfigDTO request) {
 
         // find the room
         Room roomStarting = roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not found"));

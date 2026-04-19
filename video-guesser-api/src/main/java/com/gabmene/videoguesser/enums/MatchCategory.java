@@ -2,6 +2,9 @@ package com.gabmene.videoguesser.enums;
 
 import lombok.Getter;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Getter
 public enum MatchCategory {
     ALL(0),
@@ -24,5 +27,9 @@ public enum MatchCategory {
             }
         }
         throw new IllegalArgumentException("Invalid Category ID: " + id);
+    }
+
+    public static List<String> valuesAsStrings() {
+        return Arrays.stream(MatchCategory.values()).map(Enum::name).toList();
     }
 }

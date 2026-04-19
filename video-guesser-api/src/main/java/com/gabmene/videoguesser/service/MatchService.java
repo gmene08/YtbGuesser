@@ -1,6 +1,6 @@
 package com.gabmene.videoguesser.service;
 
-import com.gabmene.videoguesser.dto.StartRoomRequestDTO;
+import com.gabmene.videoguesser.dto.MatchConfigDTO;
 import com.gabmene.videoguesser.entity.Category;
 import com.gabmene.videoguesser.entity.Match;
 import com.gabmene.videoguesser.entity.Room;
@@ -23,7 +23,7 @@ public class MatchService {
     private final RoundService roundService;
 
     @Transactional
-    public Match createMatch(Room roomStarting, StartRoomRequestDTO request){
+    public Match createMatch(Room roomStarting, MatchConfigDTO request){
         Match newMatch = new Match();
         newMatch.setRoom(roomStarting);
         newMatch.setCurrentRound(1);

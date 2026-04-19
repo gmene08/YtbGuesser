@@ -7,13 +7,20 @@
     <span class="truncate">{{ playerNickname() }}</span>
   </div>
 
-  @if(ownerId().toString() === currentUserId && playerId() !== ownerId()) {
+  @if(isOwner() && playerId() !== ownerId()) {
 
-    <button (click)="handleKickPlayer()" title="Kick Player" class="text-red-400 hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-        <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm3 10.5a.75.75 0 000-1.5H9a.75.75 0 000 1.5h6z" clip-rule="evenodd" />
-      </svg>
-    </button>
+    <div class="flex items-center gap-1">
+      <button  title="Promote to Host"
+              class="text-blue-400 hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100">
+        👑
+      </button>
+
+      <button (click)="handleKickPlayer()" title="Kick Player" class="text-red-400 hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
+          <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm3 10.5a.75.75 0 000-1.5H9a.75.75 0 000 1.5h6z" clip-rule="evenodd" />
+        </svg>
+      </button>
+    </div>
 
   }
 </div>

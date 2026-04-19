@@ -33,21 +33,30 @@ export class RoomService {
   }
 
   getRoomByCode(roomCode: string){
-    return this.http.get<RoomResponse>(`http://localhost:8080/api/room/${roomCode}`);
+    return this.http.get<RoomResponse>(`${this.apiUrl}/${roomCode}`);
   }
 
   joinRoom(roomCode: string){
-    return this.http.post<RoomResponse>(`http://localhost:8080/api/room/join/${roomCode}`, {userId: sessionStorage.getItem('userId')});
+    return this.http.post<RoomResponse>(`${this.apiUrl}/join/${roomCode}`, {
+      userId: sessionStorage.getItem('userId'),
+    });
   }
 
   leaveRoom(roomCode: string){
-    return this.http.delete(`http://localhost:8080/api/room/leave/${roomCode}?userId=${sessionStorage.getItem('userId')}`,{});
+    return this.http.delete(
+      `${this.apiUrl}/leave/${roomCode}?userId=${sessionStorage.getItem('userId')}`,
+      {},
+    );
   }
 
   kickPlayer(roomCode: string, targetUserId: number){
     return this.http.delete<RoomResponse>(
-      `http://localhost:8080/api/room/${roomCode}/kick/${targetUserId}?userId=${sessionStorage.getItem('userId')}`,
+      `${this.apiUrl}/${roomCode}/kick/${targetUserId}?userId=${sessionStorage.getItem('userId')}`,
       {},
     );
+  }
+
+  getCategories(){
+    return this.http.get<string[]>(`${this.apiUrl}/categories`);
   }
 }

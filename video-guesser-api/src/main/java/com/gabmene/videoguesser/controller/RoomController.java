@@ -2,12 +2,15 @@ package com.gabmene.videoguesser.controller;
 
 import com.gabmene.videoguesser.dto.JoinRoomRequestDTO;
 import com.gabmene.videoguesser.dto.RoomResponseDTO;
-import com.gabmene.videoguesser.dto.StartRoomRequestDTO;
+import com.gabmene.videoguesser.dto.MatchConfigDTO;
 import com.gabmene.videoguesser.entity.Room;
+import com.gabmene.videoguesser.enums.MatchCategory;
 import com.gabmene.videoguesser.service.RoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/room")
@@ -30,7 +33,7 @@ public class RoomController {
     }
 
     @PatchMapping("/{roomCode}/start")
-    public ResponseEntity<RoomResponseDTO> startRoom(@PathVariable String roomCode, @RequestBody StartRoomRequestDTO request) {
+    public ResponseEntity<RoomResponseDTO> startRoom(@PathVariable String roomCode, @RequestBody MatchConfigDTO request) {
         Room roomStarted = roomService.startRoom(roomCode, request);
         return ResponseEntity.ok(new RoomResponseDTO(roomStarted));
     }
@@ -51,5 +54,10 @@ public class RoomController {
     public ResponseEntity<RoomResponseDTO> kickPlayer(@PathVariable String roomCode, @PathVariable Integer targetUserId, @RequestParam Integer userId) {
         Room roomUpdated = roomService.kickPlayer(userId, targetUserId, roomCode);
         return ResponseEntity.ok(new RoomResponseDTO(roomUpdated));
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<List<String>> getAvailableCategories(){
+        return ResponseEntity.ok(MatchCategory.valuesAsStrings());
     }
 }

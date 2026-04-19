@@ -12,6 +12,8 @@ export class PlayerCard {
 
   playerId = input.required<number>();
 
+  isOwner = input.required<boolean>();
+
   ownerId = input.required<number>();
 
   currentUserId = sessionStorage.getItem('userId');

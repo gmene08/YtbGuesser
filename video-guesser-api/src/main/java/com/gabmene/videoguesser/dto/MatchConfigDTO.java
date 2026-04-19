@@ -12,7 +12,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class StartRoomRequestDTO {
+public class MatchConfigDTO {
     private Integer userId; // ownerId that is trying to start the room
 
     // Match configurations

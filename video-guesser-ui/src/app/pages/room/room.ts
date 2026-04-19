@@ -1,12 +1,13 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PlayerResponse, RoomService } from '../../services/room';
 import { RoomResponse } from '../../services/room';
 import { PlayerCard } from '../../components/player-card/player-card';
+import { RoomSettings } from '../../components/room-settings/room-settings';
 
 @Component({
   selector: 'app-room',
-  imports: [PlayerCard],
+  imports: [PlayerCard, RoomSettings],
   templateUrl: './room.html',
   styleUrl: './room.css',
   standalone: true,
@@ -16,12 +17,20 @@ export class Room implements OnInit {
   private router = inject(ActivatedRoute);
   private rt = inject(Router);
 
+  isCodeCopied = signal(false);
+
   roomData = signal<RoomResponse | null>(null);
 
   roomCode = signal<string>('');
 
-  ngOnInit(): void {
 
+  isUserOwner = computed(() => {
+    const room = this.roomData();
+    if (!room) {return false;}
+    return room.ownerId.toString() === sessionStorage.getItem('userId');
+  });
+
+  ngOnInit(): void {
     // Redirect to home if not logged in
     if (sessionStorage.getItem('userId') === null) {
       this.rt.navigate(['/']);
@@ -37,7 +46,6 @@ export class Room implements OnInit {
       this.rt.navigate(['/']);
       return;
     }
-
   }
 
   loadRoomData(code: string) {
@@ -47,7 +55,7 @@ export class Room implements OnInit {
     // Get room data from the server
     this.roomService.getRoomByCode(code).subscribe({
       next: (response) => {
-        const room ={
+        const room = {
           ...response,
           players: this.sortPlayers([...response.players], response.ownerId), // Sort players by ownerId - Owner is always first
         };
@@ -55,7 +63,9 @@ export class Room implements OnInit {
         this.roomData.set(room);
 
         // Redirect to home if the user is not in the room
-        if(!room.players.some(player => player.id.toString() === sessionStorage.getItem('userId'))){
+        if (
+          !room.players.some((player) => player.id.toString() === sessionStorage.getItem('userId'))
+        ) {
           this.rt.navigate(['/']);
           return;
         }
@@ -106,5 +116,20 @@ export class Room implements OnInit {
       if (b.id === currentOwnerId) return 1;
       return 0;
     });
+  }
+
+  copyCode(){
+    const roomCode = this.roomCode();
+
+    if (roomCode) {
+      navigator.clipboard.writeText(roomCode).then(()=>{
+        this.isCodeCopied.set(true);
+        setTimeout(() => {
+          this.isCodeCopied.set(false);
+        }, 2000);
+      }).catch((err) => {
+        console.error('Failed to copy room code: ', err);
+      })
+    }
   }
 }
