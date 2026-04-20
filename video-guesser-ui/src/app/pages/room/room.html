@@ -3,8 +3,8 @@
     <div class="font-bold text-2xl tracking-tighter">Yg.</div>
   </div>
 
-  <div class="flex-grow p-12">
-    <header class="flex flex-col items-center gap-1 mb-20 group">
+  <div class="flex-grow p-12 pt-4">
+    <header class="flex flex-col items-center gap-1 mb-10 group">
       <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-red-700 uppercase">room</h1>
       <button
         (click)="copyCode()"
@@ -26,7 +26,7 @@
     </header>
 
     <main
-      class="flex gap-0 flex-row mt-8 w-full max-w-5xl mx-auto border-2 border-gray-200 rounded-[2rem] overflow-hidden bg-white shadow-2xl"
+      class="flex gap-0 flex-row w-full max-w-5xl mx-auto border-2 border-gray-200 rounded-[2rem] overflow-hidden bg-white shadow-2xl"
     >
       <section
         class="flex flex-col flex-grow pt-10 p-4 gap-4 items-center text-red-700 justify-between"
@@ -44,7 +44,7 @@
                   [ownerId]="room.ownerId"
                   [playerId]="player.id"
                   [playerNickname]="player.nickname"
-                  (onKickPlayer)="kickPlayer(room.code, $event)"
+                  (onKickPlayer)="kickPlayer($event)"
                 ></app-player-card>
               }
             }
@@ -57,7 +57,14 @@
       </section>
 
       <aside class="w-96 bg-gray-50 border-l-4 border-gray-200">
-        <app-room-settings [room]="roomData()" [isOwner]="isUserOwner()"></app-room-settings>
+        <app-room-settings
+          [room]="roomData()"
+          [isOwner]="isUserOwner()"
+          [startGameErrorMessage]="startGameErrorMessage()"
+          [saveMaxPlayersErrorMessage]="saveMaxPlayersErrorMessage()"
+          (onStartGame)="startGame($event)"
+          (onSaveMaxPlayers)="updateMaxPlayers($event)"
+        ></app-room-settings>
       </aside>
     </main>
   </div>

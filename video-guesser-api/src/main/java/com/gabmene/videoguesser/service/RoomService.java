@@ -1,7 +1,8 @@
 package com.gabmene.videoguesser.service;
 
 import com.gabmene.videoguesser.dto.JoinRoomRequestDTO;
-import com.gabmene.videoguesser.dto.MatchConfigDTO;
+import com.gabmene.videoguesser.dto.MatchConfigRequestDTO;
+import com.gabmene.videoguesser.dto.RoomUpdateRequestDto;
 import com.gabmene.videoguesser.entity.Room;
 import com.gabmene.videoguesser.entity.User;
 import com.gabmene.videoguesser.enums.RoomStatus;
@@ -108,10 +109,15 @@ public class RoomService {
     }
 
     @Transactional
-    public Room startRoom(String roomCode, MatchConfigDTO request) {
+    public Room startRoom(String roomCode, MatchConfigRequestDTO request) {
 
         // find the room
         Room roomStarting = roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not found"));
+
+        System.out.println("Room starting: " + roomStarting);
+        System.out.println("Request Categories: " + request.getCategories());
+        System.out.println("Request Number of Rounds: " + request.getNumberOfRounds());
+        System.out.println("User trying to start: " + request.getUserId());
 
         // validations
         if(!roomStarting.getOwner().getId().equals(request.getUserId())) {
@@ -122,6 +128,10 @@ public class RoomService {
         }
         if(roomStarting.getUsers().size() < 2) {
             throw new RuntimeException("Room needs at least 2 players to start");
+        }
+
+        if(roomStarting.getUsers().size() > roomStarting.getMaxPlayers()) {
+            throw new RuntimeException("Room cannot have more than " + roomStarting.getMaxPlayers() + " players");
         }
 
         matchService.createMatch(roomStarting, request);
@@ -193,4 +203,15 @@ public class RoomService {
         return leaveRoom(roomCode, targetUserId);
     }
 
+    public Room updateRoom(String roomCode, RoomUpdateRequestDto request) {
+        Room roomUpdated = roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not found"));
+
+        if(userRepository.findAllByRoom(roomUpdated).size() > request.getMaxPlayers()) {
+            throw new RuntimeException("Room cannot have less players than the maximum");
+        }
+
+        roomUpdated.setMaxPlayers(request.getMaxPlayers());
+
+        return roomRepository.save(roomUpdated);
+    }
 }

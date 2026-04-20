@@ -1,13 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs';
+import { UserResponse } from '../dtos/auth.dto';
 
-export interface UserResponse {
-  id: number;
-  nickname: string;
-  email: string;
-  isGuest: boolean;
-}
 
 @Injectable({
   providedIn: 'root',

@@ -16,11 +16,16 @@ public class UserResponseDTO {
     private String email;
     private Boolean isGuest;
 
+    public static UserResponseDTO from(User user) {
+        if (user == null) {
+            return null;
+        }
 
-    public UserResponseDTO(User user) {
-        this.id = user.getId();
-        this.nickname = user.getNickname();
-        this.email = user.getEmail();
-        this.isGuest = user.getIsGuest();
+        return new UserResponseDTO(
+                user.getId(),
+                user.getNickname(),
+                user.getEmail(),
+                user.getIsGuest());
     }
+
 }

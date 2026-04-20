@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
-import { Login } from '../../components/login/login';
-import { Menu } from '../../components/menu/menu';
+import { Login } from './components/login/login';
+import { Menu } from './components/menu/menu';
 import { inject } from 'vitest';
 import { Auth } from '../../services/auth';
 

@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { RoomService } from '../../services/room';
+import { RoomService } from '../../../../services/room';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 

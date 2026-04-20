@@ -1,6 +1,7 @@
 package com.gabmene.videoguesser.dto;
 
 import com.gabmene.videoguesser.entity.User;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class JoinRoomRequestDTO {
+    @NotNull (message = "User id cannot be null")
     private Integer userId;
 
 

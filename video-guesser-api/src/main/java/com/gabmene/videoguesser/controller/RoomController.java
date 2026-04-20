@@ -2,10 +2,12 @@ package com.gabmene.videoguesser.controller;
 
 import com.gabmene.videoguesser.dto.JoinRoomRequestDTO;
 import com.gabmene.videoguesser.dto.RoomResponseDTO;
-import com.gabmene.videoguesser.dto.MatchConfigDTO;
+import com.gabmene.videoguesser.dto.MatchConfigRequestDTO;
+import com.gabmene.videoguesser.dto.RoomUpdateRequestDto;
 import com.gabmene.videoguesser.entity.Room;
 import com.gabmene.videoguesser.enums.MatchCategory;
 import com.gabmene.videoguesser.service.RoomService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,25 +25,31 @@ public class RoomController {
     @PostMapping("/{ownerId}")
     public ResponseEntity<RoomResponseDTO> createRoom(@PathVariable Integer ownerId) {
         Room newRoom = roomService.createRoom(ownerId);
-        return ResponseEntity.ok(new RoomResponseDTO(newRoom));
+        return ResponseEntity.ok(RoomResponseDTO.from(newRoom));
     }
 
     @PostMapping("/join/{roomCode}")
-    public ResponseEntity<RoomResponseDTO> joinRoom(@PathVariable String roomCode, @RequestBody JoinRoomRequestDTO request) {
+    public ResponseEntity<RoomResponseDTO> joinRoom(@PathVariable String roomCode,@Valid @RequestBody JoinRoomRequestDTO request) {
         Room roomJoined = roomService.joinRoom(roomCode, request);
-        return ResponseEntity.ok(new RoomResponseDTO(roomJoined));
+        return ResponseEntity.ok(RoomResponseDTO.from(roomJoined));
     }
 
     @PatchMapping("/{roomCode}/start")
-    public ResponseEntity<RoomResponseDTO> startRoom(@PathVariable String roomCode, @RequestBody MatchConfigDTO request) {
+    public ResponseEntity<RoomResponseDTO> startRoom(@PathVariable String roomCode,@Valid @RequestBody MatchConfigRequestDTO request) {
         Room roomStarted = roomService.startRoom(roomCode, request);
-        return ResponseEntity.ok(new RoomResponseDTO(roomStarted));
+        return ResponseEntity.ok(RoomResponseDTO.from(roomStarted));
+    }
+
+    @PatchMapping("/{roomCode}")
+    public ResponseEntity<RoomResponseDTO> updateRoom(@PathVariable String roomCode,@Valid @RequestBody RoomUpdateRequestDto request) {
+        Room roomUpdated = roomService.updateRoom(roomCode, request);
+        return ResponseEntity.ok(RoomResponseDTO.from(roomUpdated));
     }
 
     @GetMapping("/{roomCode}")
     public ResponseEntity<RoomResponseDTO> getRoom(@PathVariable String roomCode) {
         Room room = roomService.findRoomByCode(roomCode);
-        return ResponseEntity.ok(new RoomResponseDTO(room));
+        return ResponseEntity.ok(RoomResponseDTO.from(room));
     }
 
     @DeleteMapping("/leave/{roomCode}")
@@ -53,7 +61,7 @@ public class RoomController {
     @DeleteMapping("/{roomCode}/kick/{targetUserId}")
     public ResponseEntity<RoomResponseDTO> kickPlayer(@PathVariable String roomCode, @PathVariable Integer targetUserId, @RequestParam Integer userId) {
         Room roomUpdated = roomService.kickPlayer(userId, targetUserId, roomCode);
-        return ResponseEntity.ok(new RoomResponseDTO(roomUpdated));
+        return ResponseEntity.ok(RoomResponseDTO.from(roomUpdated));
     }
 
     @GetMapping("/categories")

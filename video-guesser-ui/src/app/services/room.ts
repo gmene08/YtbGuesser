@@ -1,19 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { RoomResponse } from '../dtos/room.dto';
+import { MatchConfigRequest } from '../dtos/match.dto';
 
-export interface PlayerResponse {
-  id: number;
-  nickname: string;
-}
-export interface RoomResponse {
-  id: number;
-  code: string;
-  ownerId: number;
-  players: PlayerResponse[];
-  status: string;
-  maxPlayers: number;
 
-}
 
 @Injectable({
   providedIn: 'root',
@@ -47,6 +37,16 @@ export class RoomService {
       `${this.apiUrl}/leave/${roomCode}?userId=${sessionStorage.getItem('userId')}`,
       {},
     );
+  }
+
+  startRoom(roomCode: string, matchConfig: MatchConfigRequest){
+    console.log('Starting game with config: ', matchConfig);
+    return this.http.patch(`${this.apiUrl}/${roomCode}/start`, matchConfig);
+  }
+
+  updateRoom(roomCode: string, roomConfig: Partial<RoomResponse>){
+    console.log('Updating room with config: ', roomConfig);
+    return this.http.patch(`${this.apiUrl}/${roomCode}`, roomConfig);
   }
 
   kickPlayer(roomCode: string, targetUserId: number){

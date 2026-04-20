@@ -1,6 +1,6 @@
 package com.gabmene.videoguesser.service;
 
-import com.gabmene.videoguesser.dto.MatchConfigDTO;
+import com.gabmene.videoguesser.dto.MatchConfigRequestDTO;
 import com.gabmene.videoguesser.entity.Category;
 import com.gabmene.videoguesser.entity.Match;
 import com.gabmene.videoguesser.entity.Room;
@@ -23,20 +23,18 @@ public class MatchService {
     private final RoundService roundService;
 
     @Transactional
-    public Match createMatch(Room roomStarting, MatchConfigDTO request){
+    public Match createMatch(Room roomStarting, MatchConfigRequestDTO request){
+
         Match newMatch = new Match();
+
         newMatch.setRoom(roomStarting);
         newMatch.setCurrentRound(1);
 
         // set total rounds, if not set, default to 5
-        newMatch.setNumberOfRounds(request.getNumberOfRounds() != null ?
-                request.getNumberOfRounds()
-                : 5);
+        newMatch.setNumberOfRounds(request.getNumberOfRounds());
 
         // set categories, if not set, default to all categories
-        List<MatchCategory> selectedCategories = request.getCategory() != null
-                ? request.getCategory()
-                : List.of(MatchCategory.ALL);
+        List<MatchCategory> selectedCategories = request.getCategories();
 
         // get categories from the database - if ALL is selected, get all categories
         List<Category> categories;
