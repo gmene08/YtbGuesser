@@ -64,7 +64,6 @@ export class RoomSettings implements OnInit {
 
   saveMaxPlayers() {
     if (!this.isOwner()) return;
-
     console.log('Saving player count: ', this.maxPlayers());
     this.onSaveMaxPlayers.emit(this.maxPlayers());
   }

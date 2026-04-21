@@ -1,0 +1,15 @@
+<h1 class="text-4xl md:text-5xl font-bold tracking-tight text-red-700 uppercase">room</h1>
+<button
+  (click)="copyCode()"
+  class="relative text-5xl md:text-6xl font-black text-gray-800 tracking-tighter mt-2 hover:text-gray-600 hover:scale-105 transition-all outline-none"
+  title="Click to copy code"
+>
+  {{ roomCode() }}
+</button>
+<span class="text-sm font-semibold text-gray-400 mt-1">
+  @if (isCodeCopied()) {
+    Copied!
+  } @else {
+    click to copy
+  }
+</span>

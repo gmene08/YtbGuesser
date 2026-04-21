@@ -1,71 +1,42 @@
 <div class="min-h-screen flex flex-col bg-gray-50">
-  <div class="flex justify-between items-center px-8 py-4 bg-white border-b border-gray-200">
-    <div class="font-bold text-2xl tracking-tighter">Yg.</div>
-  </div>
+  <app-nav-bar></app-nav-bar>
+  @if (!startedGame()) {
+    <div class="flex-grow p-12 pt-4">
+      <header>
+        <app-room-header
+          class="flex flex-col items-center gap-1 mb-10 group"
+          [roomCode]="roomData()?.code"
+        >
+        </app-room-header>
+      </header>
 
-  <div class="flex-grow p-12 pt-4">
-    <header class="flex flex-col items-center gap-1 mb-10 group">
-      <h1 class="text-4xl md:text-5xl font-bold tracking-tight text-red-700 uppercase">room</h1>
-      <button
-        (click)="copyCode()"
-        class="relative text-5xl md:text-6xl font-black text-gray-800 tracking-tighter mt-2 hover:text-gray-600 hover:scale-105 transition-all outline-none"
-        title="Click to copy code"
+      <main
+        class="flex gap-0 flex-row w-full max-w-5xl mx-auto border-2 border-gray-200 rounded-[2rem] overflow-hidden bg-white shadow-2xl"
       >
-        {{ roomData()?.code }}
+        <section class="flex flex-col flex-grow pt-10 p-4 items-center text-red-700">
+          <app-room-player-list
+            class="flex flex-col justify-between w-full flex-grow"
+            [room]="roomData()"
+            [isOwner]="isUserOwner()"
+            (onKickPlayer)="kickPlayer($event)"
+            (onLeaveRoom)="leaveRoom()"
+          >
+          </app-room-player-list>
+        </section>
 
-      </button>
-      <span
-        class="text-sm font-semibold text-gray-400 mt-1"
-      >
-        @if(isCodeCopied()){
-          Copied!
-        }@else{
-          click to copy
-        }
-      </span>
-    </header>
-
-    <main
-      class="flex gap-0 flex-row w-full max-w-5xl mx-auto border-2 border-gray-200 rounded-[2rem] overflow-hidden bg-white shadow-2xl"
-    >
-      <section
-        class="flex flex-col flex-grow pt-10 p-4 gap-4 items-center text-red-700 justify-between"
-      >
-        <div class="flex flex-col w-full gap-10">
-          <p class="text-3xl font-bold text-center">
-            {{ roomData()?.players?.length }} / {{ roomData()?.maxPlayers }} players
-          </p>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            @if (roomData(); as room) {
-              @for (player of room.players; track player.id) {
-                <app-player-card
-                  [isOwner]="isUserOwner()"
-                  [ownerId]="room.ownerId"
-                  [playerId]="player.id"
-                  [playerNickname]="player.nickname"
-                  (onKickPlayer)="kickPlayer($event)"
-                ></app-player-card>
-              }
-            }
-          </div>
-        </div>
-
-        <div>
-          <button (click)="leaveRoom()" class=" w-full p-4 bg-gray-700 hover:bg-gray-800 text-white text-lg font-bold rounded-lg shadow-md transition">leave room</button>
-        </div>
-      </section>
-
-      <aside class="w-96 bg-gray-50 border-l-4 border-gray-200">
-        <app-room-settings
-          [room]="roomData()"
-          [isOwner]="isUserOwner()"
-          [startGameErrorMessage]="startGameErrorMessage()"
-          [saveMaxPlayersErrorMessage]="saveMaxPlayersErrorMessage()"
-          (onStartGame)="startGame($event)"
-          (onSaveMaxPlayers)="updateMaxPlayers($event)"
-        ></app-room-settings>
-      </aside>
-    </main>
-  </div>
+        <aside class="w-96 bg-gray-50 border-l-4 border-gray-200">
+          <app-room-settings
+            [room]="roomData()"
+            [isOwner]="isUserOwner()"
+            [startGameErrorMessage]="startGameErrorMessage()"
+            [saveMaxPlayersErrorMessage]="saveMaxPlayersErrorMessage()"
+            (onStartGame)="startGame($event)"
+            (onSaveMaxPlayers)="updateMaxPlayers($event)"
+          ></app-room-settings>
+        </aside>
+      </main>
+    </div>
+  } @else {
+    <app-room-game [roomData]="roomData()"></app-room-game>
+  }
 </div>

@@ -3,10 +3,11 @@ import { Login } from './components/login/login';
 import { Menu } from './components/menu/menu';
 import { inject } from 'vitest';
 import { Auth } from '../../services/auth';
+import { NavBar } from '../../components/nav-bar/nav-bar';
 
 @Component({
   selector: 'app-home',
-  imports: [Login, Menu],
+  imports: [Login, Menu, NavBar],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })

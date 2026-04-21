@@ -1,14 +1,17 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PlayerCard } from './components/player-card/player-card';
 import { RoomSettings } from './components/room-settings/room-settings';
 import { RoomService } from '../../services/room';
 import { PlayerResponse, RoomResponse } from '../../dtos/room.dto';
-import { MatchConfigRequest } from '../../dtos/match.dto';
+import { MatchConfigRequest, MatchDataResponse } from '../../dtos/match.dto';
+import { RoomPlayerList } from './components/room-player-list/room-player-list';
+import { NavBar } from '../../components/nav-bar/nav-bar';
+import { RoomHeader } from './components/room-header/room-header';
+import { RoomGame } from './components/room-game/room-game';
 
 @Component({
   selector: 'app-room',
-  imports: [PlayerCard, RoomSettings],
+  imports: [RoomSettings, RoomPlayerList, NavBar, RoomHeader, RoomGame],
   templateUrl: './room.html',
   styleUrl: './room.css',
   standalone: true,
@@ -17,8 +20,6 @@ export class Room implements OnInit {
   private roomService = inject(RoomService);
   private router = inject(ActivatedRoute);
   private rt = inject(Router);
-
-  isCodeCopied = signal(false);
 
   roomData = signal<RoomResponse | null>(null);
 
@@ -29,9 +30,9 @@ export class Room implements OnInit {
   startGameErrorMessage = signal<string>('');
   saveMaxPlayersErrorMessage = signal<string>('');
 
-  isUserOwner = computed(() => this.roomData()?.ownerId === Number(sessionStorage.getItem('userId')));
-
-
+  isUserOwner = computed(
+    () => this.roomData()?.ownerId === Number(sessionStorage.getItem('userId')),
+  );
 
   ngOnInit(): void {
     // Redirect to home if not logged in
@@ -39,11 +40,6 @@ export class Room implements OnInit {
       console.log('User not logged in');
       this.rt.navigate(['/']);
       return;
-    }
-
-    if(this.startedGame()){
-      console.log('Game already started');
-      //this.rt.navigate(['/game']);
     }
 
     // Get the room code from the URL
@@ -127,56 +123,40 @@ export class Room implements OnInit {
     });
   }
 
-  startGame( matchConfig: MatchConfigRequest){
-    if(!this.roomCode()) return;
+  startGame(matchConfig: MatchConfigRequest) {
+    if (!this.roomCode()) return;
 
     console.log('Starting game with config: ', matchConfig);
     this.roomService.startRoom(this.roomCode(), matchConfig).subscribe({
       next: (response) => {
         console.log('Game started');
-
-        //this.rt.navigate(['/game']);
+        this.roomData.set(response);
       },
       error: (error) => {
         console.error('Error starting game: ', error);
         this.startGameErrorMessage.set(error.error?.message || 'Server error. Try again later.');
       },
-    })
+    });
   }
 
-  updateMaxPlayers(maxPlayers: number){
+  updateMaxPlayers(maxPlayers: number) {
     const room = this.roomData();
     if (!room) return;
 
     console.log('Max players updated: ', maxPlayers);
-    this.roomService.updateRoom(this.roomCode(), {maxPlayers: maxPlayers}).subscribe({
+    this.roomService.updateRoom(this.roomCode(), { maxPlayers: maxPlayers }).subscribe({
       next: (response) => {
         console.log('Room updated');
-        const updatedRoom = {...room, maxPlayers};
+        const updatedRoom = { ...room, maxPlayers };
         this.roomData.set(updatedRoom);
         this.saveMaxPlayersErrorMessage.set('');
       },
       error: (error) => {
         console.error('Error updating room: ', error.error?.message);
-        this.saveMaxPlayersErrorMessage.set(error.error?.message || 'Server error. Try again later.');
+        this.saveMaxPlayersErrorMessage.set(
+          error.error?.message || 'Server error. Try again later.',
+        );
       },
-    })
-
-  }
-
-
-  copyCode(){
-    const roomCode = this.roomCode();
-
-    if (roomCode) {
-      navigator.clipboard.writeText(roomCode).then(()=>{
-        this.isCodeCopied.set(true);
-        setTimeout(() => {
-          this.isCodeCopied.set(false);
-        }, 2000);
-      }).catch((err) => {
-        console.error('Failed to copy room code: ', err);
-      })
-    }
+    });
   }
 }

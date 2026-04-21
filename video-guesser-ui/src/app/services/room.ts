@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RoomResponse } from '../dtos/room.dto';
-import { MatchConfigRequest } from '../dtos/match.dto';
+import { MatchConfigRequest, MatchDataResponse } from '../dtos/match.dto';
 
 
 
@@ -41,7 +41,7 @@ export class RoomService {
 
   startRoom(roomCode: string, matchConfig: MatchConfigRequest){
     console.log('Starting game with config: ', matchConfig);
-    return this.http.patch(`${this.apiUrl}/${roomCode}/start`, matchConfig);
+    return this.http.patch<RoomResponse>(`${this.apiUrl}/${roomCode}/start`, matchConfig);
   }
 
   updateRoom(roomCode: string, roomConfig: Partial<RoomResponse>){

@@ -1,0 +1,28 @@
+<div class="flex flex-col w-full gap-10">
+  <p class="text-3xl font-bold text-center">
+    {{ room()?.players?.length }} / {{ room()?.maxPlayers }} players
+  </p>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    @if (room(); as room) {
+      @for (player of room.players; track player.id) {
+        <app-player-card
+          [isOwner]="isOwner()"
+          [ownerId]="room.ownerId"
+          [playerId]="player.id"
+          [playerNickname]="player.nickname"
+          (onKickPlayer)="handleKickPlayer($event)"
+        ></app-player-card>
+      }
+    }
+  </div>
+</div>
+
+<div class="mt-auto">
+  <button
+    (click)="leaveRoom()"
+    class="w-full p-4 bg-gray-700 hover:bg-gray-800 text-white text-lg font-bold rounded-lg shadow-md transition"
+  >
+    leave room
+  </button>
+</div>
