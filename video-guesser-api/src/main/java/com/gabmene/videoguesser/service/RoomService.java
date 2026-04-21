@@ -1,8 +1,9 @@
 package com.gabmene.videoguesser.service;
 
-import com.gabmene.videoguesser.dto.JoinRoomRequestDTO;
-import com.gabmene.videoguesser.dto.MatchConfigRequestDTO;
-import com.gabmene.videoguesser.dto.RoomUpdateRequestDto;
+import com.gabmene.videoguesser.dto.room.JoinRoomRequestDTO;
+import com.gabmene.videoguesser.dto.match.MatchConfigRequestDTO;
+import com.gabmene.videoguesser.dto.room.RoomUpdateRequestDto;
+import com.gabmene.videoguesser.entity.Match;
 import com.gabmene.videoguesser.entity.Room;
 import com.gabmene.videoguesser.entity.User;
 import com.gabmene.videoguesser.enums.RoomStatus;
@@ -126,20 +127,20 @@ public class RoomService {
         if(roomStarting.getStatus() != RoomStatus.WAITING) {
             throw new RuntimeException("Room has already started");
         }
-        if(roomStarting.getUsers().size() < 2) {
-            throw new RuntimeException("Room needs at least 2 players to start");
+        if(roomStarting.getUsers().size() < 1) {
+            throw new RuntimeException("Room needs at least 1 players to start");
         }
 
         if(roomStarting.getUsers().size() > roomStarting.getMaxPlayers()) {
             throw new RuntimeException("Room cannot have more than " + roomStarting.getMaxPlayers() + " players");
         }
 
-        matchService.createMatch(roomStarting, request);
+        // Match is created right when the room starts
+        Match match = matchService.createMatch(roomStarting, request);
 
         roomStarting.setStatus(RoomStatus.PLAYING);
-        roomRepository.save(roomStarting);
+        return roomRepository.save(roomStarting);
 
-        return roomStarting;
     }
 
     @Transactional
@@ -206,6 +207,7 @@ public class RoomService {
     public Room updateRoom(String roomCode, RoomUpdateRequestDto request) {
         Room roomUpdated = roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not found"));
 
+        // validate if the updated max players is less than the current number of players in the room
         if(userRepository.findAllByRoom(roomUpdated).size() > request.getMaxPlayers()) {
             throw new RuntimeException("Room cannot have less players than the maximum");
         }

@@ -43,4 +43,7 @@ public class Match {
     @JoinTable(name="match_category", joinColumns = @JoinColumn(name="match_id"), inverseJoinColumns = @JoinColumn(name="category_id"))
     private List<Category> categories;
 
+    @OneToMany(mappedBy = "match",fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, orphanRemoval = true)
+    private List<Round> rounds;
+
 }

@@ -1,4 +1,4 @@
-package com.gabmene.videoguesser.dto;
+package com.gabmene.videoguesser.dto.room;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

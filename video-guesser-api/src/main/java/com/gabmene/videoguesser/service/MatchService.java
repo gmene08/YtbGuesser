@@ -1,6 +1,7 @@
 package com.gabmene.videoguesser.service;
 
-import com.gabmene.videoguesser.dto.MatchConfigRequestDTO;
+import com.gabmene.videoguesser.dto.match.MatchConfigRequestDTO;
+import com.gabmene.videoguesser.dto.match.MatchResponseDTO;
 import com.gabmene.videoguesser.entity.Category;
 import com.gabmene.videoguesser.entity.Match;
 import com.gabmene.videoguesser.entity.Room;
@@ -8,11 +9,14 @@ import com.gabmene.videoguesser.enums.MatchCategory;
 import com.gabmene.videoguesser.enums.MatchStatus;
 import com.gabmene.videoguesser.repository.CategoryRepository;
 import com.gabmene.videoguesser.repository.MatchRepository;
+import com.gabmene.videoguesser.repository.RoomRepository;
+import com.gabmene.videoguesser.repository.RoundRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -20,12 +24,20 @@ public class MatchService {
 
     private final CategoryRepository categoryRepository;
     private final MatchRepository matchRepository;
+    private final RoomRepository roomRepository;
+    private final RoundRepository roundRepository;
+
     private final RoundService roundService;
 
     @Transactional
     public Match createMatch(Room roomStarting, MatchConfigRequestDTO request){
 
         Match newMatch = new Match();
+
+        Optional<Match> activeMatch = matchRepository.findByRoomAndStatus(roomStarting, MatchStatus.PLAYING);
+        if(activeMatch.isPresent()) {
+            return activeMatch.get();
+        }
 
         newMatch.setRoom(roomStarting);
         newMatch.setCurrentRound(1);
@@ -52,8 +64,21 @@ public class MatchService {
 
         Match savedMatch = matchRepository.save(newMatch);
 
-        roundService.createRound(savedMatch, 1);
+        for (int i = 1; i <= newMatch.getNumberOfRounds(); i++) {
+            roundService.createRound(savedMatch, i);
+        }
 
-        return savedMatch;
+        return matchRepository.save(savedMatch);
+    }
+
+    public Match getMatchByRoomCode(String roomCode){
+        Room room = roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not Found"));
+
+        // return the match that is currently being played in the room
+        return matchRepository.findByRoomAndStatus(room, MatchStatus.PLAYING).orElseThrow(()-> new RuntimeException("Match not Found"));
+    }
+
+    public Match getMatchById(Integer matchId){
+        return matchRepository.findById(matchId).orElseThrow(()-> new RuntimeException("Match not Found"));
     }
 }

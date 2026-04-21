@@ -1,4 +1,4 @@
-package com.gabmene.videoguesser.dto;
+package com.gabmene.videoguesser.dto.room;
 
 import com.gabmene.videoguesser.entity.Room;
 import lombok.AllArgsConstructor;

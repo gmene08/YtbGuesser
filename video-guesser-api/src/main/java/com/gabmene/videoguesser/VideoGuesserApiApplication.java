@@ -1,6 +1,10 @@
 package com.gabmene.videoguesser;
 
 import com.gabmene.videoguesser.entity.User;
+import com.gabmene.videoguesser.entity.Video;
+import com.gabmene.videoguesser.repository.RoomRepository;
+import com.gabmene.videoguesser.repository.RoundRepository;
+import com.gabmene.videoguesser.service.RoundService;
 import com.gabmene.videoguesser.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -20,10 +24,16 @@ public class VideoGuesserApiApplication {
 	}
 
 	@Bean
-	public CommandLineRunner run(UserService userService) {
+	public CommandLineRunner run(RoundService roundService,UserService userService) {
 		return args -> {
 			//createUser(userService);
+			//getVideo(roundService);
 		};
+	}
+
+	public void getVideo(RoundService roundService){
+		Video video = roundService.getVideoByRoomCode("RX0M5");
+		System.out.println("Video loaded: id=" + video.getId() + ", title=" + video.getTitle());
 	}
 
 	public void createUser(UserService userService){

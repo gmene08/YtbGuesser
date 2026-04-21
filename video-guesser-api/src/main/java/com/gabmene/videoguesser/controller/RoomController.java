@@ -1,9 +1,11 @@
 package com.gabmene.videoguesser.controller;
 
-import com.gabmene.videoguesser.dto.JoinRoomRequestDTO;
-import com.gabmene.videoguesser.dto.RoomResponseDTO;
-import com.gabmene.videoguesser.dto.MatchConfigRequestDTO;
-import com.gabmene.videoguesser.dto.RoomUpdateRequestDto;
+import com.gabmene.videoguesser.dto.match.MatchResponseDTO;
+import com.gabmene.videoguesser.dto.room.JoinRoomRequestDTO;
+import com.gabmene.videoguesser.dto.room.RoomResponseDTO;
+import com.gabmene.videoguesser.dto.match.MatchConfigRequestDTO;
+import com.gabmene.videoguesser.dto.room.RoomUpdateRequestDto;
+import com.gabmene.videoguesser.entity.Match;
 import com.gabmene.videoguesser.entity.Room;
 import com.gabmene.videoguesser.enums.MatchCategory;
 import com.gabmene.videoguesser.service.RoomService;
@@ -35,9 +37,9 @@ public class RoomController {
     }
 
     @PatchMapping("/{roomCode}/start")
-    public ResponseEntity<RoomResponseDTO> startRoom(@PathVariable String roomCode,@Valid @RequestBody MatchConfigRequestDTO request) {
-        Room roomStarted = roomService.startRoom(roomCode, request);
-        return ResponseEntity.ok(RoomResponseDTO.from(roomStarted));
+    public ResponseEntity<RoomResponseDTO> startRoom(@PathVariable String roomCode, @Valid @RequestBody MatchConfigRequestDTO request) {
+        Room room = roomService.startRoom(roomCode, request);
+        return ResponseEntity.ok(RoomResponseDTO.from(room));
     }
 
     @PatchMapping("/{roomCode}")

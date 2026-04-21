@@ -1,6 +1,5 @@
-package com.gabmene.videoguesser.dto;
+package com.gabmene.videoguesser.dto.room;
 
-import com.gabmene.videoguesser.entity.User;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

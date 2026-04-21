@@ -1,4 +1,4 @@
-package com.gabmene.videoguesser.dto;
+package com.gabmene.videoguesser.dto.match;
 
 import com.gabmene.videoguesser.enums.MatchCategory;
 import jakarta.validation.constraints.Max;
