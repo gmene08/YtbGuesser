@@ -15,14 +15,18 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CurrentRoundResponseDTO {
+    private Integer roundId;
     private Integer roundNumber;
     private RoundStatus roundStatus;
     private VideoResponseDTO video;
 
     public static CurrentRoundResponseDTO from(Round round) {
+        if(round == null)
+            return null;
+
         VideoResponseDTO video = VideoResponseDTO.from(round.getVideo());
 
-        return new CurrentRoundResponseDTO(round.getRoundNumber(), round.getStatus(), video );
+        return new CurrentRoundResponseDTO(round.getId(), round.getRoundNumber(), round.getStatus(), video );
     }
 
     @Getter
@@ -35,6 +39,8 @@ public class CurrentRoundResponseDTO {
         private Long viewCount;
 
         public static VideoResponseDTO from(Video video) {
+            if(video == null)
+                return null;
             return new VideoResponseDTO(video.getChannelName(), video.getYoutubeId(), video.getThumbnailUrl(), video.getTitle(), video.getViewCount());
         }
     }

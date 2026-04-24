@@ -15,6 +15,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,7 +26,6 @@ public class MatchService {
     private final CategoryRepository categoryRepository;
     private final MatchRepository matchRepository;
     private final RoomRepository roomRepository;
-    private final RoundRepository roundRepository;
 
     private final RoundService roundService;
 
@@ -64,6 +64,7 @@ public class MatchService {
 
         Match savedMatch = matchRepository.save(newMatch);
 
+        // create all the rounds
         for (int i = 1; i <= newMatch.getNumberOfRounds(); i++) {
             roundService.createRound(savedMatch, i);
         }

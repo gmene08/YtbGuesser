@@ -14,7 +14,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MatchResponseDTO {
-    private Integer id;
+    private Integer matchId;
     private Integer maxRounds;
     private Integer roundNumber;
     private MatchStatus status;
@@ -22,11 +22,14 @@ public class MatchResponseDTO {
 
 
     public static MatchResponseDTO from(Match match) {
+        if (match == null) {
+            return null;
+        }
+
         Round currentRound = match.getRounds().stream().filter
                 (r -> r.getRoundNumber().equals(match.getCurrentRound())).findFirst().orElse(null);
 
-        CurrentRoundResponseDTO currentRoundDto = currentRound != null ?
-                CurrentRoundResponseDTO.from(currentRound) : null;
+        CurrentRoundResponseDTO currentRoundDto = CurrentRoundResponseDTO.from(currentRound);
 
         return new MatchResponseDTO(
                 match.getId(),

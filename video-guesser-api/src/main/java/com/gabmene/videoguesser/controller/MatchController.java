@@ -26,4 +26,5 @@ public class MatchController {
         return ResponseEntity.ok(MatchResponseDTO.from(match));
     }
 
+
 }

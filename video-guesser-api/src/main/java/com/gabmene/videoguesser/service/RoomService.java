@@ -121,6 +121,9 @@ public class RoomService {
         System.out.println("User trying to start: " + request.getUserId());
 
         // validations
+        if (roomStarting.getOwner() == null) {
+            throw new RuntimeException("Room owner not found");
+        }
         if(!roomStarting.getOwner().getId().equals(request.getUserId())) {
             throw new RuntimeException("Only the ownerId can start the room");
         }
@@ -173,7 +176,7 @@ public class RoomService {
             return null;
 
         }
-        else if(roomOwner.equals(userLeaving)) {
+        else if (roomOwner != null && roomOwner.equals(userLeaving)) {
             roomLeaving.setOwner(null);
 
             int randomPlayerIndex = (int) (Math.random() * playersInRoom.size());
@@ -191,8 +194,12 @@ public class RoomService {
     public Room kickPlayer(Integer userId, Integer targetUserId, String roomCode){
         Room room = roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not found"));
 
+        if(userId == null || targetUserId == null) {
+            throw new RuntimeException("User ids cannot be null");
+        }
+
         // validate if the user is the owner
-        if(room.getOwner().getId() != userId) {
+        if(room.getOwner() == null || !room.getOwner().getId().equals(userId)) {
             throw new RuntimeException("Only the owner can kick a player");
         }
 
@@ -207,7 +214,7 @@ public class RoomService {
     public Room updateRoom(String roomCode, RoomUpdateRequestDto request) {
         Room roomUpdated = roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not found"));
 
-        // validate if the updated max players is less than the current number of players in the room
+        // validate if the updated maxPlayers is less than the current number of players in the room
         if(userRepository.findAllByRoom(roomUpdated).size() > request.getMaxPlayers()) {
             throw new RuntimeException("Room cannot have less players than the maximum");
         }

@@ -12,6 +12,7 @@ import java.util.List;
 @Table(name="room")
 @Getter
 @Setter
+@EqualsAndHashCode(of = "id")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
