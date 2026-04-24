@@ -1,0 +1,14 @@
+@if (countdown() > 0) {
+  <div class="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity">
+        <span class="text-9xl md:text-[12rem] font-black text-white drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] animate-pulse">
+          {{ countdown() }}
+        </span>
+  </div>
+}
+@if (showGo()) {
+  <div class="absolute inset-0 z-50 flex items-center justify-center pointer-events-none">
+        <span class="text-9xl md:text-[15rem] font-black text-white drop-shadow-[0_0_40px_rgba(220,38,38,1)] transform scale-125 transition-transform duration-300">
+          GO!
+        </span>
+  </div>
+}

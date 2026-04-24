@@ -9,7 +9,6 @@
 </header>
 
 <main class="flex flex-col xl:flex-row gap-6 w-full max-w-screen-2xl mx-auto h-full items-stretch px-4 pb-8">
-
   <aside class="w-full xl:w-72 bg-white rounded-2xl shadow-sm border border-gray-200 p-4 flex flex-col">
     <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 px-2">Rankings</h2>
     <app-player-leaderboard
@@ -20,34 +19,36 @@
 
   <section class="flex-1 flex flex-col gap-6 items-center">
 
+    <app-video
+      class="w-full max-w-4xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl relative"
+      [videoUrl]="videoUrl()"
+      (startRoundTimer)="startRoundTimer()"
+    ></app-video>
 
-      <div class="w-full max-w-4xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl relative">
-        <youtube-player
-          [videoId]="videoUrl()"
-          class="w-full h-full absolute inset-0"
-          [playerVars]="{
-        controls: 0,
-        disablekb: 1,
-        rel: 0,
-        modestbranding: 1
-      }"
-        >
-        </youtube-player>
+    @if (isRoundActive()) {
+      <div class="flex items-center gap-3 text-2xl font-black transition-colors"
+           [class.text-red-600]="timeLeft() <= 10"
+           [class.text-gray-800]="timeLeft() > 10"
+           [class.animate-pulse]="timeLeft() <= 5">
+        <span>⏱️</span>
+        <span>00:{{ timeLeft() < 10 ? '0' + timeLeft() : timeLeft() }}</span>
       </div>
+    }
 
+    <div class="w-full max-w-2xl bg-white p-2 rounded-xl shadow-lg border border-gray-200 flex items-center transition-all focus-within:ring-4 focus-within:ring-red-100 focus-within:border-red-400"
+         [class.opacity-50]="!isRoundActive()"> <div class="pl-4 text-gray-400 text-2xl">👁️</div>
 
-
-    <div class="w-full max-w-2xl bg-white p-2 rounded-xl shadow-lg border border-gray-200 flex items-center transition-all focus-within:ring-4 focus-within:ring-red-100 focus-within:border-red-400">
-      <div class="pl-4 text-gray-400 text-2xl">👁️</div>
       <input
         type="number"
-        (input) ="userGuess.set(+($any($event.target).value || 0))"
         placeholder="How many views?"
-        class="flex-1 bg-transparent px-4 py-3 outline-none text-2xl font-black text-gray-700 text-center placeholder:text-gray-300 placeholder:font-medium disabled:opacity-50"
+        [disabled]="!isRoundActive()"
+        class="flex-1 bg-transparent px-4 py-3 outline-none text-2xl font-black text-gray-700 text-center placeholder:text-gray-300 disabled:cursor-not-allowed"
       />
+
       <button
+        [disabled]="!isRoundActive()"
         (click)="guess()"
-        class="px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-lg shadow-md transition transform active:scale-95">
+        class="px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-lg shadow-md transition transform active:scale-95 disabled:bg-gray-400 disabled:active:scale-100 disabled:cursor-not-allowed">
         GUESS
       </button>
     </div>

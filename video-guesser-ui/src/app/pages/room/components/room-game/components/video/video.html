@@ -1,0 +1,26 @@
+<youtube-player
+  [videoId]="videoUrl()"
+  class="w-full h-full absolute inset-0"
+  [playerVars]="{
+    controls: 0,
+    disablekb: 1,
+    rel: 0,
+    modestbranding: 1,
+    mute: 1,
+  }"
+>
+</youtube-player>
+
+<app-timer (onFinish)="startRound()"></app-timer>
+
+<button
+  (click)="toggleMute()"
+  class="absolute top-4 right-4 z-40 bg-black/70 hover:bg-black text-white px-4 py-2 rounded-full backdrop-blur-md shadow-lg font-bold flex items-center gap-2 transition-transform transform active:scale-90 pointer-events-auto"
+>
+  @if (isMuted()) {
+    <span class="text-xl animate-pulse">🔇</span>
+    <span class="text-sm tracking-widest uppercase">Unmute</span>
+  } @else {
+    <span class="text-xl">🔊</span>
+  }
+</button>
