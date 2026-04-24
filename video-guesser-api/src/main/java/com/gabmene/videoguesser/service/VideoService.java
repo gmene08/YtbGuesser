@@ -5,6 +5,8 @@ import com.gabmene.videoguesser.dto.youtube.YoutubeSearchResponseDTO;
 import com.gabmene.videoguesser.dto.youtube.YoutubeVideoDetailsResponseDTO;
 import com.gabmene.videoguesser.entity.Category;
 import com.gabmene.videoguesser.entity.Video;
+import com.gabmene.videoguesser.exception.BusinessException;
+import com.gabmene.videoguesser.exception.ResourceNotFoundException;
 import com.gabmene.videoguesser.repository.VideoRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +34,7 @@ public class VideoService {
         // searching for videos by category
         YoutubeSearchResponseDTO response = youtubeClient.searchVideos("snippet", 50, "video","medium", category.getName().name(), pageToken,apiKey);
         if(response == null || response.getItems() == null || response.getItems().isEmpty()) {
-            throw new RuntimeException("No videos found for category: " + category.getName());
+            throw new ResourceNotFoundException("No videos found for category: " + category.getName());
         }
 
         // transform the response to a list of videos
@@ -93,7 +95,7 @@ public class VideoService {
 
         // transform the response to a list of view counts
         if(detailsResponse == null || detailsResponse.getItems() == null || detailsResponse.getItems().isEmpty()){
-            throw new RuntimeException("Error fetching videos");
+            throw new BusinessException("Error fetching videos");
         }
         Map<String, Long> viewCounts = detailsResponse.getItems().stream()
                 .filter(item -> item.getId() != null) // ignore videos without an ID

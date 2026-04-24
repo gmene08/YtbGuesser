@@ -6,6 +6,10 @@ import com.gabmene.videoguesser.entity.Round;
 import com.gabmene.videoguesser.entity.User;
 import com.gabmene.videoguesser.entity.UserRound;
 import com.gabmene.videoguesser.enums.RoundStatus;
+import com.gabmene.videoguesser.exception.BusinessException;
+import com.gabmene.videoguesser.exception.ConflictException;
+import com.gabmene.videoguesser.exception.ForbiddenException;
+import com.gabmene.videoguesser.exception.ResourceNotFoundException;
 import com.gabmene.videoguesser.repository.RoundRepository;
 import com.gabmene.videoguesser.repository.UserRepository;
 import com.gabmene.videoguesser.repository.UserRoundRepository;
@@ -24,29 +28,29 @@ public class GameService {
     @Transactional
     public UserRound processGuess(Integer roundId, UserGuessRequestDTO userGuessRequest){
 
-        Round round = roundRepository.findById(roundId).orElseThrow(()-> new RuntimeException("Round not found"));
-        User user = userRepository.findById(userGuessRequest.getUserId()).orElseThrow(()-> new RuntimeException("User not found"));
+        Round round = roundRepository.findById(roundId).orElseThrow(()-> new ResourceNotFoundException("Round not found"));
+        User user = userRepository.findById(userGuessRequest.getUserId()).orElseThrow(()-> new ResourceNotFoundException("User not found"));
 
         if(round.getMatch() == null){
-            throw new RuntimeException("Match from round:" + roundId + " not found");
+            throw new ResourceNotFoundException("Match from round:" + roundId + " not found");
         }
         Room room = round.getMatch().getRoom();
 
         if(room == null){
-            throw new RuntimeException("room from match:" + round.getMatch().getId() + " not found");
+            throw new ResourceNotFoundException("room from match:" + round.getMatch().getId() + " not found");
         }
 
         if(round.getStatus() != RoundStatus.GUESSING ) {
-            throw new RuntimeException("Round is not in guessing state");
+            throw new BusinessException("Round is not in guessing state");
         }
 
         if( user.getRoom() == null || !user.getRoom().equals(room)) {
-            throw new RuntimeException("User is not in the room");
+            throw new ForbiddenException("User is not in the room");
         }
 
         // check if the user has already guessed in this round
         if (userRoundRepository.existsByUserIdAndRoundId(user.getId(), round.getId())) {
-            throw new RuntimeException("User already guessed in this round");
+            throw new ConflictException("User already guessed in this round");
         }
 
         Long viewCount = round.getVideo().getViewCount();

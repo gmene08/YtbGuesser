@@ -1,6 +1,9 @@
 package com.gabmene.videoguesser.service;
 
 import com.gabmene.videoguesser.entity.User;
+import com.gabmene.videoguesser.exception.BusinessException;
+import com.gabmene.videoguesser.exception.ConflictException;
+import com.gabmene.videoguesser.exception.ResourceNotFoundException;
 import com.gabmene.videoguesser.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -25,16 +28,16 @@ public class UserService {
     }
 
     public User findUserById(Integer id) {
-        return userRepository.findById(id).orElseThrow(()-> new RuntimeException("User not found"));
+        return userRepository.findById(id).orElseThrow(()-> new ResourceNotFoundException("User not found"));
     }
 
     @Transactional
     public User createUser(User user) {
         if (userRepository.existsByNickname(user.getNickname())) {
-            throw new RuntimeException("Nickname already exists");
+            throw new ConflictException("Nickname already exists");
         }
         if (userRepository.existsByEmail(user.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new ConflictException("Email already exists");
         }
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
         user.setPassword(encoder.encode(user.getPassword()));
@@ -45,7 +48,7 @@ public class UserService {
     @Transactional
     public User createGuest(User user) {
         if (userRepository.existsByNickname(user.getNickname())) {
-            throw new RuntimeException("Nickname already exists");
+            throw new ConflictException("Nickname already exists");
         }
         user.setIsGuest(true);
         return userRepository.save(user);
@@ -54,12 +57,12 @@ public class UserService {
     public User loginUser(String nickname, String password){
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
 
-        User user= userRepository.findByNickname(nickname).orElseThrow(()-> new RuntimeException("Wrong nickname"));
+        User user= userRepository.findByNickname(nickname).orElseThrow(()-> new BusinessException("Wrong credentials"));
         if(encoder.matches(password, user.getPassword())){
             System.out.println("User: " + user.getNickname() +" logged in successfully");
             return user;
         }else{
-            throw new RuntimeException("Wrong password");
+            throw new BusinessException("Wrong credentials");
         }
     }
 }

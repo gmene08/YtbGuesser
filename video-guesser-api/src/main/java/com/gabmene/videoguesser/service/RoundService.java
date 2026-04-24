@@ -3,6 +3,8 @@ package com.gabmene.videoguesser.service;
 import com.gabmene.videoguesser.dto.round.UserGuessRequestDTO;
 import com.gabmene.videoguesser.entity.*;
 import com.gabmene.videoguesser.enums.RoundStatus;
+import com.gabmene.videoguesser.exception.BusinessException;
+import com.gabmene.videoguesser.exception.ResourceNotFoundException;
 import com.gabmene.videoguesser.repository.RoundRepository;
 import com.gabmene.videoguesser.repository.UserRepository;
 import com.gabmene.videoguesser.repository.VideoRepository;
@@ -32,12 +34,12 @@ public class RoundService {
 
         // get random video from the categories
         if(match.getCategories() == null || match.getCategories().isEmpty()) {
-            throw new RuntimeException("No categories selected");
+            throw new BusinessException("No categories selected");
         }
         List<Integer> categoryIds = match.getCategories().stream().map(Category::getId).toList();
 
         Video video = videoRepository.findRandomVideoByCategories(categoryIds)
-                .orElseThrow(() -> new RuntimeException("No videos found for the selected categories"));
+                .orElseThrow(() -> new ResourceNotFoundException("No videos found for the selected categories"));
 
         round.setVideo(video);
 
@@ -51,7 +53,7 @@ public class RoundService {
     }
 
     public Video getVideoByRoomCode(String roomCode) {
-        return roundRepository.findVideoByRoomCode(roomCode).orElseThrow(()-> new RuntimeException("Video not found"));
+        return roundRepository.findVideoByRoomCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Video not found"));
     }
 
 

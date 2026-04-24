@@ -7,6 +7,10 @@ import com.gabmene.videoguesser.entity.Match;
 import com.gabmene.videoguesser.entity.Room;
 import com.gabmene.videoguesser.entity.User;
 import com.gabmene.videoguesser.enums.RoomStatus;
+import com.gabmene.videoguesser.exception.BusinessException;
+import com.gabmene.videoguesser.exception.ConflictException;
+import com.gabmene.videoguesser.exception.ForbiddenException;
+import com.gabmene.videoguesser.exception.ResourceNotFoundException;
 import com.gabmene.videoguesser.repository.RoomRepository;
 import com.gabmene.videoguesser.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -26,7 +30,7 @@ public class RoomService {
     @Transactional
     public Room createRoom(Integer ownerId) {
         // search owner
-        User owner = userRepository.findById(ownerId).orElseThrow(()-> new RuntimeException("User not found"));
+        User owner = userRepository.findById(ownerId).orElseThrow(()-> new ResourceNotFoundException("User not found"));
 
         // if the owner already is the owner of another room, return the existing room
         Room existingRoom = roomRepository.findByOwner(owner).orElse(null);
@@ -69,7 +73,7 @@ public class RoomService {
     }
 
     public Room findRoomByCode(String roomCode) {
-        return roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not found"));
+        return roomRepository.findByCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Room not found"));
     }
 
     @Transactional
@@ -77,10 +81,10 @@ public class RoomService {
 
         // find room by code
         Room roomJoined = roomRepository.findByCode(roomCode)
-                .orElseThrow(() -> new RuntimeException("Room not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Room not found"));
 
         // find user by id
-        User userJoining = userRepository.findById(user.getUserId()).orElseThrow(()-> new RuntimeException("User not found"));
+        User userJoining = userRepository.findById(user.getUserId()).orElseThrow(()-> new ResourceNotFoundException("User not found"));
 
 
         // validate if the user is already in the room
@@ -90,16 +94,16 @@ public class RoomService {
 
         // validate if the user is already in a room
         if(userJoining.getRoom() != null) {
-            throw new RuntimeException("User is already in another room");
+            throw new ConflictException("User is already in another room");
         }
 
         // validate room max player count
         if(roomJoined.getUsers().size() >= roomJoined.getMaxPlayers()) {
-            throw new RuntimeException("Room is full");
+            throw new BusinessException("Room is full");
         }
         // validate room status
         if(roomJoined.getStatus() != RoomStatus.WAITING) {
-            throw new RuntimeException("Room has already started ");
+            throw new ConflictException("Room has already started ");
         }
 
         // add user to the room
@@ -113,7 +117,7 @@ public class RoomService {
     public Room startRoom(String roomCode, MatchConfigRequestDTO request) {
 
         // find the room
-        Room roomStarting = roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not found"));
+        Room roomStarting = roomRepository.findByCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Room not found"));
 
         System.out.println("Room starting: " + roomStarting);
         System.out.println("Request Categories: " + request.getCategories());
@@ -122,20 +126,20 @@ public class RoomService {
 
         // validations
         if (roomStarting.getOwner() == null) {
-            throw new RuntimeException("Room owner not found");
+            throw new ResourceNotFoundException("Room owner not found");
         }
         if(!roomStarting.getOwner().getId().equals(request.getUserId())) {
-            throw new RuntimeException("Only the ownerId can start the room");
+            throw new ForbiddenException("Only the ownerId can start the room");
         }
         if(roomStarting.getStatus() != RoomStatus.WAITING) {
-            throw new RuntimeException("Room has already started");
+            throw new ConflictException("Room has already started");
         }
         if(roomStarting.getUsers().size() < 1) {
-            throw new RuntimeException("Room needs at least 1 players to start");
+            throw new BusinessException("Room needs at least 1 players to start");
         }
 
         if(roomStarting.getUsers().size() > roomStarting.getMaxPlayers()) {
-            throw new RuntimeException("Room cannot have more than " + roomStarting.getMaxPlayers() + " players");
+            throw new BusinessException("Room cannot have more than " + roomStarting.getMaxPlayers() + " players");
         }
 
         // Match is created right when the room starts
@@ -149,16 +153,16 @@ public class RoomService {
     @Transactional
     public Room leaveRoom(String roomCode, Integer userLeavingId) {
 
-        Room roomLeaving = roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not found"));
+        Room roomLeaving = roomRepository.findByCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Room not found"));
 
-        User userLeaving = userRepository.findById(userLeavingId).orElseThrow(()-> new RuntimeException("User not found"));
+        User userLeaving = userRepository.findById(userLeavingId).orElseThrow(()-> new ResourceNotFoundException("User not found"));
 
         if(userLeaving.getRoom() == null) {
-            throw new RuntimeException("User is not in a room");
+            throw new ConflictException("User is not in a room");
         }
 
         if(!roomLeaving.getUsers().contains(userLeaving)) {
-            throw new RuntimeException("User is not in the room");
+            throw new ConflictException("User is not in the room");
         }
 
         List<User> playersInRoom = roomLeaving.getUsers();
@@ -192,31 +196,31 @@ public class RoomService {
 
     @Transactional
     public Room kickPlayer(Integer userId, Integer targetUserId, String roomCode){
-        Room room = roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not found"));
+        Room room = roomRepository.findByCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Room not found"));
 
         if(userId == null || targetUserId == null) {
-            throw new RuntimeException("User ids cannot be null");
+            throw new BusinessException("User ids cannot be null");
         }
 
         // validate if the user is the owner
         if(room.getOwner() == null || !room.getOwner().getId().equals(userId)) {
-            throw new RuntimeException("Only the owner can kick a player");
+            throw new ForbiddenException("Only the owner can kick a player");
         }
 
         // validate if the user is trying to kick themselves
         if (userId.equals(targetUserId)) {
-            throw new RuntimeException("You cannot kick yourself");
+            throw new ForbiddenException("You cannot kick yourself");
         }
 
         return leaveRoom(roomCode, targetUserId);
     }
 
     public Room updateRoom(String roomCode, RoomUpdateRequestDto request) {
-        Room roomUpdated = roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not found"));
+        Room roomUpdated = roomRepository.findByCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Room not found"));
 
         // validate if the updated maxPlayers is less than the current number of players in the room
         if(userRepository.findAllByRoom(roomUpdated).size() > request.getMaxPlayers()) {
-            throw new RuntimeException("Room cannot have less players than the maximum");
+            throw new BusinessException("Room cannot have less players than the maximum");
         }
 
         roomUpdated.setMaxPlayers(request.getMaxPlayers());

@@ -7,6 +7,7 @@ import com.gabmene.videoguesser.entity.Match;
 import com.gabmene.videoguesser.entity.Room;
 import com.gabmene.videoguesser.enums.MatchCategory;
 import com.gabmene.videoguesser.enums.MatchStatus;
+import com.gabmene.videoguesser.exception.ResourceNotFoundException;
 import com.gabmene.videoguesser.repository.CategoryRepository;
 import com.gabmene.videoguesser.repository.MatchRepository;
 import com.gabmene.videoguesser.repository.RoomRepository;
@@ -55,7 +56,7 @@ public class MatchService {
         } else {
             categories = selectedCategories.stream()
                     .map(enumCat -> categoryRepository.findById(enumCat.getId())
-                            .orElseThrow(() -> new RuntimeException("Category not found")))
+                            .orElseThrow(() -> new ResourceNotFoundException("Category not found")))
                     .toList();
         }
 
@@ -73,13 +74,13 @@ public class MatchService {
     }
 
     public Match getMatchByRoomCode(String roomCode){
-        Room room = roomRepository.findByCode(roomCode).orElseThrow(()-> new RuntimeException("Room not Found"));
+        Room room = roomRepository.findByCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Room not Found"));
 
         // return the match that is currently being played in the room
-        return matchRepository.findByRoomAndStatus(room, MatchStatus.PLAYING).orElseThrow(()-> new RuntimeException("Match not Found"));
+        return matchRepository.findByRoomAndStatus(room, MatchStatus.PLAYING).orElseThrow(()-> new ResourceNotFoundException("Match not Found"));
     }
 
     public Match getMatchById(Integer matchId){
-        return matchRepository.findById(matchId).orElseThrow(()-> new RuntimeException("Match not Found"));
+        return matchRepository.findById(matchId).orElseThrow(()-> new ResourceNotFoundException("Match not Found"));
     }
 }
