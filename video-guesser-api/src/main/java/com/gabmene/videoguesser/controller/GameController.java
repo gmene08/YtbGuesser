@@ -4,7 +4,6 @@ import com.gabmene.videoguesser.dto.round.UserGuessRequestDTO;
 import com.gabmene.videoguesser.dto.round.UserGuessResponseDTO;
 import com.gabmene.videoguesser.entity.UserRound;
 import com.gabmene.videoguesser.service.GameService;
-import com.gabmene.videoguesser.service.RoundService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

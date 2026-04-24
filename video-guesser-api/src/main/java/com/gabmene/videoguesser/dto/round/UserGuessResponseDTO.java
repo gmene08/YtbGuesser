@@ -14,7 +14,7 @@ public class UserGuessResponseDTO {
 
     private Integer userId;
     private Long guessedViewCount;
-    private Integer score;
+    private Integer scoreEarned;
 
     public static UserGuessResponseDTO from(UserRound userRound){
         if(userRound == null)

@@ -18,6 +18,6 @@ public class UserGuessRequestDTO {
 
     @NotNull(message = "Guess cannot be null")
     @Min(value = 1, message = "Guess must be greater than 0")
-    private Long guessViewedCount;
+    private Long guessedViewCount;
 
 }

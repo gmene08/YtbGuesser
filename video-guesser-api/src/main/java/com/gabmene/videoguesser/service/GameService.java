@@ -54,7 +54,7 @@ public class GameService {
         }
 
         Long viewCount = round.getVideo().getViewCount();
-        Long userGuess = userGuessRequest.getGuessViewedCount();
+        Long userGuess = userGuessRequest.getGuessedViewCount();
 
         Integer points = GameService.calculatePointsEarned(viewCount, userGuess);
         UserRound userRound;
