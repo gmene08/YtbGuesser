@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { Round } from './round';
+import { GameService } from './game';
 
-describe('Round', () => {
-  let service: Round;
+describe('Game', () => {
+  let service: GameService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(Round);
+    service = TestBed.inject(GameService);
   });
 
   it('should be created', () => {

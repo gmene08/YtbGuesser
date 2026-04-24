@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MatchDataResponse } from '../dtos/match.dto';
-import { UserGuessRequest, UserGuessResponse } from '../dtos/round.dto';
 
 @Injectable({
   providedIn: 'root',

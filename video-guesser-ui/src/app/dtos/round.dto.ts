@@ -15,10 +15,11 @@ export interface VideoResponse {
 
 export interface UserGuessRequest {
   userId: number;
-  guess: number;
+  guessedViewCount: number;
 }
 
 export interface UserGuessResponse {
   userId: number;
-  score: number;
+  guessedViewCount: number;
+  scoreEarned: number;
 }

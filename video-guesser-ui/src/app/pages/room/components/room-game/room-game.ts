@@ -5,7 +5,7 @@ import { MatchService } from '../../../../services/match';
 import { PlayerLeaderboard } from './components/player-leaderboard/player-leaderboard';
 import { YouTubePlayer } from '@angular/youtube-player';
 import { UserGuessRequest } from '../../../../dtos/round.dto';
-import { RoundService } from '../../../../services/round';
+import { GameService } from '../../../../services/game';
 
 @Component({
   selector: 'app-room-game',
@@ -16,7 +16,7 @@ import { RoundService } from '../../../../services/round';
 })
 export class RoomGame {
   matchService = inject(MatchService);
-  roundService = inject(RoundService);
+  gameService = inject(GameService);
 
   roomData = input.required<RoomResponse | null>();
   matchData = signal<MatchDataResponse | null>(null);
@@ -70,13 +70,16 @@ export class RoomGame {
       return;
     }
 
-    const userGuessRequest: UserGuessRequest = {userId: Number(sessionStorage.getItem('userId')), guess: this.userGuess()};
+    console.log('Guessing: ', this.userGuess());
 
-    this.roundService.guess(matchData.currentRound.roundId, userGuessRequest).subscribe({
+    const userGuessRequest: UserGuessRequest = {userId: Number(sessionStorage.getItem('userId')), guessedViewCount: this.userGuess()};
+
+    this.gameService.guess(matchData.currentRound.roundId, userGuessRequest).subscribe({
       next: (response) =>{
         this.hasUserGuessed.set(true);
         console.log('User guessed: ', this.userGuess());
-        this.userGuessResult.set(response.score);
+        this.userGuessResult.set(response.scoreEarned);
+        console.log('User guess result: ', response.scoreEarned);
       },
       error: (error) => {
         console.error('Error guessing: ', error.error?.message || 'Server error');

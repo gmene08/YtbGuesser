@@ -5,8 +5,8 @@ import { UserGuessRequest, UserGuessResponse } from '../dtos/round.dto';
 @Injectable({
   providedIn: 'root',
 })
-export class RoundService {
-  private apiUrl = 'http://localhost:8080/api/round';
+export class GameService {
+  private apiUrl = 'http://localhost:8080/api/game';
 
   constructor(private http: HttpClient) {}
 
