@@ -7,6 +7,7 @@ import { PlayerCard } from '../player-card/player-card';
   imports: [PlayerCard],
   templateUrl: './room-player-list.html',
   styleUrl: './room-player-list.css',
+  standalone: true,
 })
 export class RoomPlayerList {
   /*[isOwner] =

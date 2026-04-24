@@ -1,3 +1,5 @@
+import { CurrentRoundResponse } from './round.dto';
+
 export interface MatchConfigRequest {
   userId: number;
   categories: string[];
@@ -5,6 +7,7 @@ export interface MatchConfigRequest {
 }
 
 export interface MatchDataResponse {
+  matchId: number;
   maxRounds: number;
   roundNumber: number;
   status: string;
@@ -12,17 +15,4 @@ export interface MatchDataResponse {
 
 }
 
-export interface CurrentRoundResponse {
-  roundNumber: number;
-  roundStatus: string;
-  video: VideoResponse;
 
-}
-
-export interface VideoResponse {
-  url: string
-  channelName: string
-  thumbnail: string
-  title: string
-  viewCount: number
-}

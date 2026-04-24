@@ -2,6 +2,7 @@
   <app-nav-bar></app-nav-bar>
   @if (!startedGame()) {
     <div class="flex-grow p-12 pt-4">
+
       <header>
         <app-room-header
           class="flex flex-col items-center gap-1 mb-10 group"
@@ -37,6 +38,10 @@
       </main>
     </div>
   } @else {
-    <app-room-game [roomData]="roomData()"></app-room-game>
+    <app-room-game class="h-full flex flex-col flex-grow items-center p-4 gap-10 "
+      [roomData]="roomData()"
+    >
+    </app-room-game>
+
   }
 </div>

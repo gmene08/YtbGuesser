@@ -1,0 +1,23 @@
+/* 1. O próprio componente */
+youtube-player {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* 2. A div invisível do Angular E o iframe do YouTube */
+::ng-deep youtube-player div,
+::ng-deep youtube-player iframe {
+  width: 100% !important;
+  height: 100% !important;
+  border: none;
+  margin: 0;
+  padding: 0;
+
+  /* A MÁGICA ENTRA AQUI: */
+  pointer-events: none !important; /* Ignora o mouse do jogador */
+  transform: scale(1.2); /* Dá um zoom de 30% para empurrar o título para fora da tela */
+}

@@ -5,6 +5,7 @@ import { Component, input, signal } from '@angular/core';
   imports: [],
   templateUrl: './room-header.html',
   styleUrl: './room-header.css',
+  standalone: true,
 })
 export class RoomHeader {
   roomCode = input.required<string | undefined>();
