@@ -13,17 +13,9 @@ import lombok.Setter;
 public class UserGuessResponseDTO {
 
     private Integer userId;
-    private Long guessedViewCount;
-    private Integer scoreEarned;
+    private Boolean hasGuessed;
 
-    public static UserGuessResponseDTO from(UserRound userRound){
-        if(userRound == null)
-            return null;
-
-        return new UserGuessResponseDTO(
-                userRound.getUser().getId(),
-                userRound.getLastGuess(),
-                userRound.getPointsEarned()
-        );
+    public static UserGuessResponseDTO from(UserRound userRound, Boolean hasGuessed){
+        return new UserGuessResponseDTO(userRound.getUser().getId(), hasGuessed);
     }
 }

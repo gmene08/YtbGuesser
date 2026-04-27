@@ -13,7 +13,9 @@
     <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 px-2">Rankings</h2>
     <app-player-leaderboard
       class="flex-grow w-full"
-      [roomData]="roomData()">
+      [roomData]="roomData()"
+      [playersWhoGuessed]="this.wsService.playersWhoGuessed()"
+    >
     </app-player-leaderboard>
   </aside>
 
@@ -41,15 +43,16 @@
       <input
         type="number"
         placeholder="How many views?"
+        (input)="userGuess.set(+($any($event.target).value || 0))"
         [disabled]="!isRoundActive()"
         class="flex-1 bg-transparent px-4 py-3 outline-none text-2xl font-black text-gray-700 text-center placeholder:text-gray-300 disabled:cursor-not-allowed"
       />
 
       <button
-        [disabled]="!isRoundActive()"
+        [disabled]="!isRoundActive() || hasUserGuessedThisRound()"
         (click)="guess()"
         class="px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-lg shadow-md transition transform active:scale-95 disabled:bg-gray-400 disabled:active:scale-100 disabled:cursor-not-allowed">
-        GUESS
+        {{ hasUserGuessedThisRound() ? 'WAITING...' : 'GUESS' }}
       </button>
     </div>
 

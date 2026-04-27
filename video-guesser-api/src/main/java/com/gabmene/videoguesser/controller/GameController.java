@@ -16,9 +16,5 @@ import org.springframework.web.bind.annotation.*;
 public class GameController {
     private final GameService gameService;
 
-    @PostMapping("/{roundId}/guess")
-    public ResponseEntity<UserGuessResponseDTO> guess(@PathVariable Integer roundId, @Valid @RequestBody UserGuessRequestDTO userGuess){
-        UserRound userRound = gameService.processGuess(roundId, userGuess);
-        return ResponseEntity.ok(UserGuessResponseDTO.from(userRound));
-    }
+
 }

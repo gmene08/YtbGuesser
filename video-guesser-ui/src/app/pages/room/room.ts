@@ -17,6 +17,8 @@ import { RoomGame } from './components/room-game/room-game';
   standalone: true,
 })
 export class Room implements OnInit {
+  currentUserId = Number(sessionStorage.getItem('userId') ?? -1);
+
   private roomService = inject(RoomService);
   private router = inject(ActivatedRoute);
   private rt = inject(Router);
@@ -31,12 +33,12 @@ export class Room implements OnInit {
   saveMaxPlayersErrorMessage = signal<string>('');
 
   isUserOwner = computed(
-    () => this.roomData()?.ownerId === Number(sessionStorage.getItem('userId')),
+    () => this.roomData()?.ownerId === this.currentUserId,
   );
 
   ngOnInit(): void {
     // Redirect to home if not logged in
-    if (sessionStorage.getItem('userId') === null) {
+    if (this.currentUserId === -1) {
       console.log('User not logged in');
       this.rt.navigate(['/']);
       return;
@@ -69,7 +71,7 @@ export class Room implements OnInit {
 
         // Redirect to home if the user is not in the room
         if (
-          !room.players.some((player) => player.id.toString() === sessionStorage.getItem('userId'))
+          !room.players.some((player) => player.id === this.currentUserId)
         ) {
           this.rt.navigate(['/']);
           return;

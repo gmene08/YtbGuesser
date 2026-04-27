@@ -2,6 +2,11 @@
 
   <div class="flex items-center gap-2">
     <span class="truncate">{{ playerNickname() }}</span>
+    @if (hasUserGuessedThisRound()) {
+      <span class="text-green-500 font-black animate-bounce">✅</span>
+    } @else {
+      <span class="text-gray-400 animate-pulse">🤔...</span>
+    }
   </div>
 
 </div>

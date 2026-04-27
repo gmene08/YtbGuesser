@@ -7,6 +7,7 @@
     @if (roomData(); as room) {
       @for (player of room.players; track player.id) {
         <app-player-score
+          [hasUserGuessedThisRound] = "playersWhoGuessed().includes(player.id)"
           [playerNickname]="player.nickname"
         ></app-player-score>
       }

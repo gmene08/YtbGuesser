@@ -13,5 +13,11 @@ public interface UserRoundRepository extends JpaRepository<UserRound, Integer> {
     @Query("SELECT ur FROM UserRound ur WHERE ur.user.id = :userId AND ur.round.id = :roundId")
     Optional<UserRound> findByUserIdAndRoundId(@Param("userId") Integer userId, @Param("roundId")Integer roundId);
 
-    boolean existsByUserIdAndRoundId(Integer userId, Integer roundId);
+    @Query("""
+           SELECT COUNT(ur) > 0
+           FROM UserRound ur
+           WHERE ur.user.id = :userId
+             AND ur.round.id = :roundId
+           """)
+    boolean existsByUserIdAndRoundId(@Param("userId") Integer userId, @Param("roundId") Integer roundId);
 }

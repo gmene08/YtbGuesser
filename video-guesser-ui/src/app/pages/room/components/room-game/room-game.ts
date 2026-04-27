@@ -1,4 +1,14 @@
-import { Component, input, inject, signal, OnInit, effect, computed, ViewChild } from '@angular/core';
+import {
+  Component,
+  input,
+  inject,
+  signal,
+  OnInit,
+  effect,
+  computed,
+  ViewChild,
+  OnDestroy,
+} from '@angular/core';
 import { RoomResponse } from '../../../../dtos/room.dto';
 import { MatchDataResponse } from '../../../../dtos/match.dto';
 import { MatchService } from '../../../../services/match';
@@ -7,17 +17,21 @@ import { UserGuessRequest } from '../../../../dtos/round.dto';
 import { GameService } from '../../../../services/game';
 import { Timer } from './components/timer/timer';
 import { Video } from './components/video/video';
+import { GameWebsocketService } from '../../../../services/game-websocket';
 
 @Component({
   selector: 'app-room-game',
-  imports: [PlayerLeaderboard, Timer, Video],
+  imports: [PlayerLeaderboard, Video],
   templateUrl: './room-game.html',
   styleUrl: './room-game.css',
   standalone: true,
 })
-export class RoomGame {
+export class RoomGame implements OnInit, OnDestroy {
+  currentUserId = Number(sessionStorage.getItem('userId') ?? -1);
+
   matchService = inject(MatchService);
   gameService = inject(GameService);
+  wsService = inject(GameWebsocketService);
 
   @ViewChild(Video) videoPlayer!: Video;
 
@@ -25,14 +39,20 @@ export class RoomGame {
   matchData = signal<MatchDataResponse | null>(null);
 
   userGuess = signal<number>(0);
-  hasUserGuessed = signal<boolean>(false);
-  userGuessResult = signal<number>(0);
 
   timeLeft = signal<number>(30);
   isRoundActive = signal<boolean>(false);
 
   videoUrl = computed(() => {
     return this.matchData()?.currentRound?.video?.url;
+  });
+
+  hasUserGuessedThisRound = computed(() => {
+    return this.wsService.playersWhoGuessed().includes(this.currentUserId);
+  });
+
+  roundStatus = computed(() => {
+    return this.matchData()?.currentRound?.roundStatus;
   });
 
   constructor() {
@@ -55,11 +75,18 @@ export class RoomGame {
     document.body.appendChild(tag);
   }
 
+  ngOnDestroy() {
+    this.wsService.disconnect();
+  }
+
   loadData(roomCode: string) {
     this.matchService.getMatchDataByRoomCode(roomCode).subscribe({
       next: (response) => {
         console.log('Match data loaded: ', response);
         this.matchData.set(response);
+
+        // connect to websocket
+        this.wsService.connect(this.matchData()?.currentRound?.roundId || 0);
       },
       error: (error) => {
         console.error('Error fetching match data: ', error.error?.message || 'Server error');
@@ -83,17 +110,7 @@ export class RoomGame {
       guessedViewCount: this.userGuess(),
     };
 
-    this.gameService.guess(matchData.currentRound.roundId, userGuessRequest).subscribe({
-      next: (response) => {
-        this.hasUserGuessed.set(true);
-        console.log('User guessed: ', this.userGuess());
-        this.userGuessResult.set(response.scoreEarned);
-        console.log('User guess result: ', response.scoreEarned);
-      },
-      error: (error) => {
-        console.error('Error guessing: ', error.error?.message || 'Server error');
-      },
-    });
+    this.wsService.sendGuess(matchData.currentRound.roundId, userGuessRequest);
   }
 
   startRoundTimer() {
@@ -114,6 +131,11 @@ export class RoomGame {
     this.videoPlayer?.pauseVideo();
 
     console.log("Time's over");
+  }
+
+  changeRoundStatus(status: string) {
+    const matchData = this.matchData();
+    if (!matchData) return;
   }
 }
 

@@ -13,4 +13,8 @@ export class GameService {
   guess(roundId: number, userGuess: UserGuessRequest) {
     return this.http.post<UserGuessResponse>(`${this.apiUrl}/${roundId}/guess`, userGuess);
   }
+
+  changeRoundStatus(roundId: number, status: string) {
+    return this.http.patch(`${this.apiUrl}/${roundId}/status`, { status: status });
+  }
 }

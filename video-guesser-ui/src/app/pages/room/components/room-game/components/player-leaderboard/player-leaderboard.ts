@@ -12,4 +12,5 @@ import { RoomResponse } from '../../../../../../dtos/room.dto';
 })
 export class PlayerLeaderboard {
   roomData = input.required<RoomResponse | null>();
+  playersWhoGuessed = input.required<number[]>();
 }
