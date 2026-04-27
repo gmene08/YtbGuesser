@@ -15,11 +15,13 @@ import com.gabmene.videoguesser.repository.UserRepository;
 import com.gabmene.videoguesser.repository.UserRoundRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
 public class GameService {
+    private final SimpMessagingTemplate messagingTemplate;
 
     private final RoundRepository roundRepository;
     private final UserRepository userRepository;
@@ -64,7 +66,7 @@ public class GameService {
                 .lastGuess(userGuess)
                 .pointsEarned(points).build();
         userRoundRepository.save(userRound);
-
+        System.out.println("User " + user.getId() + " guessed " + userGuess + " in round " + round.getId() + " and earned " + points + " points");
         return userRound;
     }
 

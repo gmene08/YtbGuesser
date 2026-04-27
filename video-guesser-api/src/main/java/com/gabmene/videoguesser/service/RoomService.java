@@ -2,6 +2,7 @@ package com.gabmene.videoguesser.service;
 
 import com.gabmene.videoguesser.dto.room.JoinRoomRequestDTO;
 import com.gabmene.videoguesser.dto.match.MatchConfigRequestDTO;
+import com.gabmene.videoguesser.dto.room.RoomResponseDTO;
 import com.gabmene.videoguesser.dto.room.RoomUpdateRequestDto;
 import com.gabmene.videoguesser.entity.Match;
 import com.gabmene.videoguesser.entity.Room;
@@ -15,6 +16,7 @@ import com.gabmene.videoguesser.repository.RoomRepository;
 import com.gabmene.videoguesser.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,6 +25,8 @@ import java.util.Random;
 @Service
 @RequiredArgsConstructor
 public class RoomService {
+    private final SimpMessagingTemplate messagingTemplate;
+
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
     private final MatchService matchService;
@@ -110,7 +114,9 @@ public class RoomService {
         roomJoined.addUser(userJoining);
         roomRepository.save(roomJoined);
 
-    return roomJoined;
+        sendRoomUpdate(roomJoined);
+
+        return roomJoined;
     }
 
     @Transactional
@@ -146,6 +152,7 @@ public class RoomService {
         Match match = matchService.createMatch(roomStarting, request);
 
         roomStarting.setStatus(RoomStatus.PLAYING);
+        sendRoomUpdate(roomStarting);
         return roomRepository.save(roomStarting);
 
     }
@@ -191,6 +198,7 @@ public class RoomService {
         }
 
         roomRepository.save(roomLeaving);
+        sendRoomUpdate(roomLeaving);
         return roomLeaving;
     }
 
@@ -225,6 +233,15 @@ public class RoomService {
 
         roomUpdated.setMaxPlayers(request.getMaxPlayers());
 
+        sendRoomUpdate(roomUpdated);
         return roomRepository.save(roomUpdated);
+    }
+
+    private void sendRoomUpdate(Room room) {
+
+        //notify all users in the room that the room has been updated through the lobby Websocket connection
+        RoomResponseDTO roomData = RoomResponseDTO.from(room);
+
+        messagingTemplate.convertAndSend("/topic/room/" + room.getCode() + "/lobby", roomData);
     }
 }

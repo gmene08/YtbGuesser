@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RoomSettings } from './components/room-settings/room-settings';
 import { RoomService } from '../../services/room';
@@ -8,6 +8,7 @@ import { RoomPlayerList } from './components/room-player-list/room-player-list';
 import { NavBar } from '../../components/nav-bar/nav-bar';
 import { RoomHeader } from './components/room-header/room-header';
 import { RoomGame } from './components/room-game/room-game';
+import { LobbyWebsocket } from '../../services/websocket/lobby-websocket';
 
 @Component({
   selector: 'app-room',
@@ -20,10 +21,19 @@ export class Room implements OnInit {
   currentUserId = Number(sessionStorage.getItem('userId') ?? -1);
 
   private roomService = inject(RoomService);
+  private lobbyService = inject(LobbyWebsocket);
   private router = inject(ActivatedRoute);
   private rt = inject(Router);
 
-  roomData = signal<RoomResponse | null>(null);
+  roomData = computed(() => {
+    const room = this.lobbyService.roomData();
+    if (!room) return null;
+    return {
+      ...room,
+      players: this.sortPlayers(room.players, room.ownerId),
+    };
+  });
+  hasLoadedInitialRoomData = signal(false);
 
   roomCode = signal<string>('');
 
@@ -35,6 +45,21 @@ export class Room implements OnInit {
   isUserOwner = computed(
     () => this.roomData()?.ownerId === this.currentUserId,
   );
+
+  constructor() {
+    effect(() => {
+      if (!this.hasLoadedInitialRoomData()) return; // guarantees the data is loaded before checking the user's status'
+
+      const room = this.roomData();
+
+      const IsUserStillInRoom = room?.players.some(player => player.id === this.currentUserId) ?? false;
+      if (!IsUserStillInRoom) {
+        console.log('User not in this room');
+        this.lobbyService.disconnectFromLobby();
+        this.rt.navigate(['/']);
+      }
+    })
+  }
 
   ngOnInit(): void {
     // Redirect to home if not logged in
@@ -48,6 +73,7 @@ export class Room implements OnInit {
     const code = this.router.snapshot.paramMap.get('code');
     if (code) {
       this.loadRoomData(code);
+
     } else {
       console.error('Room code not found in URL');
       this.rt.navigate(['/']);
@@ -59,32 +85,24 @@ export class Room implements OnInit {
     this.roomCode.set(code);
     console.log('Room code: ', code);
 
-    // Get room data from the server
     this.roomService.getRoomByCode(code).subscribe({
-      next: (response) => {
-        const room = {
-          ...response,
-          players: this.sortPlayers([...response.players], response.ownerId), // Sort players by ownerId - Owner is always first
-        };
-        // Set room data in the signal
-        this.roomData.set(room);
-
-        // Redirect to home if the user is not in the room
-        if (
-          !room.players.some((player) => player.id === this.currentUserId)
-        ) {
+      next: (response) =>{
+        const isUserInThisRoom = response.players.some(player => player.id === this.currentUserId) ?? false;
+        if (!isUserInThisRoom) {
+          console.log('User not in this room');
           this.rt.navigate(['/']);
           return;
         }
 
-        console.log('Room data: ', response);
+        this.lobbyService.setRoomData(response);
+        this.hasLoadedInitialRoomData.set(true);
+        this.lobbyService.connectToLobby(code);
       },
       error: (error) => {
         console.error('Error fetching room data: ', error);
         this.rt.navigate(['/']);
-        return;
       },
-    });
+    })
   }
 
   leaveRoom() {
@@ -104,10 +122,10 @@ export class Room implements OnInit {
   kickPlayer(playerId: number) {
     this.roomService.kickPlayer(this.roomCode(), playerId).subscribe({
       next: (response) => {
-        this.roomData.set({
+        /*this.roomData.set({
           ...response,
           players: this.sortPlayers([...response.players], response.ownerId),
-        });
+        });*/
         console.log('Player kicked');
       },
       error: (error) => {
@@ -132,7 +150,7 @@ export class Room implements OnInit {
     this.roomService.startRoom(this.roomCode(), matchConfig).subscribe({
       next: (response) => {
         console.log('Game started');
-        this.roomData.set(response);
+        //this.roomData.set(response);
       },
       error: (error) => {
         console.error('Error starting game: ', error);
@@ -150,7 +168,7 @@ export class Room implements OnInit {
       next: (response) => {
         console.log('Room updated');
         const updatedRoom = { ...room, maxPlayers };
-        this.roomData.set(updatedRoom);
+        //this.roomData.set(updatedRoom);
         this.saveMaxPlayersErrorMessage.set('');
       },
       error: (error) => {

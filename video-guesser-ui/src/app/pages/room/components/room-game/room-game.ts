@@ -15,9 +15,8 @@ import { MatchService } from '../../../../services/match';
 import { PlayerLeaderboard } from './components/player-leaderboard/player-leaderboard';
 import { UserGuessRequest } from '../../../../dtos/round.dto';
 import { GameService } from '../../../../services/game';
-import { Timer } from './components/timer/timer';
 import { Video } from './components/video/video';
-import { GameWebsocketService } from '../../../../services/game-websocket';
+import { GameWebsocketService } from '../../../../services/websocket/game-websocket';
 
 @Component({
   selector: 'app-room-game',
@@ -30,8 +29,7 @@ export class RoomGame implements OnInit, OnDestroy {
   currentUserId = Number(sessionStorage.getItem('userId') ?? -1);
 
   matchService = inject(MatchService);
-  gameService = inject(GameService);
-  wsService = inject(GameWebsocketService);
+  gameService = inject(GameWebsocketService);
 
   @ViewChild(Video) videoPlayer!: Video;
 
@@ -48,7 +46,7 @@ export class RoomGame implements OnInit, OnDestroy {
   });
 
   hasUserGuessedThisRound = computed(() => {
-    return this.wsService.playersWhoGuessed().includes(this.currentUserId);
+    return this.gameService.playersWhoGuessed().includes(this.currentUserId);
   });
 
   roundStatus = computed(() => {
@@ -76,7 +74,7 @@ export class RoomGame implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.wsService.disconnect();
+    this.gameService.disconnect();
   }
 
   loadData(roomCode: string) {
@@ -86,7 +84,7 @@ export class RoomGame implements OnInit, OnDestroy {
         this.matchData.set(response);
 
         // connect to websocket
-        this.wsService.connect(this.matchData()?.currentRound?.roundId || 0);
+        this.gameService.connect(this.matchData()?.currentRound?.roundId || 0);
       },
       error: (error) => {
         console.error('Error fetching match data: ', error.error?.message || 'Server error');
@@ -106,11 +104,11 @@ export class RoomGame implements OnInit, OnDestroy {
     console.log('Guessing: ', this.userGuess());
 
     const userGuessRequest: UserGuessRequest = {
-      userId: Number(sessionStorage.getItem('userId')),
+      userId: this.currentUserId,
       guessedViewCount: this.userGuess(),
     };
 
-    this.wsService.sendGuess(matchData.currentRound.roundId, userGuessRequest);
+    this.gameService.sendGuess(matchData.currentRound.roundId, userGuessRequest);
   }
 
   startRoundTimer() {

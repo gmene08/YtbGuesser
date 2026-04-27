@@ -12,6 +12,7 @@ import com.gabmene.videoguesser.service.RoomService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.List;
 public class RoomController {
 
     private final RoomService roomService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @PostMapping("/{ownerId}")
     public ResponseEntity<RoomResponseDTO> createRoom(@PathVariable Integer ownerId) {
@@ -33,7 +35,8 @@ public class RoomController {
     @PostMapping("/join/{roomCode}")
     public ResponseEntity<RoomResponseDTO> joinRoom(@PathVariable String roomCode,@Valid @RequestBody JoinRoomRequestDTO request) {
         Room roomJoined = roomService.joinRoom(roomCode, request);
-        return ResponseEntity.ok(RoomResponseDTO.from(roomJoined));
+        RoomResponseDTO roomData = RoomResponseDTO.from(roomJoined);
+        return ResponseEntity.ok(roomData);
     }
 
     @PatchMapping("/{roomCode}/start")
