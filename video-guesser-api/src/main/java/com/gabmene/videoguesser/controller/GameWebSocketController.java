@@ -1,5 +1,6 @@
 package com.gabmene.videoguesser.controller;
 
+import com.gabmene.videoguesser.dto.match.MatchResponseDTO;
 import com.gabmene.videoguesser.dto.round.UserGuessRequestDTO;
 import com.gabmene.videoguesser.dto.round.UserGuessResponseDTO;
 import com.gabmene.videoguesser.entity.UserRound;

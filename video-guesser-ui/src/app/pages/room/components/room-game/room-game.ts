@@ -36,6 +36,14 @@ export class RoomGame implements OnInit, OnDestroy {
   roomData = input.required<RoomResponse | null>();
   matchData = signal<MatchDataResponse | null>(null);
 
+  playersWhoGuessed = computed(() => {
+    return this.matchData()?.currentRound?.playersWhoGuessed ?? [];
+  });
+
+  hasUserGuessedThisRound = computed(() => {
+    return this.playersWhoGuessed().includes(this.currentUserId);
+  });
+
   userGuess = signal<number>(0);
 
   timeLeft = signal<number>(30);
@@ -43,10 +51,6 @@ export class RoomGame implements OnInit, OnDestroy {
 
   videoUrl = computed(() => {
     return this.matchData()?.currentRound?.video?.url;
-  });
-
-  hasUserGuessedThisRound = computed(() => {
-    return this.gameService.playersWhoGuessed().includes(this.currentUserId);
   });
 
   roundStatus = computed(() => {
@@ -84,8 +88,26 @@ export class RoomGame implements OnInit, OnDestroy {
         this.matchData.set(response);
 
         // connect to websocket
-        this.gameService.connect(this.matchData()?.currentRound?.roundId || 0);
+        this.gameService.connect(this.matchData()?.currentRound?.roundId || 0, (userId: number) => {
+          // update the playersWhoGuessed everytime someone guesses
+          this.matchData.update((match)=>{
+            if(!match) return null;
+
+            return {
+              ...match,
+              currentRound: {
+                ...match.currentRound,
+                playersWhoGuessed:[
+                  ...match.currentRound.playersWhoGuessed,
+                    userId,
+                ]
+              }
+            }
+          });
+        });
+
       },
+
       error: (error) => {
         console.error('Error fetching match data: ', error.error?.message || 'Server error');
       },

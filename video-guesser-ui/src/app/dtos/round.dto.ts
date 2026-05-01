@@ -2,6 +2,7 @@ export interface CurrentRoundResponse {
   roundId: number;
   roundNumber: number;
   roundStatus: string;
+  playersWhoGuessed: number[];
   video: VideoResponse;
 }
 
@@ -16,10 +17,4 @@ export interface VideoResponse {
 export interface UserGuessRequest {
   userId: number;
   guessedViewCount: number;
-}
-
-export interface UserGuessResponse {
-  userId: number;
-  guessedViewCount: number;
-  scoreEarned: number;
 }

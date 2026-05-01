@@ -40,16 +40,19 @@ public class RoomResponseDTO {
     }
 
     private static List<PlayerDTO> mapPlayers(Room room) {
+        // check if the room has users - If it does, return the list of users
         if (room.getUsers() != null && !room.getUsers().isEmpty()) {
             return room.getUsers().stream()
                     .map(user -> new PlayerDTO(user.getId(), user.getNickname()))
                     .toList();
         }
 
+        // if the room has no users, check if it has an owner - If it does, return the owner
         if (room.getOwner() != null) {
             return List.of(new PlayerDTO(room.getOwner().getId(), room.getOwner().getNickname()));
         }
 
+        // if the room has no users and no owner, return an empty list
         return List.of();
     }
 }

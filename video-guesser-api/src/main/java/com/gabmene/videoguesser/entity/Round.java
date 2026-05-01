@@ -4,6 +4,8 @@ import com.gabmene.videoguesser.enums.RoundStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Table(name="round")
 @Getter
@@ -32,5 +34,8 @@ public class Round {
     @ManyToOne
     @JoinColumn(name="video_id")
     private Video video;
+
+    @OneToMany (mappedBy = "round", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserRound> userGuesses;
 
 }

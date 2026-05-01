@@ -44,6 +44,8 @@ public class Room {
     @JoinColumn(name="owner_id")
     private User owner;
 
+
+
     // helper method
     public void addUser(User user) {
         if (users == null) {
