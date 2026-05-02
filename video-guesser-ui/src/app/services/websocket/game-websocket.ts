@@ -1,7 +1,8 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal, computed } from '@angular/core';
 import { Client } from '@stomp/stompjs';
-import { UserGuessRequest } from '../../dtos/round.dto';
+import { CurrentRoundResponse, UserGuessRequest } from '../../dtos/round.dto';
 import { CoreWebsocket } from './core-websocket';
+import { MatchDataResponse } from '../../dtos/match.dto';
 
 @Injectable({
   providedIn: 'root',
@@ -9,19 +10,46 @@ import { CoreWebsocket } from './core-websocket';
 export class GameWebsocketService {
   private core = inject(CoreWebsocket);
 
-  // load the players who guessed in the round
-  public playersWhoGuessed = signal<number[]>([]);
+  matchData = signal<MatchDataResponse | null>(null);
+  roundData = computed(()=>{
+    return this.matchData()?.currentRound;
+  });
 
-  connect(roundId: number, onPlayerGuessed?: (userId: number) => void) {
+  connect(roundId: number) {
     this.core.connect(); // make sure the connection is established
 
-    // load the players who guessed in the round
+    // load the players who guessed during the round
     this.core.subscribe(`/topic/game/${roundId}/guessed-status`, (message) => {
       const data = JSON.parse(message.body);
       if(data.hasGuessed){
-        onPlayerGuessed?.(data.userId);
+        //onPlayerGuessed?.(data.userId);
+        this.matchData.update(match => {
+          if(!match) return null;
+
+          return {
+            ...match,
+            currentRound: {
+              ...match.currentRound,
+              playersWhoGuessed: [...match.currentRound.playersWhoGuessed, data.userId]
+            }
+          }
+        })
       }
     });
+
+    this.core.subscribe(`/topic/game/${roundId}/round-status`, (message) => {
+      const data = JSON.parse(message.body);
+      const roundWithUpdatedStatus = data as CurrentRoundResponse;
+      this.matchData.update(match => {
+        if(!match) return null;
+
+        return {
+          ...match,
+          currentRound: roundWithUpdatedStatus
+        };
+      });
+    });
+
   }
 
   sendGuess(roundId: number, userGuess: UserGuessRequest) {
@@ -30,7 +58,6 @@ export class GameWebsocketService {
 
   disconnect() {
     this.core.disconnect();
-    this.playersWhoGuessed.set([]);
   }
 
 }

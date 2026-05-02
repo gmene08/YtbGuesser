@@ -1,7 +1,9 @@
+import { RoundStatus } from '../enums/round-status.enum';
+
 export interface CurrentRoundResponse {
   roundId: number;
   roundNumber: number;
-  roundStatus: string;
+  roundStatus: RoundStatus;
   playersWhoGuessed: number[];
   video: VideoResponse;
 }
@@ -17,4 +19,9 @@ export interface VideoResponse {
 export interface UserGuessRequest {
   userId: number;
   guessedViewCount: number;
+}
+
+export interface UpdateRoundStatusRequest {
+  userId: number;
+  status: RoundStatus;
 }

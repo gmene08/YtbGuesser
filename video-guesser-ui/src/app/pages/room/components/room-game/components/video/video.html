@@ -11,7 +11,12 @@
 >
 </youtube-player>
 
-<app-timer (onFinish)="startRound()"></app-timer>
+@if (roundStatus() === RoundStatus.Preparing){
+  <app-timer
+    (onFinish)="startRound()"
+    [roundStatus]="roundStatus()"
+  ></app-timer>
+}
 
 <button
   (click)="toggleMute()"

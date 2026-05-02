@@ -224,17 +224,19 @@ public class RoomService {
     }
 
     public Room updateRoom(String roomCode, RoomUpdateRequestDto request) {
-        Room roomUpdated = roomRepository.findByCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Room not found"));
+        Room roomToBeUpdated = roomRepository.findByCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Room not found"));
 
         // validate if the updated maxPlayers is less than the current number of players in the room
-        if(userRepository.findAllByRoom(roomUpdated).size() > request.getMaxPlayers()) {
+        if(userRepository.findAllByRoom(roomToBeUpdated).size() > request.getMaxPlayers()) {
             throw new BusinessException("Room cannot have less players than the maximum");
         }
 
-        roomUpdated.setMaxPlayers(request.getMaxPlayers());
+        roomToBeUpdated.setMaxPlayers(request.getMaxPlayers());
 
-        sendRoomUpdate(roomUpdated);
-        return roomRepository.save(roomUpdated);
+        Room roomUpdated = roomRepository.save(roomToBeUpdated);
+        sendRoomUpdate(roomToBeUpdated);
+
+        return roomUpdated;
     }
 
     private void sendRoomUpdate(Room room) {

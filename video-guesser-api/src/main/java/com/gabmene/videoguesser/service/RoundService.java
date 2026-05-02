@@ -1,6 +1,7 @@
 package com.gabmene.videoguesser.service;
 
-import com.gabmene.videoguesser.dto.round.UserGuessRequestDTO;
+import com.gabmene.videoguesser.dto.round.CurrentRoundResponseDTO;
+import com.gabmene.videoguesser.dto.round.UpdateRoundRequestDTO;
 import com.gabmene.videoguesser.entity.*;
 import com.gabmene.videoguesser.enums.RoundStatus;
 import com.gabmene.videoguesser.exception.BusinessException;
@@ -10,14 +11,18 @@ import com.gabmene.videoguesser.repository.UserRepository;
 import com.gabmene.videoguesser.repository.VideoRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class RoundService {
+
+    private final SimpMessagingTemplate messagingTemplate;
 
     private final RoundRepository roundRepository;
     private final VideoRepository videoRepository;
@@ -56,5 +61,24 @@ public class RoundService {
         return roundRepository.findVideoByRoomCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Video not found"));
     }
 
+    public Round updateRound(Integer roundId, UpdateRoundRequestDTO request) {
+        Round roundToBeUpdated = roundRepository.findById(roundId).orElseThrow(()->new ResourceNotFoundException("Round not found"));
+
+        if(!request.getUserId().equals(roundToBeUpdated.getMatch().getRoom().getOwner().getId())) {
+            throw new BusinessException("User is not the owner of the room");
+        }
+
+        roundToBeUpdated.setStatus(request.getStatus());
+
+        Round roundUpdated = roundRepository.save(roundToBeUpdated);
+        sendRoundUpdate(roundUpdated);
+
+        return roundUpdated;
+    }
+
+    private void sendRoundUpdate(Round round) {
+        CurrentRoundResponseDTO roundData = CurrentRoundResponseDTO.from(round);
+        messagingTemplate.convertAndSend("/topic/game/" + round.getId() + "/round-status", roundData);
+    }
 
 }

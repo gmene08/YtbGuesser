@@ -1,22 +1,23 @@
 import {
   Component,
-  input,
-  inject,
-  signal,
-  OnInit,
-  effect,
   computed,
-  ViewChild,
+  effect,
+  inject,
+  input,
   OnDestroy,
+  OnInit,
+  signal,
+  ViewChild,
 } from '@angular/core';
 import { RoomResponse } from '../../../../dtos/room.dto';
 import { MatchDataResponse } from '../../../../dtos/match.dto';
 import { MatchService } from '../../../../services/match';
 import { PlayerLeaderboard } from './components/player-leaderboard/player-leaderboard';
 import { UserGuessRequest } from '../../../../dtos/round.dto';
-import { GameService } from '../../../../services/game';
+import { RoundService } from '../../../../services/round';
 import { Video } from './components/video/video';
 import { GameWebsocketService } from '../../../../services/websocket/game-websocket';
+import { RoundStatus } from '../../../../enums/round-status.enum';
 
 @Component({
   selector: 'app-room-game',
@@ -30,45 +31,65 @@ export class RoomGame implements OnInit, OnDestroy {
 
   matchService = inject(MatchService);
   gameService = inject(GameWebsocketService);
+  roundService = inject(RoundService);
 
   @ViewChild(Video) videoPlayer!: Video;
 
   roomData = input.required<RoomResponse | null>();
-  matchData = signal<MatchDataResponse | null>(null);
+
+  matchData = computed(() => this.gameService.matchData());
+  roundData = computed(() => this.gameService.roundData());
 
   playersWhoGuessed = computed(() => {
-    return this.matchData()?.currentRound?.playersWhoGuessed ?? [];
+    return this.roundData()?.playersWhoGuessed ?? [];
   });
 
   hasUserGuessedThisRound = computed(() => {
     return this.playersWhoGuessed().includes(this.currentUserId);
   });
 
-  userGuess = signal<number>(0);
-
-  timeLeft = signal<number>(30);
-  isRoundActive = signal<boolean>(false);
+  isRoundActive = computed(() => this.roundStatus() === 'GUESSING');
 
   videoUrl = computed(() => {
-    return this.matchData()?.currentRound?.video?.url;
+    return this.roundData()?.video?.url;
   });
 
   roundStatus = computed(() => {
-    return this.matchData()?.currentRound?.roundStatus;
+    return this.roundData()?.roundStatus;
   });
+
+  userGuess = signal<number>(0);
+
+  timeLeft = signal<number>(30);
 
   constructor() {
     effect(() => {
-      const roomCode = this.roomData()?.code;
+      /*const roomCode = this.roomData()?.code;
       if (this.roomData()?.status !== 'PLAYING' || !roomCode) {
         return;
       }
 
-      this.loadData(roomCode);
+      this.loadData(roomCode);*/
+      if (this.roundStatus() === 'FINISHED') {
+        console.log('Round finished');
+        this.endRoundTimer();
+      }
+
+      if (this.roundStatus() === 'GUESSING') {
+        console.log('Round started');
+        this.startRoundTimer();
+      }
     });
   }
 
   ngOnInit() {
+    const roomCode = this.roomData()?.code;
+    if (this.roomData()?.status !== 'PLAYING' || !roomCode) {
+      return;
+    }
+
+    this.loadData(roomCode);
+
     if (document.getElementById('youtube-iframe-api')) return;
 
     const tag = document.createElement('script');
@@ -85,27 +106,10 @@ export class RoomGame implements OnInit, OnDestroy {
     this.matchService.getMatchDataByRoomCode(roomCode).subscribe({
       next: (response) => {
         console.log('Match data loaded: ', response);
-        this.matchData.set(response);
+        this.gameService.matchData.set(response);
 
         // connect to websocket
-        this.gameService.connect(this.matchData()?.currentRound?.roundId || 0, (userId: number) => {
-          // update the playersWhoGuessed everytime someone guesses
-          this.matchData.update((match)=>{
-            if(!match) return null;
-
-            return {
-              ...match,
-              currentRound: {
-                ...match.currentRound,
-                playersWhoGuessed:[
-                  ...match.currentRound.playersWhoGuessed,
-                    userId,
-                ]
-              }
-            }
-          });
-        });
-
+        this.gameService.connect(this.roundData()?.roundId || 0);
       },
 
       error: (error) => {
@@ -133,29 +137,71 @@ export class RoomGame implements OnInit, OnDestroy {
     this.gameService.sendGuess(matchData.currentRound.roundId, userGuessRequest);
   }
 
+  startRound() {
+    // Using the ownerId so only one http method is called to start a round
+    if (this.currentUserId != this.roomData()?.ownerId) return;
+
+    const roundId = this.roundData()?.roundId;
+    if (!roundId) return;
+
+    if (this.roundStatus() !== 'PREPARING') return;
+
+    this.roundService
+      .changeRoundStatus(roundId, {
+        userId: this.currentUserId,
+        status: RoundStatus.Guessing,
+      })
+      .subscribe({
+        next: (response) => {
+          console.log('Round started: ', response);
+        },
+        error: (error) => {
+          console.error('Error starting round: ', error.error?.message || 'Server error');
+        },
+      });
+  }
+
   startRoundTimer() {
     this.timeLeft.set(30);
-    this.isRoundActive.set(true);
 
     const interval = setInterval(() => {
       this.timeLeft.update((v) => v - 1);
       if (this.timeLeft() <= 0) {
         clearInterval(interval);
-        this.endRoundTimer();
+
+        if (this.currentUserId === this.roomData()?.ownerId) {
+          this.endRound();
+        }
       }
     }, 1000);
   }
 
+  endRound() {
+    const roundId = this.roundData()?.roundId;
+    if (!roundId) return;
+
+    if (this.roundStatus() !== 'GUESSING') return;
+
+    this.roundService
+      .changeRoundStatus(roundId, {
+        userId: this.currentUserId,
+        status: RoundStatus.Finished,
+      })
+      .subscribe({
+        next: (response) => {
+          console.log('Round ended: ', response);
+          this.endRoundTimer();
+        },
+        error: (error) => {
+          console.error('Error ending round: ', error.error?.message || 'Server error');
+        },
+      });
+  }
+
   endRoundTimer() {
-    this.isRoundActive.set(false);
     this.videoPlayer?.pauseVideo();
 
     console.log("Time's over");
-  }
-
-  changeRoundStatus(status: string) {
-    const matchData = this.matchData();
-    if (!matchData) return;
   }
 }
 

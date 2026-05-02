@@ -1,6 +1,8 @@
-import { Component, input, output, signal, ViewChild } from '@angular/core';
+import { Component, input, output, signal, ViewChild, effect } from '@angular/core';
 import { YouTubePlayer } from '@angular/youtube-player';
 import { Timer } from '../timer/timer';
+import { MatchDataResponse } from '../../../../../../dtos/match.dto';
+import { RoundStatus } from '../../../../../../enums/round-status.enum';
 
 @Component({
   selector: 'app-video',
@@ -11,9 +13,20 @@ import { Timer } from '../timer/timer';
 export class Video {
   @ViewChild(YouTubePlayer) private videoPlayer!: YouTubePlayer;
 
+  roundStatus = input.required<string | undefined>();
   videoUrl = input.required<string | undefined>();
-  startRoundTimer = output<void>();
+
   isMuted = signal(true);
+
+  startRoundTimer = output<void>();
+
+  constructor() {
+    effect(()=>{
+      if (this.roundStatus() === 'GUESSING') {
+        this.playVideo();
+      }
+    })
+  }
 
   playVideo() {
     this.videoPlayer?.playVideo();
@@ -23,18 +36,17 @@ export class Video {
   }
 
   startRound() {
-    this.videoPlayer?.playVideo();
     this.startRoundTimer.emit();
   }
 
   toggleMute() {
-    if(this.isMuted()){
+    if (this.isMuted()) {
       this.videoPlayer?.unMute();
-    }else{
+    } else {
       this.videoPlayer?.mute();
     }
-    this.isMuted.update(
-      (current) => !current
-    )
+    this.isMuted.update((current) => !current);
   }
+
+  protected readonly RoundStatus = RoundStatus;
 }

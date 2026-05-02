@@ -1,4 +1,5 @@
-import { Component, OnInit, output, signal } from '@angular/core';
+import { Component, OnInit, output, signal, effect, input } from '@angular/core';
+import { RoundStatus } from '../../../../../../enums/round-status.enum';
 
 @Component({
   selector: 'app-timer',
@@ -6,20 +7,25 @@ import { Component, OnInit, output, signal } from '@angular/core';
   templateUrl: './timer.html',
   styleUrl: './timer.css',
 })
-export class Timer implements OnInit{
+export class Timer{
 
   countdown = signal<number>(3);
   showGo = signal<boolean>(false);
+  showWaitingForHost = signal<boolean>(false);
+  roundStatus = input.required<string | undefined>();
 
   onFinish = output<void>();
 
-  ngOnInit(){
-    this.startCountdown();
+  constructor() {
+    effect(()=>{
+      if(this.roundStatus() === 'PREPARING') this.startCountdown();
+      if(this.roundStatus() === 'GUESSING') this.showWaitingForHost.set(false);
+    })
   }
 
   startCountdown() {
 
-    this.countdown.set(3);
+    this.countdown.set(5);
     this.showGo.set(false);
 
     const interval = setInterval(() => {
@@ -33,6 +39,10 @@ export class Timer implements OnInit{
           this.showGo.set(false);
           this.onFinish.emit();
         }, 1000);
+
+        setTimeout(() => {
+          this.showWaitingForHost.set(true);
+        }, 3000)
       }
     }, 1000)
   }
