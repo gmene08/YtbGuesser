@@ -1,7 +1,16 @@
-import { Component, input, output, signal, ViewChild, effect } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  signal,
+  ViewChild,
+  effect,
+  computed,
+  ElementRef,
+  HostListener, inject,
+} from '@angular/core';
 import { YouTubePlayer } from '@angular/youtube-player';
 import { Timer } from '../timer/timer';
-import { MatchDataResponse } from '../../../../../../dtos/match.dto';
 import { RoundStatus } from '../../../../../../enums/round-status.enum';
 
 @Component({
@@ -12,31 +21,65 @@ import { RoundStatus } from '../../../../../../enums/round-status.enum';
 })
 export class Video {
   @ViewChild(YouTubePlayer) private videoPlayer!: YouTubePlayer;
+  private el = inject(ElementRef)
 
   roundStatus = input.required<string | undefined>();
   videoUrl = input.required<string | undefined>();
 
   isMuted = signal(true);
-
   startRoundTimer = output<void>();
 
+  playerWidth = signal<number>(0);
+  playerHeight = signal<number>(0);
+
+  playerVars = computed(() => ({
+    autoplay: this.roundStatus() === 'GUESSING' ? 1 : 0,
+    mute: 1,
+    controls: 0,
+    disablekb: 1,
+  }));
+
   constructor() {
-    effect(()=>{
-      if (this.roundStatus() === 'GUESSING') {
+    effect(() => {
+      if (this.roundStatus() === 'GUESSING' && this.videoPlayer) {
         this.playVideo();
       }
-    })
+    });
   }
 
-  playVideo() {
-    this.videoPlayer?.playVideo();
+  ngAfterViewInit() {
+    setTimeout(() => this.updatePlayerSize(), 0);
   }
-  pauseVideo() {
-    this.videoPlayer?.pauseVideo();
+
+  @HostListener('window:resize')
+  updatePlayerSize() {
+    if (this.el.nativeElement) {
+      this.playerWidth.set(this.el.nativeElement.clientWidth);
+      this.playerHeight.set(this.el.nativeElement.clientHeight);
+    }
   }
 
   startRound() {
     this.startRoundTimer.emit();
+  }
+
+  onPlayerReady(event: any) {
+    event.target.mute();
+
+    if (this.roundStatus() === 'GUESSING') {
+      event.target.playVideo();
+    }
+  }
+
+  playVideo() {
+    if (this.isMuted()) {
+      this.videoPlayer?.mute();
+    }
+    this.videoPlayer?.playVideo();
+  }
+
+  pauseVideo() {
+    this.videoPlayer?.pauseVideo();
   }
 
   toggleMute() {

@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +25,7 @@ public class CurrentRoundResponseDTO {
     private RoundStatus roundStatus;
     private List<Integer> playersWhoGuessed;
     private VideoResponseDTO video;
+    private Instant endsAt;
 
     public static CurrentRoundResponseDTO from(Round round) {
         if(round == null)
@@ -32,7 +34,7 @@ public class CurrentRoundResponseDTO {
         VideoResponseDTO video = VideoResponseDTO.from(round.getVideo());
         List<Integer> guesses = mapGuesses(round);
 
-        return new CurrentRoundResponseDTO(round.getId(), round.getRoundNumber(), round.getStatus(), guesses, video );
+        return new CurrentRoundResponseDTO(round.getId(), round.getRoundNumber(), round.getStatus(), guesses, video, round.getEndsAt() );
     }
 
     private static List<Integer> mapGuesses(Round round) {

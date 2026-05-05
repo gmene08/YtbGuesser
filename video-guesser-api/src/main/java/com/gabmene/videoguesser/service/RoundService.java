@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -69,6 +70,11 @@ public class RoundService {
         }
 
         roundToBeUpdated.setStatus(request.getStatus());
+
+        // if the round is in guessing state, set the end time to 30 seconds from now
+        if(request.getStatus() == RoundStatus.GUESSING) {
+            roundToBeUpdated.setEndsAt(Instant.now().plusSeconds(30));
+        }
 
         Round roundUpdated = roundRepository.save(roundToBeUpdated);
         sendRoundUpdate(roundUpdated);

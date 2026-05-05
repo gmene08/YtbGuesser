@@ -1,16 +1,19 @@
-<youtube-player
-  [videoId]="videoUrl()"
-  class="w-full h-full absolute inset-0"
-  [playerVars]="{
-    controls: 0,
-    disablekb: 1,
-    rel: 0,
-    modestbranding: 1,
-    mute: 1,
-  }"
->
-</youtube-player>
-
+@if(videoUrl()){
+  <youtube-player
+    [videoId]="videoUrl()!"
+    [width]="playerWidth()"
+    [height]="playerHeight()"
+    class="absolute inset-0 pointer-events-auto"
+    [class.pointer-events-none]="roundStatus() !== 'GUESSING'"
+    [playerVars]="playerVars()"
+    (ready)="onPlayerReady($event)"
+  >
+  </youtube-player>
+} @else {
+  <div class="w-full h-full absolute inset-0 bg-black flex items-center justify-center">
+    <span class="text-white text-4xl font-bold">Loading...</span>
+  </div>
+}
 @if (roundStatus() === RoundStatus.Preparing){
   <app-timer
     (onFinish)="startRound()"

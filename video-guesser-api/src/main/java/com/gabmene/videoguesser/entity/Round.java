@@ -4,6 +4,7 @@ import com.gabmene.videoguesser.enums.RoundStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.Instant;
 import java.util.List;
 
 @Entity
@@ -35,7 +36,12 @@ public class Round {
     @JoinColumn(name="video_id")
     private Video video;
 
+    @Column(name="ends_at")
+    private Instant endsAt;
+
     @OneToMany (mappedBy = "round", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserRound> userGuesses;
+
+
 
 }

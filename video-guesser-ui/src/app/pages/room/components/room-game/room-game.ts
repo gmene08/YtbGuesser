@@ -139,7 +139,9 @@ export class RoomGame implements OnInit, OnDestroy {
 
   startRound() {
     // Using the ownerId so only one http method is called to start a round
-    if (this.currentUserId != this.roomData()?.ownerId) return;
+    if (this.currentUserId != this.roomData()?.ownerId) {
+      return;
+    }
 
     const roundId = this.roundData()?.roundId;
     if (!roundId) return;
@@ -162,18 +164,36 @@ export class RoomGame implements OnInit, OnDestroy {
   }
 
   startRoundTimer() {
-    this.timeLeft.set(30);
+    const endsAtString = this.roundData()?.endsAt;
+    if (!endsAtString) {
+      return;
+    }
 
-    const interval = setInterval(() => {
-      this.timeLeft.update((v) => v - 1);
-      if (this.timeLeft() <= 0) {
-        clearInterval(interval);
+    const endsAtTime = new Date(endsAtString).getTime();
+    const now = new Date().getTime();
 
-        if (this.currentUserId === this.roomData()?.ownerId) {
-          this.endRound();
+    const secondsLeft = Math.ceil((endsAtTime - now) / 1000);
+
+    if (secondsLeft > 0) {
+      this.timeLeft.set(secondsLeft);
+      const interval = setInterval(() => {
+        this.timeLeft.update((v) => v - 1);
+        if (this.timeLeft() <= 0) {
+          clearInterval(interval);
+
+          if (this.currentUserId === this.roomData()?.ownerId) {
+            this.endRound();
+          }
         }
+      }, 1000);
+    }
+    else {
+      this.timeLeft.set(0);
+
+      if (this.currentUserId === this.roomData()?.ownerId) {
+        this.endRound();
       }
-    }, 1000);
+    }
   }
 
   endRound() {
@@ -182,6 +202,10 @@ export class RoomGame implements OnInit, OnDestroy {
 
     if (this.roundStatus() !== 'GUESSING') return;
 
+    if (this.currentUserId != this.roomData()?.ownerId) {
+      return;
+    }
+
     this.roundService
       .changeRoundStatus(roundId, {
         userId: this.currentUserId,
@@ -189,7 +213,6 @@ export class RoomGame implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (response) => {
-          console.log('Round ended: ', response);
           this.endRoundTimer();
         },
         error: (error) => {
@@ -204,4 +227,3 @@ export class RoomGame implements OnInit, OnDestroy {
     console.log("Time's over");
   }
 }
-
