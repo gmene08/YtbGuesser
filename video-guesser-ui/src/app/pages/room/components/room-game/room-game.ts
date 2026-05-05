@@ -61,6 +61,7 @@ export class RoomGame implements OnInit, OnDestroy {
   userGuess = signal<number>(0);
 
   timeLeft = signal<number>(30);
+  videoStartTime = signal<number>(0);
 
   constructor() {
     effect(() => {
@@ -164,18 +165,15 @@ export class RoomGame implements OnInit, OnDestroy {
   }
 
   startRoundTimer() {
-    const endsAtString = this.roundData()?.endsAt;
-    if (!endsAtString) {
-      return;
-    }
 
-    const endsAtTime = new Date(endsAtString).getTime();
-    const now = new Date().getTime();
-
-    const secondsLeft = Math.ceil((endsAtTime - now) / 1000);
+    const secondsLeft = this.calculateTimeLeft();
+    if (secondsLeft === undefined) return;
 
     if (secondsLeft > 0) {
+
+      this.syncVideoStartTime(secondsLeft);
       this.timeLeft.set(secondsLeft);
+
       const interval = setInterval(() => {
         this.timeLeft.update((v) => v - 1);
         if (this.timeLeft() <= 0) {
@@ -213,7 +211,7 @@ export class RoomGame implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (response) => {
-          this.endRoundTimer();
+          console.log('Round ended: ', response);
         },
         error: (error) => {
           console.error('Error ending round: ', error.error?.message || 'Server error');
@@ -225,5 +223,28 @@ export class RoomGame implements OnInit, OnDestroy {
     this.videoPlayer?.pauseVideo();
 
     console.log("Time's over");
+  }
+
+  syncVideoStartTime(secondsLeft: number){
+    const originalStartTime = this.roundData()?.videoStartsAtSecond;
+    if (originalStartTime === undefined || originalStartTime === null) return;
+
+    // calculates
+    const roundDuration = 30; // hard coded for now
+    const secondsElapsed = roundDuration - secondsLeft;
+
+    this.videoStartTime.set(originalStartTime + secondsElapsed);
+  }
+
+  calculateTimeLeft() {
+    const endsAtString = this.roundData()?.endsAt;
+    if (!endsAtString) {
+      return;
+    }
+
+    const endsAtTime = new Date(endsAtString).getTime();
+    const now = new Date().getTime();
+
+    return Math.ceil((endsAtTime - now) / 1000);
   }
 }

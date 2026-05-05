@@ -1,5 +1,6 @@
 package com.gabmene.videoguesser.service;
 
+import com.gabmene.videoguesser.constants.AppConstants;
 import com.gabmene.videoguesser.dto.round.CurrentRoundResponseDTO;
 import com.gabmene.videoguesser.dto.round.UpdateRoundRequestDTO;
 import com.gabmene.videoguesser.entity.*;
@@ -7,16 +8,15 @@ import com.gabmene.videoguesser.enums.RoundStatus;
 import com.gabmene.videoguesser.exception.BusinessException;
 import com.gabmene.videoguesser.exception.ResourceNotFoundException;
 import com.gabmene.videoguesser.repository.RoundRepository;
-import com.gabmene.videoguesser.repository.UserRepository;
 import com.gabmene.videoguesser.repository.VideoRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import java.util.Random;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -27,7 +27,6 @@ public class RoundService {
 
     private final RoundRepository roundRepository;
     private final VideoRepository videoRepository;
-    private final UserRepository userRepository;
 
     @Transactional
     public void createRound(Match match, Integer roundNumber){
@@ -48,6 +47,7 @@ public class RoundService {
                 .orElseThrow(() -> new ResourceNotFoundException("No videos found for the selected categories"));
 
         round.setVideo(video);
+        round.setVideoStartsAtSecond(generateRandomStart(round));
 
         // if the match doesn't have rounds yet, create an empty list'
         if(match.getRounds() == null){
@@ -85,6 +85,21 @@ public class RoundService {
     private void sendRoundUpdate(Round round) {
         CurrentRoundResponseDTO roundData = CurrentRoundResponseDTO.from(round);
         messagingTemplate.convertAndSend("/topic/game/" + round.getId() + "/round-status", roundData);
+    }
+
+    private Integer generateRandomStart(Round round){
+        Integer roundDuration = AppConstants.ROUND_GUESSING_DURATION_SECONDS;
+        Integer videoDuration = round.getVideo().getDurationSeconds() != null ? round.getVideo().getDurationSeconds() : 0;
+
+        int startsAt = 0;
+
+        // only generate a random start if the video duration is greater than the round duration
+        if(videoDuration > roundDuration) {
+            int maxStart = videoDuration - roundDuration;
+            startsAt = new Random().nextInt(maxStart);
+        }
+        return startsAt;
+
     }
 
 }

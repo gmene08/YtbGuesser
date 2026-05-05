@@ -9,10 +9,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+
 public class YoutubeSyncJob {
 
     private final VideoService videoService;
-
 
     public void syncVideosJob() {
 

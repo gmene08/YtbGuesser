@@ -25,6 +25,7 @@ export class Video {
 
   roundStatus = input.required<string | undefined>();
   videoUrl = input.required<string | undefined>();
+  videoStartTime = input.required<number | undefined>();
 
   isMuted = signal(true);
   startRoundTimer = output<void>();
@@ -67,6 +68,7 @@ export class Video {
     event.target.mute();
 
     if (this.roundStatus() === 'GUESSING') {
+      event.target.seekTo(this.videoStartTime(), true);
       event.target.playVideo();
     }
   }

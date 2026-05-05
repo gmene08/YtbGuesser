@@ -26,6 +26,7 @@ public class CurrentRoundResponseDTO {
     private List<Integer> playersWhoGuessed;
     private VideoResponseDTO video;
     private Instant endsAt;
+    private Integer videoStartsAtSecond;
 
     public static CurrentRoundResponseDTO from(Round round) {
         if(round == null)
@@ -34,7 +35,7 @@ public class CurrentRoundResponseDTO {
         VideoResponseDTO video = VideoResponseDTO.from(round.getVideo());
         List<Integer> guesses = mapGuesses(round);
 
-        return new CurrentRoundResponseDTO(round.getId(), round.getRoundNumber(), round.getStatus(), guesses, video, round.getEndsAt() );
+        return new CurrentRoundResponseDTO(round.getId(), round.getRoundNumber(), round.getStatus(), guesses, video, round.getEndsAt(), round.getVideoStartsAtSecond() );
     }
 
     private static List<Integer> mapGuesses(Round round) {

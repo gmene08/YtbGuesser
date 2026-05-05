@@ -42,4 +42,7 @@ public class Video {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "duration_seconds")
+    private Integer durationSeconds;
 }

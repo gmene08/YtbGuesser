@@ -42,6 +42,9 @@ public class Round {
     @OneToMany (mappedBy = "round", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserRound> userGuesses;
 
+    @Column(name="video_starts_at_second")
+    private Integer videoStartsAtSecond;
+
 
 
 }

@@ -16,11 +16,18 @@ public class YoutubeVideoDetailsResponseDTO {
     public static class VideoDetailItemDTO {
         private String id;
         private VideoStatisticsDTO statistics;
+        private ContentDetailsDTO contentDetails;
     }
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class VideoStatisticsDTO {
         private Long viewCount;
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class ContentDetailsDTO {
+        private String duration; // O YouTube retorna como "PT5M30S"
     }
 }

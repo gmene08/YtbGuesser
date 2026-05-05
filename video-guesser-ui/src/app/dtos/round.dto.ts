@@ -7,6 +7,7 @@ export interface CurrentRoundResponse {
   playersWhoGuessed: number[];
   video: VideoResponse;
   endsAt: string;
+  videoStartsAtSecond: number;
 }
 
 export interface VideoResponse {
