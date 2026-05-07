@@ -1,23 +1,27 @@
 package com.gabmene.videoguesser.service;
 
 import com.gabmene.videoguesser.constants.AppConstants;
-import com.gabmene.videoguesser.dto.round.CurrentRoundResponseDTO;
+import com.gabmene.videoguesser.dto.round.ActiveRoundResponseDTO;
 import com.gabmene.videoguesser.dto.round.UpdateRoundRequestDTO;
 import com.gabmene.videoguesser.entity.*;
 import com.gabmene.videoguesser.enums.RoundStatus;
 import com.gabmene.videoguesser.exception.BusinessException;
 import com.gabmene.videoguesser.exception.ResourceNotFoundException;
 import com.gabmene.videoguesser.repository.RoundRepository;
+import com.gabmene.videoguesser.repository.UserMatchRepository;
 import com.gabmene.videoguesser.repository.VideoRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+
+import java.util.Map;
 import java.util.Random;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +31,7 @@ public class RoundService {
 
     private final RoundRepository roundRepository;
     private final VideoRepository videoRepository;
+    private final UserMatchRepository userMatchRepository;
 
     @Transactional
     public void createRound(Match match, Integer roundNumber){
@@ -81,9 +86,38 @@ public class RoundService {
 
         return roundUpdated;
     }
+    private void endRound(Round round) {
+        Map<Integer,Integer> userCurrentTotalPoints = round.getMatch().getUserMatches().stream().collect(Collectors.toMap(
+                userMatch -> userMatch.getUser().getId(),
+                UserMatch::getCurrentScore
+        ));
+
+        Map<Integer, Integer> userPointsScoredThisRound = round.getUserGuesses().stream().collect(Collectors.toMap(
+                userGuess -> userGuess.getUser().getId(),
+                UserRound::getPointsEarned
+        ));
+
+        for(UserRound userGuess : round.getUserGuesses()) {
+            Integer currentTotalPoints = userCurrentTotalPoints.getOrDefault(userGuess.getUser().getId(), 0);
+            Integer pointsScored = userPointsScoredThisRound.getOrDefault(userGuess.getUser().getId(), 0);
+            Integer newTotalPoints = currentTotalPoints + pointsScored;
+
+            UserMatch userMatchToBeUpdated = userMatchRepository.findByUserIdAndMatchId(userGuess.getUser().getId(), round.getMatch().getId()).orElse(
+                    new UserMatch().builder()
+                            .user(userGuess.getUser())
+                            .match(round.getMatch())
+                            .finalScore(0)
+                            .currentScore(0)
+                            .build()
+            );
+
+            userMatchToBeUpdated.setCurrentScore(newTotalPoints);
+            userMatchRepository.save(userMatchToBeUpdated);
+        }
+    }
 
     private void sendRoundUpdate(Round round) {
-        CurrentRoundResponseDTO roundData = CurrentRoundResponseDTO.from(round);
+        ActiveRoundResponseDTO roundData = ActiveRoundResponseDTO.from(round);
         messagingTemplate.convertAndSend("/topic/game/" + round.getId() + "/round-status", roundData);
     }
 

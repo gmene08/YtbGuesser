@@ -46,4 +46,7 @@ public class Match {
     @OneToMany(mappedBy = "match",fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, orphanRemoval = true)
     private List<Round> rounds;
 
+    @OneToMany(mappedBy = "match",fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, orphanRemoval = true)
+    private List<UserMatch> userMatches;
+
 }

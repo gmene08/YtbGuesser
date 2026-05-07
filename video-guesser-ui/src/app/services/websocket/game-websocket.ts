@@ -38,16 +38,14 @@ export class GameWebsocketService {
     });
 
     this.core.subscribe(`/topic/game/${roundId}/round-status`, (message) => {
-      const updatedStatus = message.body;
+      const data = JSON.parse(message.body);
+      const roundUpdated = data as ActiveRoundResponse;
       this.matchData.update(match => {
         if(!match) return null;
 
         return {
           ...match,
-          currentRound: {
-            ...match.currentRound,
-            status:updatedStatus
-          }
+          currentRound: roundUpdated
         };
       });
     });

@@ -2,16 +2,11 @@ package com.gabmene.videoguesser.service;
 
 import com.gabmene.videoguesser.dto.match.MatchConfigRequestDTO;
 import com.gabmene.videoguesser.dto.match.MatchResponseDTO;
-import com.gabmene.videoguesser.entity.Category;
-import com.gabmene.videoguesser.entity.Match;
-import com.gabmene.videoguesser.entity.Room;
+import com.gabmene.videoguesser.entity.*;
 import com.gabmene.videoguesser.enums.MatchCategory;
 import com.gabmene.videoguesser.enums.MatchStatus;
 import com.gabmene.videoguesser.exception.ResourceNotFoundException;
-import com.gabmene.videoguesser.repository.CategoryRepository;
-import com.gabmene.videoguesser.repository.MatchRepository;
-import com.gabmene.videoguesser.repository.RoomRepository;
-import com.gabmene.videoguesser.repository.RoundRepository;
+import com.gabmene.videoguesser.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,6 +22,7 @@ public class MatchService {
     private final CategoryRepository categoryRepository;
     private final MatchRepository matchRepository;
     private final RoomRepository roomRepository;
+    private final UserMatchRepository userMatchRepository;
 
     private final RoundService roundService;
 
@@ -65,9 +61,19 @@ public class MatchService {
 
         Match savedMatch = matchRepository.save(newMatch);
 
-        // create all the rounds
+        // create all the rounds beforehand
         for (int i = 1; i <= newMatch.getNumberOfRounds(); i++) {
             roundService.createRound(savedMatch, i);
+        }
+
+        // create a UserMatch object for each user in the room
+        for (User user : roomStarting.getUsers()) {
+            UserMatch userMatch = new UserMatch();
+            userMatch.setUser(user);
+            userMatch.setMatch(savedMatch);
+            userMatch.setFinalScore(0);
+            userMatch.setCurrentScore(0);
+            userMatchRepository.save(userMatch);
         }
 
         return matchRepository.save(savedMatch);
