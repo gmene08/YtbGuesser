@@ -3,6 +3,8 @@ package com.gabmene.videoguesser.repository;
 import com.gabmene.videoguesser.entity.User;
 import com.gabmene.videoguesser.entity.UserMatch;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -15,5 +17,6 @@ public interface UserMatchRepository extends JpaRepository<UserMatch,Integer> {
 
     List<UserMatch> user(User user);
 
-    Optional<UserMatch> findByUserIdAndMatchId(Integer id, Integer id1);
+    @Query("SELECT um FROM UserMatch um WHERE um.user.id = :userId AND um.match.id = :matchId")
+    Optional<UserMatch> findByUserIdAndMatchId(@Param("userId") Integer userId, @Param("matchId") Integer matchId);
 }

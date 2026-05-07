@@ -81,25 +81,26 @@ public class RoundService {
             roundToBeUpdated.setEndsAt(Instant.now().plusSeconds(30));
         }
 
+        if(request.getStatus() == RoundStatus.FINISHED) {
+            processRoundResults(roundToBeUpdated);
+        }
+
         Round roundUpdated = roundRepository.save(roundToBeUpdated);
         sendRoundUpdate(roundUpdated);
 
         return roundUpdated;
     }
-    private void endRound(Round round) {
+    private void processRoundResults(Round round) {
         Map<Integer,Integer> userCurrentTotalPoints = round.getMatch().getUserMatches().stream().collect(Collectors.toMap(
                 userMatch -> userMatch.getUser().getId(),
                 UserMatch::getCurrentScore
         ));
 
-        Map<Integer, Integer> userPointsScoredThisRound = round.getUserGuesses().stream().collect(Collectors.toMap(
-                userGuess -> userGuess.getUser().getId(),
-                UserRound::getPointsEarned
-        ));
+        List<UserMatch> userMatchesToBeUpdated = new ArrayList<>();
 
         for(UserRound userGuess : round.getUserGuesses()) {
             Integer currentTotalPoints = userCurrentTotalPoints.getOrDefault(userGuess.getUser().getId(), 0);
-            Integer pointsScored = userPointsScoredThisRound.getOrDefault(userGuess.getUser().getId(), 0);
+            Integer pointsScored = userGuess.getPointsEarned();
             Integer newTotalPoints = currentTotalPoints + pointsScored;
 
             UserMatch userMatchToBeUpdated = userMatchRepository.findByUserIdAndMatchId(userGuess.getUser().getId(), round.getMatch().getId()).orElse(
@@ -112,8 +113,9 @@ public class RoundService {
             );
 
             userMatchToBeUpdated.setCurrentScore(newTotalPoints);
-            userMatchRepository.save(userMatchToBeUpdated);
+            userMatchesToBeUpdated.add(userMatchToBeUpdated);
         }
+        userMatchRepository.saveAll(userMatchesToBeUpdated);
     }
 
     private void sendRoundUpdate(Round round) {
