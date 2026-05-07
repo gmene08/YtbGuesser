@@ -1,4 +1,4 @@
-import { CurrentRoundResponse } from './round.dto';
+import { ActiveRoundResponse } from './round.dto';
 
 export interface MatchConfigRequest {
   userId: number;
@@ -11,7 +11,7 @@ export interface MatchDataResponse {
   maxRounds: number;
   roundNumber: number;
   status: string;
-  currentRound: CurrentRoundResponse;
+  currentRound: ActiveRoundResponse;
 
 }
 

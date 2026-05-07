@@ -57,6 +57,7 @@ export class RoomGame implements OnInit, OnDestroy {
   roundStatus = computed(() => {
     return this.roundData()?.roundStatus;
   });
+  private previousStatus: string | undefined = undefined;
 
   userGuess = signal<number>(0);
 
@@ -65,21 +66,27 @@ export class RoomGame implements OnInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      /*const roomCode = this.roomData()?.code;
-      if (this.roomData()?.status !== 'PLAYING' || !roomCode) {
+      const currentStatus = this.roundStatus();
+
+      // Se o status for o mesmo de antes, aborta! Não roda os timers de novo.
+      if (currentStatus === this.previousStatus) {
         return;
       }
 
-      this.loadData(roomCode);*/
-      if (this.roundStatus() === 'FINISHED') {
-        console.log('Round finished');
+      // Se mudou para GUESSING
+      if (currentStatus === 'GUESSING') {
+        console.log('Status changed to GUESSING, starting timer...');
+        this.startRoundTimer();
+      }
+
+      // Se mudou para FINISHED
+      if (currentStatus === 'FINISHED') {
+        console.log('Status changed to FINISHED, stopping timer...');
         this.endRoundTimer();
       }
 
-      if (this.roundStatus() === 'GUESSING') {
-        console.log('Round started');
-        this.startRoundTimer();
-      }
+      // Atualiza o rastreador
+      this.previousStatus = currentStatus;
     });
   }
 
@@ -165,12 +172,10 @@ export class RoomGame implements OnInit, OnDestroy {
   }
 
   startRoundTimer() {
-
     const secondsLeft = this.calculateTimeLeft();
     if (secondsLeft === undefined) return;
 
     if (secondsLeft > 0) {
-
       this.syncVideoStartTime(secondsLeft);
       this.timeLeft.set(secondsLeft);
 
@@ -184,8 +189,7 @@ export class RoomGame implements OnInit, OnDestroy {
           }
         }
       }, 1000);
-    }
-    else {
+    } else {
       this.timeLeft.set(0);
 
       if (this.currentUserId === this.roomData()?.ownerId) {
@@ -225,7 +229,7 @@ export class RoomGame implements OnInit, OnDestroy {
     console.log("Time's over");
   }
 
-  syncVideoStartTime(secondsLeft: number){
+  syncVideoStartTime(secondsLeft: number) {
     const originalStartTime = this.roundData()?.videoStartsAtSecond;
     if (originalStartTime === undefined || originalStartTime === null) return;
 

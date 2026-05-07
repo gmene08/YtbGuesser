@@ -2,7 +2,6 @@ package com.gabmene.videoguesser.dto.round;
 
 
 import com.gabmene.videoguesser.entity.Round;
-import com.gabmene.videoguesser.entity.UserRound;
 import com.gabmene.videoguesser.entity.Video;
 import com.gabmene.videoguesser.enums.RoundStatus;
 import lombok.AllArgsConstructor;
@@ -19,23 +18,23 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class CurrentRoundResponseDTO {
+public class ActiveRoundResponseDTO {
     private Integer roundId;
     private Integer roundNumber;
     private RoundStatus roundStatus;
     private List<Integer> playersWhoGuessed;
-    private VideoResponseDTO video;
+    private ActiveVideoResponseDTO video;
     private Instant endsAt;
     private Integer videoStartsAtSecond;
 
-    public static CurrentRoundResponseDTO from(Round round) {
+    public static ActiveRoundResponseDTO from(Round round) {
         if(round == null)
             return null;
 
-        VideoResponseDTO video = VideoResponseDTO.from(round.getVideo());
+        ActiveVideoResponseDTO video = ActiveVideoResponseDTO.from(round.getVideo());
         List<Integer> guesses = mapGuesses(round);
 
-        return new CurrentRoundResponseDTO(round.getId(), round.getRoundNumber(), round.getStatus(), guesses, video, round.getEndsAt(), round.getVideoStartsAtSecond() );
+        return new ActiveRoundResponseDTO(round.getId(), round.getRoundNumber(), round.getStatus(), guesses, video, round.getEndsAt(), round.getVideoStartsAtSecond() );
     }
 
     private static List<Integer> mapGuesses(Round round) {
@@ -50,17 +49,14 @@ public class CurrentRoundResponseDTO {
 
     @Getter
     @AllArgsConstructor
-    public static class VideoResponseDTO {
-        private String channelName;
+    public static class ActiveVideoResponseDTO {
         private String url;
         private String thumbnail;
-        private String title;
-        private Long viewCount;
 
-        public static VideoResponseDTO from(Video video) {
+        public static ActiveVideoResponseDTO from(Video video) {
             if(video == null)
                 return null;
-            return new VideoResponseDTO(video.getChannelName(), video.getYoutubeId(), video.getThumbnailUrl(), video.getTitle(), video.getViewCount());
+            return new ActiveVideoResponseDTO( video.getYoutubeId(), video.getThumbnailUrl());
         }
     }
 

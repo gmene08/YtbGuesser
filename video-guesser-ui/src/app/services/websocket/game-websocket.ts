@@ -1,6 +1,6 @@
 import { inject, Injectable, signal, computed } from '@angular/core';
 import { Client } from '@stomp/stompjs';
-import { CurrentRoundResponse, UserGuessRequest } from '../../dtos/round.dto';
+import { ActiveRoundResponse, UserGuessRequest } from '../../dtos/round.dto';
 import { CoreWebsocket } from './core-websocket';
 import { MatchDataResponse } from '../../dtos/match.dto';
 
@@ -38,14 +38,16 @@ export class GameWebsocketService {
     });
 
     this.core.subscribe(`/topic/game/${roundId}/round-status`, (message) => {
-      const data = JSON.parse(message.body);
-      const roundWithUpdatedStatus = data as CurrentRoundResponse;
+      const updatedStatus = message.body;
       this.matchData.update(match => {
         if(!match) return null;
 
         return {
           ...match,
-          currentRound: roundWithUpdatedStatus
+          currentRound: {
+            ...match.currentRound,
+            status:updatedStatus
+          }
         };
       });
     });
