@@ -223,6 +223,7 @@ public class RoomService {
         return leaveRoom(roomCode, targetUserId);
     }
 
+    @Transactional
     public Room updateRoom(String roomCode, RoomUpdateRequestDto request) {
         Room roomToBeUpdated = roomRepository.findByCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Room not found"));
 

@@ -1,22 +1,26 @@
 package com.gabmene.videoguesser.service;
 
+import com.gabmene.videoguesser.dto.round.RoundResultResponseDTO;
 import com.gabmene.videoguesser.dto.round.UserGuessRequestDTO;
-import com.gabmene.videoguesser.entity.Room;
-import com.gabmene.videoguesser.entity.Round;
-import com.gabmene.videoguesser.entity.User;
-import com.gabmene.videoguesser.entity.UserRound;
+import com.gabmene.videoguesser.entity.*;
 import com.gabmene.videoguesser.enums.RoundStatus;
 import com.gabmene.videoguesser.exception.BusinessException;
 import com.gabmene.videoguesser.exception.ConflictException;
 import com.gabmene.videoguesser.exception.ForbiddenException;
 import com.gabmene.videoguesser.exception.ResourceNotFoundException;
 import com.gabmene.videoguesser.repository.RoundRepository;
+import com.gabmene.videoguesser.repository.UserMatchRepository;
 import com.gabmene.videoguesser.repository.UserRepository;
 import com.gabmene.videoguesser.repository.UserRoundRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +30,7 @@ public class GameService {
     private final RoundRepository roundRepository;
     private final UserRepository userRepository;
     private final UserRoundRepository userRoundRepository;
+    private final UserMatchRepository userMatchRepository;
 
     @Transactional
     public UserRound processGuess(Integer roundId, UserGuessRequestDTO userGuessRequest){
@@ -70,6 +75,39 @@ public class GameService {
         return userRound;
     }
 
+    @Transactional
+    public void processRoundResults(Round round) {
+
+        // get the current total points for each user into a map
+        Map<Integer,Integer> userCurrentTotalPoints = round.getMatch().getUserMatches().stream().collect(Collectors.toMap(
+                userMatch -> userMatch.getUser().getId(),
+                UserMatch::getCurrentScore
+        ));
+
+        List<UserMatch> userMatchesToBeUpdated = new ArrayList<>();
+
+        // update the user matches with the new total points
+        for(UserRound userGuess : round.getUserGuesses()) {
+            Integer currentTotalPoints = userCurrentTotalPoints.getOrDefault(userGuess.getUser().getId(), 0);
+            Integer pointsScored = userGuess.getPointsEarned();
+            Integer newTotalPoints = currentTotalPoints + pointsScored;
+
+            UserMatch userMatchToBeUpdated = userMatchRepository.findByUserIdAndMatchId(userGuess.getUser().getId(), round.getMatch().getId()).orElse(
+                    UserMatch.builder()
+                            .user(userGuess.getUser())
+                            .match(round.getMatch())
+                            .finalScore(0)
+                            .currentScore(0)
+                            .build()
+            );
+
+            userMatchToBeUpdated.setCurrentScore(newTotalPoints);
+            userMatchesToBeUpdated.add(userMatchToBeUpdated);
+        }
+        userMatchRepository.saveAll(userMatchesToBeUpdated);
+        sendRoundResults(round);
+    }
+
     public static Integer calculatePointsEarned(Long viewCount, Long userGuess){
 
         int maxPoints = 1000;
@@ -89,5 +127,10 @@ public class GameService {
         // If the score is negative, set it to 0
         return Math.max(0, (int) points);
 
+    }
+
+    private void sendRoundResults(Round round) {
+        RoundResultResponseDTO roundResults = RoundResultResponseDTO.from(round);
+        messagingTemplate.convertAndSend("/topic/game/round/" + round.getId() + "/round-results", roundResults);
     }
 }

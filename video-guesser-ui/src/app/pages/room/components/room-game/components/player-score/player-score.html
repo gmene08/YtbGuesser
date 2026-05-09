@@ -9,4 +9,12 @@
     }
   </div>
 
+  <div class="flex items-center gap-2">
+    @if (showPlayerRoundScore()){
+
+      <span>+{{playerRoundScore()}}</span>
+    }
+    <span> {{playerTotalScore()}}</span>
+  </div>
+
 </div>

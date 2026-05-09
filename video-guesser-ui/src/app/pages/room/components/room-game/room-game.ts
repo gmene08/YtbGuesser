@@ -117,7 +117,7 @@ export class RoomGame implements OnInit, OnDestroy {
         this.gameService.matchData.set(response);
 
         // connect to websocket
-        this.gameService.connect(this.roundData()?.roundId || 0);
+        this.gameService.connect(this.roundData()?.roundId || 0, this.matchData()?.matchId || 0);
       },
 
       error: (error) => {

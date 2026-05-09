@@ -26,5 +26,12 @@ public class MatchController {
         return ResponseEntity.ok(MatchResponseDTO.from(match));
     }
 
+    @PatchMapping("/{matchId}/nextRound")
+    public ResponseEntity<MatchResponseDTO> nextRound(@PathVariable Integer matchId){
+        Match match = matchService.changeToNextRound(matchId);
+        return ResponseEntity.ok(MatchResponseDTO.from(match));
+    }
+
+
 
 }

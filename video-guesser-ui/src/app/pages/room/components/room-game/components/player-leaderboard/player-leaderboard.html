@@ -4,11 +4,14 @@
   </div>
 
   <div class="grid grid-cols-1 sm:grid-cols-1 gap-4">
-    @if (roomData(); as room) {
-      @for (player of room.players; track player.id) {
+    @if (matchData(); as match) {
+      @for (player of match.playerLeaderboard; track player.userId) {
         <app-player-score
-          [hasUserGuessedThisRound] = "playersWhoGuessed().includes(player.id)"
+          [hasUserGuessedThisRound] = "playersWhoGuessed().includes(player.userId)"
           [playerNickname]="player.nickname"
+          [playerTotalScore]="player.totalScore"
+          [playerRoundScore]="getPlayerRoundScore(player.userId)"
+          [showPlayerRoundScore]="match.currentRound.roundStatus === RoundStatus.Finished"
         ></app-player-score>
       }
     }

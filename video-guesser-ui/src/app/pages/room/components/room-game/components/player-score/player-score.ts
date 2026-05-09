@@ -10,4 +10,8 @@ import { Component, input } from '@angular/core';
 export class PlayerScore {
   playerNickname = input.required<string>();
   hasUserGuessedThisRound = input.required<boolean>();
+  playerTotalScore = input.required<number>();
+  playerRoundScore = input.required<number>();
+  showPlayerRoundScore = input.required<boolean>();
+
 }

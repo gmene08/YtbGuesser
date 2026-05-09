@@ -12,7 +12,14 @@ export interface MatchDataResponse {
   roundNumber: number;
   status: string;
   currentRound: ActiveRoundResponse;
+  playerLeaderboard: PlayerCurrentScoreResponse[];
 
+}
+
+export interface PlayerCurrentScoreResponse {
+  userId: number;
+  nickname: string;
+  totalScore: number;
 }
 
 

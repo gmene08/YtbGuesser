@@ -19,4 +19,6 @@ public interface UserMatchRepository extends JpaRepository<UserMatch,Integer> {
 
     @Query("SELECT um FROM UserMatch um WHERE um.user.id = :userId AND um.match.id = :matchId")
     Optional<UserMatch> findByUserIdAndMatchId(@Param("userId") Integer userId, @Param("matchId") Integer matchId);
+
+    List<UserMatch> findByMatchIdOrderByCurrentScoreDesc(Integer matchId);
 }

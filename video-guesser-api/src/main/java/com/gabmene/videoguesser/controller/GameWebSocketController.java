@@ -20,7 +20,7 @@ public class GameWebSocketController {
     private final GameService gameService;
 
     @MessageMapping("/game/{roundId}/guess")
-    @SendTo("/topic/game/{roundId}/guessed-status")
+    @SendTo("/topic/game/round/{roundId}/guessed-status")
     public UserGuessResponseDTO guess(@DestinationVariable Integer roundId, @Valid @Payload UserGuessRequestDTO userGuess){
         UserRound userRound = gameService.processGuess(roundId, userGuess);
         return UserGuessResponseDTO.from(userRound, true);

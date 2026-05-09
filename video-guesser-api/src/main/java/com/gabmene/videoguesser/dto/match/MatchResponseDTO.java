@@ -3,11 +3,14 @@ package com.gabmene.videoguesser.dto.match;
 import com.gabmene.videoguesser.dto.round.ActiveRoundResponseDTO;
 import com.gabmene.videoguesser.entity.Match;
 import com.gabmene.videoguesser.entity.Round;
+import com.gabmene.videoguesser.entity.UserMatch;
 import com.gabmene.videoguesser.enums.MatchStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -19,7 +22,7 @@ public class MatchResponseDTO {
     private Integer roundNumber;
     private MatchStatus status;
     private ActiveRoundResponseDTO currentRound;
-
+    private List<PlayerCurrentScoreDTO> playerLeaderboard;
 
     public static MatchResponseDTO from(Match match) {
         if (match == null) {
@@ -29,14 +32,43 @@ public class MatchResponseDTO {
         Round currentRound = match.getRounds().stream().filter
                 (r -> r.getRoundNumber().equals(match.getCurrentRound())).findFirst().orElse(null);
 
-        ActiveRoundResponseDTO currentRoundDto = ActiveRoundResponseDTO.from(currentRound);
+        if(currentRound == null) {
+            return null;
+        }
 
         return new MatchResponseDTO(
                 match.getId(),
                 match.getNumberOfRounds(),
                 match.getCurrentRound(),
                 match.getStatus(),
-                currentRoundDto
+                ActiveRoundResponseDTO.from(currentRound),
+                mapPlayers(match.getUserMatches())
         );
+    }
+
+    private static List<PlayerCurrentScoreDTO> mapPlayers(List<UserMatch> userMatches){
+        if(userMatches == null || userMatches.isEmpty()) {
+            return null;
+        }
+        List<PlayerCurrentScoreDTO>  playerScoreUnsorted= userMatches
+                .stream()
+                .map(PlayerCurrentScoreDTO::from)
+                .toList();
+
+        // sort the list in descending order based on the total score
+        return playerScoreUnsorted.stream().sorted((a,b) -> b.getTotalScore().compareTo(a.getTotalScore())).toList();
+
+    }
+
+    @Getter
+    @AllArgsConstructor
+    private static class PlayerCurrentScoreDTO {
+        private Integer userId;
+        private String nickname;
+        private Integer totalScore;
+
+        public static PlayerCurrentScoreDTO from(UserMatch userMatch){
+            return new PlayerCurrentScoreDTO(userMatch.getUser().getId(), userMatch.getUser().getNickname(),userMatch.getCurrentScore());
+        }
     }
 }
