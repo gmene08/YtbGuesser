@@ -1,5 +1,6 @@
 package com.gabmene.videoguesser.dto.match;
 
+import com.gabmene.videoguesser.dto.player.PlayerCurrentScoreDTO;
 import com.gabmene.videoguesser.dto.round.ActiveRoundResponseDTO;
 import com.gabmene.videoguesser.entity.Match;
 import com.gabmene.videoguesser.entity.Round;
@@ -60,15 +61,4 @@ public class MatchResponseDTO {
 
     }
 
-    @Getter
-    @AllArgsConstructor
-    private static class PlayerCurrentScoreDTO {
-        private Integer userId;
-        private String nickname;
-        private Integer totalScore;
-
-        public static PlayerCurrentScoreDTO from(UserMatch userMatch){
-            return new PlayerCurrentScoreDTO(userMatch.getUser().getId(), userMatch.getUser().getNickname(),userMatch.getCurrentScore());
-        }
-    }
 }

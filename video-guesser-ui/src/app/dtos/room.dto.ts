@@ -1,7 +1,5 @@
-export interface PlayerResponse {
-  id: number;
-  nickname: string;
-}
+import { PlayerResponse } from './player.dto';
+
 export interface RoomResponse {
   id: number;
   code: string;

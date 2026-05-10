@@ -1,4 +1,5 @@
 import { ActiveRoundResponse } from './round.dto';
+import { PlayerCurrentScoreResponse } from './player.dto';
 
 export interface MatchConfigRequest {
   userId: number;
@@ -13,13 +14,8 @@ export interface MatchDataResponse {
   status: string;
   currentRound: ActiveRoundResponse;
   playerLeaderboard: PlayerCurrentScoreResponse[];
-
 }
 
-export interface PlayerCurrentScoreResponse {
-  userId: number;
-  nickname: string;
-  totalScore: number;
-}
+
 
 

@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { CoreWebsocket } from './core-websocket';
 import { RoomResponse } from '../../dtos/room.dto';
+import { RoomState } from '../../models/room.state';
 
 @Injectable({
   providedIn: 'root',
@@ -8,7 +9,7 @@ import { RoomResponse } from '../../dtos/room.dto';
 export class LobbyWebsocket {
   private core = inject(CoreWebsocket);
 
-  public roomData = signal<RoomResponse | null>(null);
+  public roomData = signal<RoomState | null>(null);
 
   connectToLobby(roomCode: string){
     this.core.connect(); // make sure the connection is established

@@ -1,7 +1,8 @@
 import { inject, Injectable, signal, computed } from '@angular/core';
-import { ActiveRoundResponse, RoundResultResponse, UserGuessRequest } from '../../dtos/round.dto';
+import { ActiveRoundResponse, EndOfRoundResponse, UserGuessRequest } from '../../dtos/round.dto';
 import { CoreWebsocket } from './core-websocket';
 import { MatchDataResponse } from '../../dtos/match.dto';
+import { MatchState } from '../../models/match.state';
 
 @Injectable({
   providedIn: 'root',
@@ -9,7 +10,7 @@ import { MatchDataResponse } from '../../dtos/match.dto';
 export class GameWebsocketService {
   private core = inject(CoreWebsocket);
 
-  matchData = signal<MatchDataResponse | null>(null);
+  matchData = signal<MatchState | null>(null);
   roundData = computed(()=>{
     return this.matchData()?.currentRound;
   });
@@ -54,7 +55,7 @@ export class GameWebsocketService {
 
     this.core.subscribe(`/topic/game/round/${roundId}/round-results`, (message) => {
       const data = JSON.parse(message.body);
-      const roundResults = data as RoundResultResponse;
+      const roundResults = data as EndOfRoundResponse;
       console.log('Round results: ', roundResults);
       this.matchData.update(match =>{
         if(!match) return null;

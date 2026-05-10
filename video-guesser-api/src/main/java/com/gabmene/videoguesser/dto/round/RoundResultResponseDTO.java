@@ -1,5 +1,6 @@
 package com.gabmene.videoguesser.dto.round;
 
+import com.gabmene.videoguesser.dto.player.PlayerRoundResultDTO;
 import com.gabmene.videoguesser.entity.Round;
 import com.gabmene.videoguesser.entity.UserRound;
 import com.gabmene.videoguesser.entity.Video;
@@ -12,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 public class RoundResultResponseDTO {
 
-    private List<PlayerResultDTO> playersScore;
+    private List<PlayerRoundResultDTO> playersScore;
     private VideoResultDTO videoDetails;
 
     public static RoundResultResponseDTO from(Round round){
@@ -22,25 +23,14 @@ public class RoundResultResponseDTO {
         );
     }
 
-    private static List<PlayerResultDTO> mapPlayers(List<UserRound> userRounds){
+    private static List<PlayerRoundResultDTO> mapPlayers(List<UserRound> userRounds){
         if(userRounds == null || userRounds.isEmpty()) {
             return null;
         }
-        return userRounds.stream().map(PlayerResultDTO::from).toList();
+        return userRounds.stream().map(PlayerRoundResultDTO::from).toList();
     }
 
-    @Getter
-    @AllArgsConstructor
-    public static class PlayerResultDTO {
 
-        private Integer userId;
-        private Integer pointsScored;
-
-        public static PlayerResultDTO from(UserRound userRound){
-            return new PlayerResultDTO(userRound.getUser().getId(), userRound.getPointsEarned());
-        }
-
-    }
 
     @Getter
     @AllArgsConstructor

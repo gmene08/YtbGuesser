@@ -1,6 +1,6 @@
 import { Component, input, output } from '@angular/core';
-import { RoomResponse } from '../../../../dtos/room.dto';
 import { PlayerCard } from '../player-card/player-card';
+import { RoomState } from '../../../../models/room.state';
 
 @Component({
   selector: 'app-room-player-list',
@@ -16,7 +16,7 @@ export class RoomPlayerList {
       'player.id'[playerNickname] =
       'player.nickname'(onKickPlayer) =
         'kickPlayer($event)');*/
-  room = input.required<RoomResponse | null>();
+  room = input.required<RoomState | null>();
   isOwner = input.required<boolean>();
 
   onKickPlayer = output<number>();

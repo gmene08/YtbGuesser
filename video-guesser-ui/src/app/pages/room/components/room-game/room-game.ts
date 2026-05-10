@@ -9,8 +9,6 @@ import {
   signal,
   ViewChild,
 } from '@angular/core';
-import { RoomResponse } from '../../../../dtos/room.dto';
-import { MatchDataResponse } from '../../../../dtos/match.dto';
 import { MatchService } from '../../../../services/match';
 import { PlayerLeaderboard } from './components/player-leaderboard/player-leaderboard';
 import { UserGuessRequest } from '../../../../dtos/round.dto';
@@ -18,6 +16,7 @@ import { RoundService } from '../../../../services/round';
 import { Video } from './components/video/video';
 import { GameWebsocketService } from '../../../../services/websocket/game-websocket';
 import { RoundStatus } from '../../../../enums/round-status.enum';
+import { RoomState } from '../../../../models/room.state';
 
 @Component({
   selector: 'app-room-game',
@@ -35,7 +34,7 @@ export class RoomGame implements OnInit, OnDestroy {
 
   @ViewChild(Video) videoPlayer!: Video;
 
-  roomData = input.required<RoomResponse | null>();
+  roomData = input.required<RoomState | null>();
 
   matchData = computed(() => this.gameService.matchData());
   roundData = computed(() => this.gameService.roundData());

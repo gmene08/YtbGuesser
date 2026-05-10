@@ -1,9 +1,8 @@
 import { Component, input } from '@angular/core';
-import { PlayerCard } from '../../../player-card/player-card';
 import { PlayerScore } from '../player-score/player-score';
-import { RoomResponse } from '../../../../../../dtos/room.dto';
-import { MatchDataResponse } from '../../../../../../dtos/match.dto';
 import { RoundStatus } from '../../../../../../enums/round-status.enum';
+import { RoomState } from '../../../../../../models/room.state';
+import { MatchState } from '../../../../../../models/match.state';
 
 @Component({
   selector: 'app-player-leaderboard',
@@ -13,9 +12,9 @@ import { RoundStatus } from '../../../../../../enums/round-status.enum';
   standalone: true,
 })
 export class PlayerLeaderboard {
-  roomData = input.required<RoomResponse | null>();
+  roomData = input.required<RoomState | null>();
   playersWhoGuessed = input.required<number[]>();
-  matchData = input.required<MatchDataResponse | null>();
+  matchData = input.required<MatchState | null>();
 
   getPlayerRoundScore(userId: number):number{
     const match = this.matchData();

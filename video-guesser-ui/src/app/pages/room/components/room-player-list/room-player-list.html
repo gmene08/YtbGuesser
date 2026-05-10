@@ -5,11 +5,11 @@
 
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
     @if (room(); as room) {
-      @for (player of room.players; track player.id) {
+      @for (player of room.players; track player.userId) {
         <app-player-card
           [isOwner]="isOwner()"
           [ownerId]="room.ownerId"
-          [playerId]="player.id"
+          [playerId]="player.userId"
           [playerNickname]="player.nickname"
           (onKickPlayer)="handleKickPlayer($event)"
         ></app-player-card>

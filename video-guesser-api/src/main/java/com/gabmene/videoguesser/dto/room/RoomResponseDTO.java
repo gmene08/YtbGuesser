@@ -1,5 +1,6 @@
 package com.gabmene.videoguesser.dto.room;
 
+import com.gabmene.videoguesser.dto.player.PlayerDTO;
 import com.gabmene.videoguesser.entity.Room;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,12 +19,6 @@ public class RoomResponseDTO {
     private Integer ownerId;
     private Integer currentPlayers;
 
-    @Getter
-    @AllArgsConstructor
-    public static class PlayerDTO {
-        private Integer id;
-        private String nickname;
-    }
 
     public static RoomResponseDTO from(Room room) {
         List<PlayerDTO> players = mapPlayers(room);

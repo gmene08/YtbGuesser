@@ -1,7 +1,7 @@
 import { Component, input, output, OnInit, signal, inject } from '@angular/core';
 import { RoomService } from '../../../../services/room';
 import { MatchConfigRequest } from '../../../../dtos/match.dto';
-import { RoomResponse } from '../../../../dtos/room.dto';
+import { RoomState } from '../../../../models/room.state';
 
 
 @Component({
@@ -16,7 +16,7 @@ export class RoomSettings implements OnInit {
 
   saveMaxPlayersErrorMessage = input.required<string>();
   startGameErrorMessage = input.required<string>();
-  room = input<RoomResponse | null>(null);
+  room = input<RoomState | null>(null);
   isOwner = input.required<boolean>();
 
   onStartGame = output<MatchConfigRequest>();

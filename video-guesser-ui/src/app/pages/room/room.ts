@@ -2,13 +2,13 @@ import { Component, computed, effect, inject, OnInit, signal } from '@angular/co
 import { ActivatedRoute, Router } from '@angular/router';
 import { RoomSettings } from './components/room-settings/room-settings';
 import { RoomService } from '../../services/room';
-import { PlayerResponse, RoomResponse } from '../../dtos/room.dto';
-import { MatchConfigRequest, MatchDataResponse } from '../../dtos/match.dto';
+import { MatchConfigRequest } from '../../dtos/match.dto';
 import { RoomPlayerList } from './components/room-player-list/room-player-list';
 import { NavBar } from '../../components/nav-bar/nav-bar';
 import { RoomHeader } from './components/room-header/room-header';
 import { RoomGame } from './components/room-game/room-game';
 import { LobbyWebsocket } from '../../services/websocket/lobby-websocket';
+import { Player } from '../../models/room.state';
 
 @Component({
   selector: 'app-room',
@@ -52,7 +52,7 @@ export class Room implements OnInit {
 
       const room = this.roomData();
 
-      const IsUserStillInRoom = room?.players.some(player => player.id === this.currentUserId) ?? false;
+      const IsUserStillInRoom = room?.players.some(player => player.userId === this.currentUserId) ?? false;
       if (!IsUserStillInRoom) {
         console.log('User not in this room');
         this.lobbyService.disconnectFromLobby();
@@ -87,7 +87,7 @@ export class Room implements OnInit {
 
     this.roomService.getRoomByCode(code).subscribe({
       next: (response) =>{
-        const isUserInThisRoom = response.players.some(player => player.id === this.currentUserId) ?? false;
+        const isUserInThisRoom = response.players.some(player => player.userId === this.currentUserId) ?? false;
         if (!isUserInThisRoom) {
           console.log('User not in this room');
           this.rt.navigate(['/']);
@@ -135,10 +135,10 @@ export class Room implements OnInit {
     });
   }
 
-  sortPlayers(players: PlayerResponse[], currentOwnerId: number) {
+  sortPlayers(players: Player[], currentOwnerId: number) {
     return players.sort((a, b) => {
-      if (a.id === currentOwnerId) return -1;
-      if (b.id === currentOwnerId) return 1;
+      if (a.userId === currentOwnerId) return -1;
+      if (b.userId === currentOwnerId) return 1;
       return 0;
     });
   }
