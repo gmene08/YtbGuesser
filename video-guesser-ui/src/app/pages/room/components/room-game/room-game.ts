@@ -17,10 +17,12 @@ import { Video } from './components/video/video';
 import { GameWebsocketService } from '../../../../services/websocket/game-websocket';
 import { RoundStatus } from '../../../../enums/round-status.enum';
 import { RoomState } from '../../../../models/room.state';
+import { VideoDetails } from './components/video-details/video-details';
+import { ChatBox, LogMessage } from './components/chat-box/chat-box';
 
 @Component({
   selector: 'app-room-game',
-  imports: [PlayerLeaderboard, Video],
+  imports: [PlayerLeaderboard, Video, VideoDetails, ChatBox],
   templateUrl: './room-game.html',
   styleUrl: './room-game.css',
   standalone: true,
@@ -47,44 +49,48 @@ export class RoomGame implements OnInit, OnDestroy {
     return this.playersWhoGuessed().includes(this.currentUserId);
   });
 
-  isRoundActive = computed(() => this.roundStatus() === 'GUESSING');
+  isRoundActive = computed(() => this.roundStatus() === RoundStatus.Guessing);
 
   videoUrl = computed(() => {
-    return this.roundData()?.video?.url;
+    const round = this.roundData();
+    if (!round) return null;
+    return round.video.url;
   });
 
   roundStatus = computed(() => {
-    return this.roundData()?.roundStatus;
+    const round = this.roundData();
+    if (!round) return null;
+
+    return round.roundStatus;
   });
-  private previousStatus: string | undefined = undefined;
+
+  private previousStatus: RoundStatus | null = null;
 
   userGuess = signal<number>(0);
 
   timeLeft = signal<number>(30);
   videoStartTime = signal<number>(0);
 
+  activityLogs = signal<LogMessage[]>([]);
+
   constructor() {
     effect(() => {
       const currentStatus = this.roundStatus();
 
-      // Se o status for o mesmo de antes, aborta! Não roda os timers de novo.
       if (currentStatus === this.previousStatus) {
         return;
       }
 
-      // Se mudou para GUESSING
-      if (currentStatus === 'GUESSING') {
+      if (currentStatus === RoundStatus.Guessing) {
         console.log('Status changed to GUESSING, starting timer...');
         this.startRoundTimer();
       }
 
-      // Se mudou para FINISHED
-      if (currentStatus === 'FINISHED') {
+      if (currentStatus === RoundStatus.Finished) {
         console.log('Status changed to FINISHED, stopping timer...');
         this.endRoundTimer();
       }
 
-      // Atualiza o rastreador
       this.previousStatus = currentStatus;
     });
   }
@@ -153,7 +159,7 @@ export class RoomGame implements OnInit, OnDestroy {
     const roundId = this.roundData()?.roundId;
     if (!roundId) return;
 
-    if (this.roundStatus() !== 'PREPARING') return;
+    if (this.roundStatus() !== RoundStatus.Preparing) return;
 
     this.roundService
       .changeRoundStatus(roundId, {
@@ -201,7 +207,7 @@ export class RoomGame implements OnInit, OnDestroy {
     const roundId = this.roundData()?.roundId;
     if (!roundId) return;
 
-    if (this.roundStatus() !== 'GUESSING') return;
+    if (this.roundStatus() !== RoundStatus.Guessing) return;
 
     if (this.currentUserId != this.roomData()?.ownerId) {
       return;
@@ -249,5 +255,13 @@ export class RoomGame implements OnInit, OnDestroy {
     const now = new Date().getTime();
 
     return Math.ceil((endsAtTime - now) / 1000);
+  }
+
+  addLog(text: string, type: 'info' | 'error' | 'success' = 'info'){
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    this.activityLogs.update(logs => [
+      ...logs,
+      {type, text, time}
+    ])
   }
 }

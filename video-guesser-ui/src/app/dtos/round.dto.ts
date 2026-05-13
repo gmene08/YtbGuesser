@@ -9,6 +9,8 @@ export interface ActiveRoundResponse {
   video: ActiveVideoResponse;
   endsAt: string;
   videoStartsAtSecond: number;
+
+  roundDetails?: EndOfRoundResponse; // Only available when round status is finished
 }
 
 export interface EndOfRoundResponse {

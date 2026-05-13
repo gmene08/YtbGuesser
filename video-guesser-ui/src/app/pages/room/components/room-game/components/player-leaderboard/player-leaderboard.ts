@@ -19,11 +19,11 @@ export class PlayerLeaderboard {
   getPlayerRoundScore(userId: number):number{
     const match = this.matchData();
 
-    if(!match?.currentRound?.roundResult?.playersScore){
+    if(!match?.currentRound?.roundDetails?.playersScore){
       return 0;
     }
 
-    const result = match.currentRound.roundResult.playersScore.find(player => player.userId === userId);
+    const result = match.currentRound.roundDetails.playersScore.find(player => player.userId === userId);
 
     return result?.pointsScored || 0;
 

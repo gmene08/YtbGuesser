@@ -27,6 +27,8 @@ public class ActiveRoundResponseDTO {
     private Instant endsAt;
     private Integer videoStartsAtSecond;
 
+    private RoundResultResponseDTO roundDetails;
+
     public static ActiveRoundResponseDTO from(Round round) {
         if(round == null)
             return null;
@@ -34,7 +36,20 @@ public class ActiveRoundResponseDTO {
         ActiveVideoResponseDTO video = ActiveVideoResponseDTO.from(round.getVideo());
         List<Integer> guesses = mapGuesses(round);
 
-        return new ActiveRoundResponseDTO(round.getId(), round.getRoundNumber(), round.getStatus(), guesses, video, round.getEndsAt(), round.getVideoStartsAtSecond() );
+
+        // if the round is finished, include the round result -- This is so that the client can display the result when he F5s during the finished round
+        RoundResultResponseDTO roundResult = null;
+        if (round.getStatus().equals(RoundStatus.FINISHED)) {
+            roundResult = RoundResultResponseDTO.from(round);
+        }
+
+        return new ActiveRoundResponseDTO(round.getId(),
+                round.getRoundNumber(),
+                round.getStatus(),
+                guesses,
+                video, round.getEndsAt(),
+                round.getVideoStartsAtSecond(),
+                roundResult );
     }
 
     private static List<Integer> mapGuesses(Round round) {

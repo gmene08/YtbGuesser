@@ -23,9 +23,9 @@ export class Video {
   @ViewChild(YouTubePlayer) private videoPlayer!: YouTubePlayer;
   private el = inject(ElementRef)
 
-  roundStatus = input.required<string | undefined>();
-  videoUrl = input.required<string | undefined>();
-  videoStartTime = input.required<number | undefined>();
+  roundStatus = input.required<string | null>();
+  videoUrl = input.required<string | null>();
+  videoStartTime = input.required<number | null>();
 
   isMuted = signal(true);
   startRoundTimer = output<void>();

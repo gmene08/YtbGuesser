@@ -1,0 +1,29 @@
+<div class="flex flex-col h-full w-full">
+  <div class="flex justify-start mb-4">
+    <h2 class="text-sm font-bold text-gray-400 uppercase tracking-widest border-b border-gray-200 pb-1 w-full">
+      Activity Log
+    </h2>
+  </div>
+
+  <div #scrollContainer class="flex-1 overflow-y-auto pr-2 flex flex-col gap-3 custom-scrollbar">
+
+    @if (logs().length === 0) {
+      <div class="text-center text-gray-400 text-sm mt-10 italic">
+        Waiting for activity...
+      </div>
+    }
+
+    @for (log of logs(); track $index) {
+      <div class="text-sm p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-1"
+           [class.bg-blue-50]="log.type === 'info'"
+           [class.bg-green-50]="log.type === 'success'"
+           [class.bg-yellow-50]="log.type === 'error'">
+
+        <span class="text-[10px] text-gray-400 font-bold">{{ log.time }}</span>
+        <span class="text-gray-700 font-medium">{{ log.text }}</span>
+
+      </div>
+    }
+
+  </div>
+</div>

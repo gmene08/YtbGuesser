@@ -12,7 +12,9 @@ export class GameWebsocketService {
 
   matchData = signal<MatchState | null>(null);
   roundData = computed(()=>{
-    return this.matchData()?.currentRound;
+    const match = this.matchData();
+    if(!match) return null;
+    return match.currentRound;
   });
 
   connect(roundId: number, matchId:number) {

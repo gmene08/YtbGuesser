@@ -12,14 +12,14 @@ export class Timer{
   countdown = signal<number>(3);
   showGo = signal<boolean>(false);
   showWaitingForHost = signal<boolean>(false);
-  roundStatus = input.required<string | undefined>();
+  roundStatus = input.required<string | null>();
 
   onFinish = output<void>();
 
   constructor() {
     effect(()=>{
-      if(this.roundStatus() === 'PREPARING') this.startCountdown();
-      if(this.roundStatus() === 'GUESSING') this.showWaitingForHost.set(false);
+      if(this.roundStatus() === RoundStatus.Preparing) this.startCountdown();
+      if(this.roundStatus() === RoundStatus.Finished) this.showWaitingForHost.set(false);
     })
   }
 
