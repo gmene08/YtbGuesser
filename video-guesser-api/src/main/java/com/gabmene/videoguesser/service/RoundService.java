@@ -15,6 +15,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.Map;
 import java.util.Random;
@@ -95,11 +97,6 @@ public class RoundService {
         return roundUpdated;
     }
 
-    private void sendRoundUpdate(Round round) {
-        ActiveRoundResponseDTO roundData = ActiveRoundResponseDTO.from(round);
-        messagingTemplate.convertAndSend("/topic/game/round/" + round.getId() + "/round-status", roundData);
-    }
-
     private Integer generateRandomStart(Round round){
         Integer roundDuration = AppConstants.ROUND_GUESSING_DURATION_SECONDS;
         Integer videoDuration = round.getVideo().getDurationSeconds() != null ? round.getVideo().getDurationSeconds() : 0;
@@ -112,6 +109,24 @@ public class RoundService {
             startsAt = new Random().nextInt(maxStart);
         }
         return startsAt;
+
+    }
+
+    private void sendRoundUpdate(Round round) {
+
+        ActiveRoundResponseDTO roundData = ActiveRoundResponseDTO.from(round);
+
+        // check if the transaction is active, if it is, register a synchronization to send the message after the transaction is committed
+        if(TransactionSynchronizationManager.isActualTransactionActive()){
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    messagingTemplate.convertAndSend("/topic/game/round/" + round.getId() + "/round-status", roundData);
+                }
+            });
+        } else {
+            messagingTemplate.convertAndSend("/topic/game/round/" + round.getId() + "/round-status", roundData);
+        }
 
     }
 

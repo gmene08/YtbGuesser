@@ -13,6 +13,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,7 +124,19 @@ public class MatchService {
 
     private void sendMatchUpdate(Match match) {
         MatchResponseDTO matchResponseDTO = MatchResponseDTO.from(match);
-        messagingTemplate.convertAndSend("/topic/game/match/" + match.getId() + "/match-data", matchResponseDTO);
+
+        // if the transaction is active, register a synchronization to send the message after the transaction is committed
+        if(TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    messagingTemplate.convertAndSend("/topic/game/match/" + match.getId() + "/match-data", matchResponseDTO);
+                }
+            });
+        } else {
+            messagingTemplate.convertAndSend("/topic/game/match/" + match.getId() + "/match-data", matchResponseDTO);
+        }
+
     }
 
 }

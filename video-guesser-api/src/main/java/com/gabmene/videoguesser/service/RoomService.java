@@ -18,6 +18,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.Random;
@@ -152,8 +154,9 @@ public class RoomService {
         Match match = matchService.createMatch(roomStarting, request);
 
         roomStarting.setStatus(RoomStatus.PLAYING);
-        sendRoomUpdate(roomStarting);
-        return roomRepository.save(roomStarting);
+        Room savedRoom = roomRepository.save(roomStarting);
+        sendRoomUpdate(savedRoom);
+        return savedRoom;
 
     }
 
@@ -245,6 +248,17 @@ public class RoomService {
         //notify all users in the room that the room has been updated through the lobby Websocket connection
         RoomResponseDTO roomData = RoomResponseDTO.from(room);
 
-        messagingTemplate.convertAndSend("/topic/room/" + room.getCode() + "/lobby", roomData);
+        // check if the transaction is active, if it is, register a synchronization to send the message after the transaction is committed
+        if (TransactionSynchronizationManager.isActualTransactionActive()){
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    messagingTemplate.convertAndSend("/topic/room/" + room.getCode() + "/lobby", roomData);
+                }
+            });
+        } else{
+            messagingTemplate.convertAndSend("/topic/room/" + room.getCode() + "/lobby", roomData);
+        }
+
     }
 }
