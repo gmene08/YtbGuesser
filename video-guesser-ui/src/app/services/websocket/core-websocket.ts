@@ -42,14 +42,39 @@ export class CoreWebsocket {
   }
 
   public subscribe(destination: string, callback: (message: any) => void) {
+    // variable to store the subscription
+    let stompSubscription: any = null;
+
     const action = ()=>{
-      this.client.subscribe(destination, callback);
+      stompSubscription = this.client.subscribe(destination, callback);
       console.log(`[STOMP Core] Subscribed to ${destination}`);
     };
+
+    // if it is already connected, execute the action immediately. Otherwise, queue it up.
     if (this.isConnected) {
       action();
     } else {
       this.connectionQueue.push(action);
+    }
+
+    // return an unsubscribe function
+    return {
+      unsubscribe: () => {
+
+        // if the subscription is already active, unsubscribe. Otherwise, remove it from the queue.
+        if(stompSubscription){
+          stompSubscription.unsubscribe();
+          console.log(`[STOMP Core] Unsubscribed from ${destination}`);
+        }
+        else {
+          const index = this.connectionQueue.indexOf(action);
+          if (index > -1) {
+            this.connectionQueue.splice(index, 1);
+            console.log(`[STOMP Core] Removed queued subscription for ${destination} (was not connected yet)`);
+          }
+        }
+
+      }
     }
   }
 
