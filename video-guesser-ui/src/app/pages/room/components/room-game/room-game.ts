@@ -19,6 +19,7 @@ import { RoundStatus } from '../../../../enums/round-status.enum';
 import { RoomState } from '../../../../models/room.state';
 import { VideoDetails } from './components/video-details/video-details';
 import { ChatBox, LogMessage } from './components/chat-box/chat-box';
+import { retry } from 'rxjs';
 
 @Component({
   selector: 'app-room-game',
@@ -116,13 +117,17 @@ export class RoomGame implements OnInit, OnDestroy {
   }
 
   loadData(roomCode: string) {
-    this.matchService.getMatchDataByRoomCode(roomCode).subscribe({
+    this.matchService.getMatchDataByRoomCode(roomCode)
+      .pipe(
+        retry({count: 3, delay:500})
+      )
+      .subscribe({
       next: (response) => {
         console.log('Match data loaded: ', response);
         this.gameService.matchData.set(response);
 
         // connect to websocket
-        this.gameService.connect(this.roundData()?.roundId || 0, this.matchData()?.matchId || 0);
+        this.gameService.connectToMatch(this.roundData()?.roundId || 0, this.matchData()?.matchId || 0);
       },
 
       error: (error) => {

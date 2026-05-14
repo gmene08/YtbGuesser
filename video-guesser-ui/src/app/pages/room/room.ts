@@ -9,6 +9,7 @@ import { RoomHeader } from './components/room-header/room-header';
 import { RoomGame } from './components/room-game/room-game';
 import { LobbyWebsocket } from '../../services/websocket/lobby-websocket';
 import { Player } from '../../models/room.state';
+import { retry } from 'rxjs';
 
 @Component({
   selector: 'app-room',
@@ -85,8 +86,13 @@ export class Room implements OnInit {
     this.roomCode.set(code);
     console.log('Room code: ', code);
 
-    this.roomService.getRoomByCode(code).subscribe({
+    this.roomService.getRoomByCode(code)
+      .pipe(
+        retry({count:3, delay:500})
+      )
+      .subscribe({
       next: (response) =>{
+
         const isUserInThisRoom = response.players.some(player => player.userId === this.currentUserId) ?? false;
         if (!isUserInThisRoom) {
           console.log('User not in this room');
