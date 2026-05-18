@@ -32,6 +32,13 @@ public class MatchController {
         return ResponseEntity.ok(MatchResponseDTO.from(match));
     }
 
+    @DeleteMapping("/{matchId}/end")
+    public ResponseEntity<Void> endMatch(@PathVariable Integer matchId, @RequestParam Integer userId){
+        matchService.endMatch(matchId, userId);
+        return ResponseEntity.ok().build();
+    }
+
+
 
 
 }

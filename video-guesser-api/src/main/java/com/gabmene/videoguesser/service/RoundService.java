@@ -34,8 +34,9 @@ public class RoundService {
 
     private final RoundRepository roundRepository;
     private final VideoRepository videoRepository;
-    private final UserMatchRepository userMatchRepository;
+
     private final GameService gameService;
+    private final GameNotificationService gameNotificationService;
 
     @Transactional
     public void createRound(Match match, Integer roundNumber){
@@ -83,7 +84,7 @@ public class RoundService {
 
         // if the round is to be updated to guessing state, set the end time to 30 seconds from now
         if(request.getStatus() == RoundStatus.GUESSING) {
-            roundToBeUpdated.setEndsAt(Instant.now().plusSeconds(30));
+            roundToBeUpdated.setEndsAt(Instant.now().plusSeconds(AppConstants.ROUND_GUESSING_DURATION_SECONDS));
         }
 
         // if the round is to be updated to finished state, process the round results and send the results
@@ -92,7 +93,7 @@ public class RoundService {
         }
 
         Round roundUpdated = roundRepository.save(roundToBeUpdated);
-        sendRoundUpdate(roundUpdated);
+        gameNotificationService.sendRoundUpdate(roundUpdated);
 
         return roundUpdated;
     }
@@ -112,22 +113,6 @@ public class RoundService {
 
     }
 
-    private void sendRoundUpdate(Round round) {
 
-        ActiveRoundResponseDTO roundData = ActiveRoundResponseDTO.from(round);
-
-        // check if the transaction is active, if it is, register a synchronization to send the message after the transaction is committed
-        if(TransactionSynchronizationManager.isActualTransactionActive()){
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    messagingTemplate.convertAndSend("/topic/game/round/" + round.getId() + "/round-status", roundData);
-                }
-            });
-        } else {
-            messagingTemplate.convertAndSend("/topic/game/round/" + round.getId() + "/round-status", roundData);
-        }
-
-    }
 
 }

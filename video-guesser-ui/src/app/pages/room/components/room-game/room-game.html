@@ -1,79 +1,110 @@
-<header class="w-full max-w-screen-2xl mx-auto flex justify-between items-center mb-3 px-4">
-  <h1 class="text-3xl md:text-4xl font-black tracking-tight text-gray-800 uppercase">
-    Youtube <span class="text-red-600">Guesser</span>
-  </h1>
+@if (matchData()?.status === MatchStatus.Playing) {
+  <header class="w-full max-w-screen-2xl mx-auto flex justify-between items-center px-4">
+    <h1 class="text-3xl md:text-4xl font-black tracking-tight text-gray-800 uppercase">
+      Youtube <span class="text-red-600">Guesser</span>
+    </h1>
 
-  <div class="px-6 py-2 bg-red-100 text-red-700 font-black rounded-full text-xl border-2 border-red-200 shadow-sm">
-    ROUND {{matchData()?.roundNumber}} <span class="opacity-50 font-bold">/ {{matchData()?.maxRounds}}</span>
-  </div>
-</header>
-
-<main class="flex flex-col xl:flex-row gap-6 w-full max-w-screen-2xl mx-auto h-full items-stretch px-4 pb-8">
-  <aside class="w-full xl:w-72 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col flex flex-col p-4 pt-4 rounded-lg">
-    <app-player-leaderboard
-      class="flex-grow w-full"
-      [roomData]="roomData()"
-      [matchData] = "matchData()"
-      [playersWhoGuessed]="playersWhoGuessed()"
+    <div
+      class="px-6 py-2 bg-red-100 text-red-700 font-black rounded-full text-xl border-2 border-red-200 shadow-sm"
     >
-    </app-player-leaderboard>
-  </aside>
-
-  <section class="flex-1 flex flex-col gap-6 items-center">
-
-    <app-video
-      class="w-full max-w-4xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl relative"
-      [roundStatus]="roundStatus()"
-      [videoUrl]="videoUrl()"
-      [videoStartTime]="videoStartTime()"
-      (startRoundTimer)="startRound()"
-    ></app-video>
-
-    @if (isRoundActive()) {
-      <div class="flex items-center gap-3 text-2xl font-black transition-colors"
-           [class.text-red-600]="timeLeft() <= 10"
-           [class.text-gray-800]="timeLeft() > 10"
-           [class.animate-pulse]="timeLeft() <= 5">
-        <span>⏱️</span>
-        <span>00:{{ timeLeft() < 10 ? '0' + timeLeft() : timeLeft() }}</span>
-      </div>
-    }
-
-    <div class="w-full max-w-2xl bg-white p-2 rounded-xl shadow-lg border border-gray-200 flex items-center transition-all focus-within:ring-4 focus-within:ring-red-100 focus-within:border-red-400"
-         [class.opacity-50]="!isRoundActive()"> <div class="pl-4 text-gray-400 text-2xl">👁️</div>
-
-      <input
-        type="number"
-        placeholder="How many views?"
-        (input)="userGuess.set(+($any($event.target).value || 0))"
-        [disabled]="!isRoundActive()"
-        class="flex-1 bg-transparent px-4 py-3 outline-none text-2xl font-black text-gray-700 text-center placeholder:text-gray-300 disabled:cursor-not-allowed"
-      />
-
-      <button
-        [disabled]="!isRoundActive() || hasUserGuessedThisRound()"
-        (click)="guess()"
-        class="px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-lg shadow-md transition transform active:scale-95 disabled:bg-gray-400 disabled:active:scale-100 disabled:cursor-not-allowed">
-        {{ hasUserGuessedThisRound() ? 'WAITING...' : 'GUESS' }}
-      </button>
+      ROUND {{ matchData()?.roundNumber }}
+      <span class="opacity-50 font-bold">/ {{ matchData()?.maxRounds }}</span>
     </div>
+  </header>
 
-  </section>
-
-  <aside >
-    <div class="flex flex-col gap-6 w-full xl:w-80 h-full">
-      <app-video-details
-        class = "w-full xl:w-80 font-bold"
-        [roundData]="roundData()"
-        [roundStatus]="roundStatus()"
-      ></app-video-details>
-
-      <app-chat-box
-        class = "w-full h-full xl:w-80 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col flex p-4 pt-4 rounded-lg"
-        [logs] = "activityLogs()"
+  <main
+    class="flex flex-col xl:flex-row gap-6 w-full max-w-screen-2xl mx-auto h-full items-stretch px-4"
+  >
+    <aside
+      class="w-full xl:w-72 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col flex flex-col p-4 pt-4 rounded-lg"
+    >
+      <app-player-leaderboard
+        class="flex-grow w-full"
+        [roomData]="roomData()"
+        [matchData]="matchData()"
+        [playersWhoGuessed]="playersWhoGuessed()"
       >
-      </app-chat-box>
-    </div>
-  </aside>
+      </app-player-leaderboard>
+    </aside>
 
-</main>
+    <section class="flex-1 flex flex-col gap-6 items-center">
+      <app-video
+        class="w-full max-w-4xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl relative"
+        [roundStatus]="roundStatus()"
+        [videoUrl]="videoUrl()"
+        [videoStartTime]="videoStartTime()"
+        (startRoundTimer)="startRound()"
+      ></app-video>
+
+      @if (isRoundActive()) {
+        <div
+          class="flex items-center gap-3 text-2xl font-black transition-colors"
+          [class.text-red-600]="timeLeft() <= 10"
+          [class.text-gray-800]="timeLeft() > 10"
+          [class.animate-pulse]="timeLeft() <= 5"
+        >
+          <span>⏱️</span>
+          <span>00:{{ timeLeft() < 10 ? '0' + timeLeft() : timeLeft() }}</span>
+        </div>
+      }
+
+      <div
+        class="w-full max-w-2xl bg-white p-2 rounded-xl shadow-lg border border-gray-200 flex items-center transition-all focus-within:ring-4 focus-within:ring-red-100 focus-within:border-red-400"
+        [class.opacity-50]="!isRoundActive()"
+      >
+        <div class="pl-4 text-gray-400 text-2xl">👁️</div>
+
+        <input
+          type="number"
+          placeholder="How many views?"
+          (input)="userGuess.set(+($any($event.target).value || 0))"
+          [disabled]="!isRoundActive()"
+          class="flex-1 bg-transparent px-4 py-3 outline-none text-2xl font-black text-gray-700 text-center placeholder:text-gray-300 disabled:cursor-not-allowed"
+        />
+
+        @if (roundStatus() === RoundStatus.Finished) {
+          <button
+            [disabled]="!isUserOwner()"
+            (click)="changeToNextRound()"
+            class="px-8 py-4 bg-green-500 hover:bg-green-600 text-white font-bold text-xl rounded-lg shadow-md transition transform active:scale-95 disabled:bg-gray-400 disabled:active:scale-100 disabled:cursor-not-allowed"
+          >
+            {{ isUserOwner() ? 'NEXT ROUND' : 'WAITING...' }}
+          </button>
+        } @else {
+          <button
+            [disabled]="!isRoundActive() || hasUserGuessedThisRound()"
+            (click)="guess()"
+            class="px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-bold text-xl rounded-lg shadow-md transition transform active:scale-95 disabled:bg-gray-400 disabled:active:scale-100 disabled:cursor-not-allowed"
+          >
+            {{ hasUserGuessedThisRound() ? 'WAITING...' : 'GUESS' }}
+          </button>
+        }
+      </div>
+    </section>
+
+    <aside>
+      <div class="flex flex-col gap-6 w-full xl:w-80 h-full">
+        <app-video-details
+          class="w-full xl:w-80 font-bold"
+          [roundData]="roundData()"
+          [roundStatus]="roundStatus()"
+        ></app-video-details>
+
+        <app-chat-box
+          class="w-full h-full xl:w-80 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col flex p-4 pt-4 rounded-lg"
+          [logs]="activityLogs()"
+        >
+        </app-chat-box>
+      </div>
+    </aside>
+  </main>
+} @else if (matchData()?.status === MatchStatus.Results) {
+  <app-results
+    [matchData]="matchData()"
+    [isUserOwner]="isUserOwner()"
+    [currentUserId]="currentUserId"
+    (backToLobby)="endMatch()"
+  >
+
+  </app-results>
+}

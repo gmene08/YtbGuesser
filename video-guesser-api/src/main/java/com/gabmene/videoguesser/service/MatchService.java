@@ -2,10 +2,11 @@ package com.gabmene.videoguesser.service;
 
 import com.gabmene.videoguesser.dto.match.MatchConfigRequestDTO;
 import com.gabmene.videoguesser.dto.match.MatchResponseDTO;
-import com.gabmene.videoguesser.dto.round.ActiveRoundResponseDTO;
+import com.gabmene.videoguesser.dto.room.RoomResponseDTO;
 import com.gabmene.videoguesser.entity.*;
 import com.gabmene.videoguesser.enums.MatchCategory;
 import com.gabmene.videoguesser.enums.MatchStatus;
+import com.gabmene.videoguesser.enums.RoomStatus;
 import com.gabmene.videoguesser.exception.BusinessException;
 import com.gabmene.videoguesser.exception.ResourceNotFoundException;
 import com.gabmene.videoguesser.repository.*;
@@ -16,8 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -31,13 +32,16 @@ public class MatchService {
     private final SimpMessagingTemplate messagingTemplate;
 
     private final RoundService roundService;
+    private final GameNotificationService gameNotificationService;
+
 
     @Transactional
     public Match createMatch(Room roomStarting, MatchConfigRequestDTO request){
 
         Match newMatch = new Match();
 
-        Optional<Match> activeMatch = matchRepository.findByRoomAndStatus(roomStarting, MatchStatus.PLAYING);
+        // if there is already a not finished match in the room, return the existing match
+        Optional<Match> activeMatch = matchRepository.findByRoomAndStatusInOrderByIdDesc(roomStarting,List.of(MatchStatus.PLAYING, MatchStatus.RESULTS) );
         if(activeMatch.isPresent()) {
             return activeMatch.get();
         }
@@ -97,7 +101,7 @@ public class MatchService {
         // if the current round is the last round, set the match status to FINISHED -- otherwise, increment the current round
         int currentRound = match.getCurrentRound();
         if(currentRound >= match.getNumberOfRounds()) {
-            match.setStatus(MatchStatus.FINISHED);
+            match.setStatus(MatchStatus.RESULTS);
         }
         else {
             match.setCurrentRound(currentRound + 1);
@@ -106,7 +110,7 @@ public class MatchService {
         // save the match
         Match savedMatch = matchRepository.save(match);
 
-        sendMatchUpdate(match);
+        gameNotificationService.sendMatchUpdate(match);
 
         return savedMatch;
     }
@@ -114,7 +118,7 @@ public class MatchService {
     public Match getMatchByRoomCode(String roomCode){
         Room room = roomRepository.findByCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Room not Found"));
 
-        return matchRepository.findByRoomAndStatus(room, MatchStatus.PLAYING).orElseThrow(()-> new ResourceNotFoundException("Match not Found"));
+        return matchRepository.findByRoomAndStatusInOrderByIdDesc(room, List.of(MatchStatus.PLAYING, MatchStatus.RESULTS)).orElseThrow(()-> new ResourceNotFoundException("Match not Found"));
     }
 
     public Match getMatchById(Integer matchId){
@@ -122,21 +126,32 @@ public class MatchService {
         return matchRepository.findById(matchId).orElseThrow(()-> new ResourceNotFoundException("Match not Found"));
     }
 
-    private void sendMatchUpdate(Match match) {
-        MatchResponseDTO matchResponseDTO = MatchResponseDTO.from(match);
 
-        // if the transaction is active, register a synchronization to send the message after the transaction is committed
-        if(TransactionSynchronizationManager.isActualTransactionActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    messagingTemplate.convertAndSend("/topic/game/match/" + match.getId() + "/match-data", matchResponseDTO);
-                }
-            });
-        } else {
-            messagingTemplate.convertAndSend("/topic/game/match/" + match.getId() + "/match-data", matchResponseDTO);
+
+    @Transactional
+    public void endMatch(Integer matchId, Integer userId) {
+        Match match = matchRepository.findById(matchId).orElseThrow(()-> new ResourceNotFoundException("Match not Found"));
+
+        if(!Objects.equals(match.getRoom().getOwner().getId(), userId)) {
+            throw new BusinessException("User is not the owner of the room");
         }
 
-    }
+        /*
+        match.setStatus(MatchStatus.FINISHED);
+        matchRepository.save(match);*/
 
+        Room room = match.getRoom();
+
+        // if the room is in PLAYING status, set it to WAITING status -- So players can join again and return to the lobby
+        if(room.getStatus() == RoomStatus.PLAYING) {
+            room.setStatus(RoomStatus.WAITING);
+            Room roomSaved = roomRepository.save(room);
+
+            gameNotificationService.sendRoomUpdate(roomSaved);
+        }
+
+        matchRepository.delete(match); // delete the match to save database space for now
+
+
+    }
 }

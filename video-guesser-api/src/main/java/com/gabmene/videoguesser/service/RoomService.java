@@ -33,6 +33,8 @@ public class RoomService {
     private final UserRepository userRepository;
     private final MatchService matchService;
 
+    private final GameNotificationService gameNotificationService;
+
     @Transactional
     public Room createRoom(Integer ownerId) {
         // search owner
@@ -116,7 +118,7 @@ public class RoomService {
         roomJoined.addUser(userJoining);
         roomRepository.save(roomJoined);
 
-        sendRoomUpdate(roomJoined);
+        gameNotificationService.sendRoomUpdate(roomJoined);
 
         return roomJoined;
     }
@@ -155,7 +157,7 @@ public class RoomService {
 
         roomStarting.setStatus(RoomStatus.PLAYING);
         Room savedRoom = roomRepository.save(roomStarting);
-        sendRoomUpdate(savedRoom);
+        gameNotificationService.sendRoomUpdate(savedRoom);
         return savedRoom;
 
     }
@@ -201,7 +203,7 @@ public class RoomService {
         }
 
         roomRepository.save(roomLeaving);
-        sendRoomUpdate(roomLeaving);
+        gameNotificationService.sendRoomUpdate(roomLeaving);
         return roomLeaving;
     }
 
@@ -238,27 +240,27 @@ public class RoomService {
         roomToBeUpdated.setMaxPlayers(request.getMaxPlayers());
 
         Room roomUpdated = roomRepository.save(roomToBeUpdated);
-        sendRoomUpdate(roomToBeUpdated);
+        gameNotificationService.sendRoomUpdate(roomUpdated);
 
         return roomUpdated;
     }
 
-    private void sendRoomUpdate(Room room) {
 
-        //notify all users in the room that the room has been updated through the lobby Websocket connection
-        RoomResponseDTO roomData = RoomResponseDTO.from(room);
+    @Transactional
+    public Room endRoom(String roomCode, Integer userId) {
+        /*Room roomToBeEnded = roomRepository.findByCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Room not found"));
 
-        // check if the transaction is active, if it is, register a synchronization to send the message after the transaction is committed
-        if (TransactionSynchronizationManager.isActualTransactionActive()){
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    messagingTemplate.convertAndSend("/topic/room/" + room.getCode() + "/lobby", roomData);
-                }
-            });
-        } else{
-            messagingTemplate.convertAndSend("/topic/room/" + room.getCode() + "/lobby", roomData);
+        if(roomToBeEnded.getOwner() == null) {
+            throw new ResourceNotFoundException("Room owner not found");
         }
 
+        if(!roomToBeEnded.getOwner().getId().equals(userId)) {
+            throw new ForbiddenException("Only the owner can end the room");
+        }
+
+        if(roomToBeEnded.getStatus() != (RoomStatus.PLAYING) ) {}*/
+        return null;
+
     }
+
 }

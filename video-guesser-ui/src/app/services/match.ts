@@ -14,6 +14,14 @@ export class MatchService {
     return this.http.get<MatchDataResponse>(`${this.apiUrl}/?roomCode=${roomCode}`);
   }
 
+  changeToNextRound(matchId: number) {
+    return this.http.patch(`${this.apiUrl}/${matchId}/nextRound`, {});
+  }
+
+  endMatch(matchId: number) {
+    return this.http.delete(`${this.apiUrl}/${matchId}/end?userId=${sessionStorage.getItem('userId')}`, {});
+  }
+
   getMatchDataByMatchId(matchId: number) {
     return this.http.get<MatchDataResponse>(`${this.apiUrl}/${matchId}`);
   }

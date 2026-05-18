@@ -11,10 +11,12 @@ export class LobbyWebsocket {
 
   public roomData = signal<RoomState | null>(null);
 
+  private lobbySubscription: any = null;
+
   connectToLobby(roomCode: string){
     this.core.connect(); // make sure the connection is established
 
-    this.core.subscribe(`/topic/room/${roomCode}/lobby`, (message) => {
+   this.lobbySubscription =  this.core.subscribe(`/topic/room/${roomCode}/lobby`, (message) => {
       const data = JSON.parse(message.body);
       console.log('Received room data: ', data);
 
@@ -22,7 +24,10 @@ export class LobbyWebsocket {
     })
   }
   disconnectFromLobby(){
-    this.core.disconnect();
+    if(this.lobbySubscription){
+      this.lobbySubscription.unsubscribe();
+      this.lobbySubscription = null;
+    }
     this.roomData.set(null);
   }
 

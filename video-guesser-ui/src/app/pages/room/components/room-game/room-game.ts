@@ -20,10 +20,12 @@ import { RoomState } from '../../../../models/room.state';
 import { VideoDetails } from './components/video-details/video-details';
 import { ChatBox, LogMessage } from './components/chat-box/chat-box';
 import { retry } from 'rxjs';
+import { MatchStatus } from '../../../../enums/match-status';
+import { Results } from './components/results/results';
 
 @Component({
   selector: 'app-room-game',
-  imports: [PlayerLeaderboard, Video, VideoDetails, ChatBox],
+  imports: [PlayerLeaderboard, Video, VideoDetails, ChatBox, Results],
   templateUrl: './room-game.html',
   styleUrl: './room-game.css',
   standalone: true,
@@ -45,6 +47,8 @@ export class RoomGame implements OnInit, OnDestroy {
   playersWhoGuessed = computed(() => {
     return this.roundData()?.playersWhoGuessed ?? [];
   });
+
+  isUserOwner = computed(() => this.roomData()?.ownerId === this.currentUserId);
 
   hasUserGuessedThisRound = computed(() => {
     return this.playersWhoGuessed().includes(this.currentUserId);
@@ -94,10 +98,12 @@ export class RoomGame implements OnInit, OnDestroy {
 
       this.previousStatus = currentStatus;
     });
+
   }
 
   ngOnInit() {
     const roomCode = this.roomData()?.code;
+
     if (this.roomData()?.status !== 'PLAYING' || !roomCode) {
       return;
     }
@@ -117,23 +123,25 @@ export class RoomGame implements OnInit, OnDestroy {
   }
 
   loadData(roomCode: string) {
-    this.matchService.getMatchDataByRoomCode(roomCode)
-      .pipe(
-        retry({count: 3, delay:500})
-      )
+    this.matchService
+      .getMatchDataByRoomCode(roomCode)
+      .pipe(retry({ count: 3, delay: 500 }))
       .subscribe({
-      next: (response) => {
-        console.log('Match data loaded: ', response);
-        this.gameService.matchData.set(response);
+        next: (response) => {
+          console.log('Match data loaded: ', response);
+          this.gameService.matchData.set(response);
 
-        // connect to websocket
-        this.gameService.connectToMatch(this.roundData()?.roundId || 0, this.matchData()?.matchId || 0);
-      },
+          // connect to websocket
+          this.gameService.connectToMatch(
+            this.roundData()?.roundId || 0,
+            this.matchData()?.matchId || 0,
+          );
+        },
 
-      error: (error) => {
-        console.error('Error fetching match data: ', error.error?.message || 'Server error');
-      },
-    });
+        error: (error) => {
+          console.error('Error fetching match data: ', error.error?.message || 'Server error');
+        },
+      });
   }
 
   guess() {
@@ -244,7 +252,7 @@ export class RoomGame implements OnInit, OnDestroy {
     if (originalStartTime === undefined || originalStartTime === null) return;
 
     // calculates
-    const roundDuration = 30; // hard coded for now
+    const roundDuration = 5; // hard coded for now
     const secondsElapsed = roundDuration - secondsLeft;
 
     this.videoStartTime.set(originalStartTime + secondsElapsed);
@@ -262,11 +270,44 @@ export class RoomGame implements OnInit, OnDestroy {
     return Math.ceil((endsAtTime - now) / 1000);
   }
 
-  addLog(text: string, type: 'info' | 'error' | 'success' = 'info'){
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    this.activityLogs.update(logs => [
-      ...logs,
-      {type, text, time}
-    ])
+  addLog(text: string, type: 'info' | 'error' | 'success' = 'info') {
+    const time = new Date().toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+    this.activityLogs.update((logs) => [...logs, { type, text, time }]);
   }
+
+  changeToNextRound() {
+    const match = this.matchData();
+    if (!match) return;
+
+    this.matchService.changeToNextRound(match.matchId).subscribe({
+      next: () => {
+        console.log('Next round');
+      },
+      error: (error) => {
+        console.log('Error changing to next round: ', error.error?.message);
+      },
+    });
+  }
+
+  endMatch(){
+    const match = this.matchData();
+    if (!match) return;
+
+    this.matchService.endMatch(match.matchId).subscribe({
+      next: () =>{
+        console.log('Match ended, back to lobby');
+      },
+      error: (error) => {
+        console.log('Error ending match: ', error.error?.message);
+      }
+    })
+
+  }
+
+  protected readonly RoundStatus = RoundStatus;
+  protected readonly MatchStatus = MatchStatus;
 }

@@ -32,6 +32,8 @@ public class GameService {
     private final UserRoundRepository userRoundRepository;
     private final UserMatchRepository userMatchRepository;
 
+    private final GameNotificationService gameNotificationService;
+
     @Transactional
     public UserRound processGuess(Integer roundId, UserGuessRequestDTO userGuessRequest){
 
@@ -105,7 +107,7 @@ public class GameService {
             userMatchesToBeUpdated.add(userMatchToBeUpdated);
         }
         userMatchRepository.saveAll(userMatchesToBeUpdated);
-        sendRoundResults(round);
+        gameNotificationService.sendRoundResults(round);
     }
 
     public static Integer calculatePointsEarned(Long viewCount, Long userGuess){
@@ -129,8 +131,4 @@ public class GameService {
 
     }
 
-    private void sendRoundResults(Round round) {
-        RoundResultResponseDTO roundResults = RoundResultResponseDTO.from(round);
-        messagingTemplate.convertAndSend("/topic/game/round/" + round.getId() + "/round-results", roundResults);
-    }
 }

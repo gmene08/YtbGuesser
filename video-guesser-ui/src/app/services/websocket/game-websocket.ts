@@ -123,7 +123,8 @@ export class GameWebsocketService {
       this.matchSubscription = null;
     }
 
-    this.core.disconnect();
+    this.matchData.set(null);
+
   }
 
 }

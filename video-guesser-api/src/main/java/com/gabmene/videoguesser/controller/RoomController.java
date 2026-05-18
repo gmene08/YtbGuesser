@@ -51,6 +51,12 @@ public class RoomController {
         return ResponseEntity.ok(RoomResponseDTO.from(roomUpdated));
     }
 
+    @PatchMapping("/{roomCode}/end")
+    public ResponseEntity<RoomResponseDTO> endRoom(@PathVariable String roomCode, @RequestParam Integer userId) {
+
+        return null;
+    }
+
     @GetMapping("/{roomCode}")
     public ResponseEntity<RoomResponseDTO> getRoom(@PathVariable String roomCode) {
         Room room = roomService.findRoomByCode(roomCode);
