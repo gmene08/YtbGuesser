@@ -27,8 +27,8 @@ public class MatchController {
     }
 
     @PatchMapping("/{matchId}/nextRound")
-    public ResponseEntity<MatchResponseDTO> nextRound(@PathVariable Integer matchId){
-        Match match = matchService.changeToNextRound(matchId);
+    public ResponseEntity<MatchResponseDTO> nextRound(@PathVariable Integer matchId, @RequestParam Integer userId){
+        Match match = matchService.changeToNextRound(matchId, userId);
         return ResponseEntity.ok(MatchResponseDTO.from(match));
     }
 

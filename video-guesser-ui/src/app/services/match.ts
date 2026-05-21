@@ -15,7 +15,9 @@ export class MatchService {
   }
 
   changeToNextRound(matchId: number) {
-    return this.http.patch(`${this.apiUrl}/${matchId}/nextRound`, {});
+    return this.http.patch(
+      `${this.apiUrl}/${matchId}/nextRound?userId=${sessionStorage.getItem('userId')}`, {},
+    );
   }
 
   endMatch(matchId: number) {
