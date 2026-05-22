@@ -32,19 +32,17 @@ public class GameNotificationService {
         }
     }
 
-    public void sendMatchUpdate(Match match) {
-        MatchResponseDTO matchResponseDTO = MatchResponseDTO.from(match);
-
+    public void sendMatchUpdate(MatchResponseDTO match) {
         // if the transaction is active, register a synchronization to send the message after the transaction is committed
         if(TransactionSynchronizationManager.isActualTransactionActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    messagingTemplate.convertAndSend("/topic/game/match/" + match.getId() + "/match-data", matchResponseDTO);
+                    messagingTemplate.convertAndSend("/topic/game/match/" + match.getMatchId() + "/match-data", match);
                 }
             });
         } else {
-            messagingTemplate.convertAndSend("/topic/game/match/" + match.getId() + "/match-data", matchResponseDTO);
+            messagingTemplate.convertAndSend("/topic/game/match/" + match.getMatchId() + "/match-data", match);
         }
 
     }

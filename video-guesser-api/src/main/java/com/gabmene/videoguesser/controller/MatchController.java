@@ -17,19 +17,19 @@ public class MatchController {
     @GetMapping("/")
     public ResponseEntity<MatchResponseDTO> getMatchBeingPlayedByRoomCode(@RequestParam String roomCode){
         Match match = matchService.getMatchByRoomCode(roomCode);
-        return ResponseEntity.ok(MatchResponseDTO.from(match));
+        return ResponseEntity.ok(matchService.buildMatchResponseDTO(match));
     }
 
     @GetMapping("/{matchId}")
     public ResponseEntity<MatchResponseDTO> getMatchBeingPlayedByMatchId(@PathVariable Integer matchId){
         Match match = matchService.getMatchById(matchId);
-        return ResponseEntity.ok(MatchResponseDTO.from(match));
+        return ResponseEntity.ok(matchService.buildMatchResponseDTO(match));
     }
 
     @PatchMapping("/{matchId}/nextRound")
     public ResponseEntity<MatchResponseDTO> nextRound(@PathVariable Integer matchId, @RequestParam Integer userId){
         Match match = matchService.changeToNextRound(matchId, userId);
-        return ResponseEntity.ok(MatchResponseDTO.from(match));
+        return ResponseEntity.ok(matchService.buildMatchResponseDTO(match));
     }
 
     @DeleteMapping("/{matchId}/end")

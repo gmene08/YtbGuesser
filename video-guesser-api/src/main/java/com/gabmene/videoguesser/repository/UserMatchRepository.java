@@ -1,5 +1,6 @@
 package com.gabmene.videoguesser.repository;
 
+import com.gabmene.videoguesser.entity.Match;
 import com.gabmene.videoguesser.entity.User;
 import com.gabmene.videoguesser.entity.UserMatch;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,5 +21,5 @@ public interface UserMatchRepository extends JpaRepository<UserMatch,Integer> {
     @Query("SELECT um FROM UserMatch um WHERE um.user.id = :userId AND um.match.id = :matchId")
     Optional<UserMatch> findByUserIdAndMatchId(@Param("userId") Integer userId, @Param("matchId") Integer matchId);
 
-    List<UserMatch> findByMatchIdOrderByCurrentScoreDesc(Integer matchId);
+    List<UserMatch> findAllByMatchOrderByCurrentScoreDesc(Match match);
 }

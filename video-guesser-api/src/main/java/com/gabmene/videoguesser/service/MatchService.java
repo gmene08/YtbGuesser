@@ -113,7 +113,7 @@ public class MatchService {
         // save the match
         Match savedMatch = matchRepository.save(match);
 
-        gameNotificationService.sendMatchUpdate(match);
+        gameNotificationService.sendMatchUpdate(this.buildMatchResponseDTO(savedMatch));
 
         return savedMatch;
     }
@@ -156,5 +156,11 @@ public class MatchService {
         matchRepository.delete(match); // delete the match to save database space for now
 
 
+    }
+
+    public MatchResponseDTO buildMatchResponseDTO(Match match) {
+        List<UserMatch> sortedLeaderboard = userMatchRepository.findAllByMatchOrderByCurrentScoreDesc(match);
+
+        return MatchResponseDTO.from(match, sortedLeaderboard);
     }
 }

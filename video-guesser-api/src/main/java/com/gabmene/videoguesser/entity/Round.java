@@ -39,7 +39,7 @@ public class Round {
     @Column(name="ends_at")
     private Instant endsAt;
 
-    @OneToMany (mappedBy = "round", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany (mappedBy = "round",fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserRound> userGuesses;
 
     @Column(name="video_starts_at_second")

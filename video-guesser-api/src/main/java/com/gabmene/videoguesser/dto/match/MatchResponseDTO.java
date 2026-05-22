@@ -25,7 +25,7 @@ public class MatchResponseDTO {
     private ActiveRoundResponseDTO currentRound;
     private List<PlayerCurrentScoreDTO> playerLeaderboard;
 
-    public static MatchResponseDTO from(Match match) {
+    public static MatchResponseDTO from(Match match, List<UserMatch> sortedPlayerLeaderboard) {
         if (match == null) {
             return null;
         }
@@ -43,7 +43,7 @@ public class MatchResponseDTO {
                 match.getCurrentRound(),
                 match.getStatus(),
                 ActiveRoundResponseDTO.from(currentRound),
-                mapPlayers(match.getUserMatches())
+                mapPlayers(sortedPlayerLeaderboard)
         );
     }
 
@@ -51,13 +51,11 @@ public class MatchResponseDTO {
         if(userMatches == null || userMatches.isEmpty()) {
             return null;
         }
-        List<PlayerCurrentScoreDTO>  playerScoreUnsorted= userMatches
+
+        return userMatches
                 .stream()
                 .map(PlayerCurrentScoreDTO::from)
                 .toList();
-
-        // sort the list in descending order based on the total score
-        return playerScoreUnsorted.stream().sorted((a,b) -> b.getTotalScore().compareTo(a.getTotalScore())).toList();
 
     }
 
