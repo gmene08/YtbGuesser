@@ -93,7 +93,7 @@ public class RoundService {
         }
 
         Round roundUpdated = roundRepository.save(roundToBeUpdated);
-        gameNotificationService.sendRoundUpdate(roundUpdated);
+        gameNotificationService.sendRoundUpdate(ActiveRoundResponseDTO.from(roundUpdated));
 
         return roundUpdated;
     }
@@ -113,6 +113,12 @@ public class RoundService {
 
     }
 
+    public ActiveRoundResponseDTO buildActiveRoundResponseDTO(Round round){
+        return ActiveRoundResponseDTO.from(round);
+    }
 
+    public RoundResultResponseDTO buildRoundResultResponseDTO(Round round){
+        return RoundResultResponseDTO.from(round);
+    }
 
 }

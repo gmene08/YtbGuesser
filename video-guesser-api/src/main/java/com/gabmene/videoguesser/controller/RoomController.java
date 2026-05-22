@@ -28,29 +28,29 @@ public class RoomController {
 
     @PostMapping("/{ownerId}")
     public ResponseEntity<RoomResponseDTO> createRoom(@PathVariable Integer ownerId) {
-        Room newRoom = roomService.createRoom(ownerId);
-        return ResponseEntity.ok(RoomResponseDTO.from(newRoom));
+        Room room = roomService.createRoom(ownerId);
+        return ResponseEntity.ok(roomService.buildRoomResponseDTO(room));
     }
 
     @PostMapping("/join/{roomCode}")
     public ResponseEntity<RoomResponseDTO> joinRoom(@PathVariable String roomCode,@Valid @RequestBody JoinRoomRequestDTO request) {
-        Room roomJoined = roomService.joinRoom(roomCode, request);
-        RoomResponseDTO roomData = RoomResponseDTO.from(roomJoined);
-        return ResponseEntity.ok(roomData);
+        Room room = roomService.joinRoom(roomCode, request);
+        return ResponseEntity.ok(roomService.buildRoomResponseDTO(room));
     }
 
     @PatchMapping("/{roomCode}/start")
     public ResponseEntity<RoomResponseDTO> startRoom(@PathVariable String roomCode, @Valid @RequestBody MatchConfigRequestDTO request) {
         Room room = roomService.startRoom(roomCode, request);
-        return ResponseEntity.ok(RoomResponseDTO.from(room));
+        return ResponseEntity.ok(roomService.buildRoomResponseDTO(room));
     }
 
     @PatchMapping("/{roomCode}")
     public ResponseEntity<RoomResponseDTO> updateRoom(@PathVariable String roomCode,@Valid @RequestBody RoomUpdateRequestDto request) {
-        Room roomUpdated = roomService.updateRoom(roomCode, request);
-        return ResponseEntity.ok(RoomResponseDTO.from(roomUpdated));
+        Room room = roomService.updateRoom(roomCode, request);
+        return ResponseEntity.ok(roomService.buildRoomResponseDTO(room));
     }
 
+    //TODO: implement this
     @PatchMapping("/{roomCode}/end")
     public ResponseEntity<RoomResponseDTO> endRoom(@PathVariable String roomCode, @RequestParam Integer userId) {
 
@@ -60,19 +60,19 @@ public class RoomController {
     @GetMapping("/{roomCode}")
     public ResponseEntity<RoomResponseDTO> getRoom(@PathVariable String roomCode) {
         Room room = roomService.findRoomByCode(roomCode);
-        return ResponseEntity.ok(RoomResponseDTO.from(room));
+        return ResponseEntity.ok(roomService.buildRoomResponseDTO(room));
     }
 
     @DeleteMapping("/leave/{roomCode}")
     public ResponseEntity<Void> leaveRoom(@PathVariable String roomCode, @RequestParam Integer userId) {
-        Room roomLeaving = roomService.leaveRoom(roomCode, userId);
+        roomService.leaveRoom(roomCode, userId);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{roomCode}/kick/{targetUserId}")
     public ResponseEntity<RoomResponseDTO> kickPlayer(@PathVariable String roomCode, @PathVariable Integer targetUserId, @RequestParam Integer userId) {
-        Room roomUpdated = roomService.kickPlayer(userId, targetUserId, roomCode);
-        return ResponseEntity.ok(RoomResponseDTO.from(roomUpdated));
+        Room room = roomService.kickPlayer(userId, targetUserId, roomCode);
+        return ResponseEntity.ok(roomService.buildRoomResponseDTO(room));
     }
 
     @GetMapping("/categories")

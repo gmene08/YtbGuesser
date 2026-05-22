@@ -150,7 +150,7 @@ public class MatchService {
             room.setStatus(RoomStatus.WAITING);
             Room roomSaved = roomRepository.save(room);
 
-            gameNotificationService.sendRoomUpdate(roomSaved);
+            gameNotificationService.sendRoomUpdate(RoomResponseDTO.from(roomSaved));
         }
 
         matchRepository.delete(match); // delete the match to save database space for now

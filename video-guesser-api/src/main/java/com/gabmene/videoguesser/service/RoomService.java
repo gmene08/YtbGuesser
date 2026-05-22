@@ -116,11 +116,11 @@ public class RoomService {
 
         // add user to the room
         roomJoined.addUser(userJoining);
-        roomRepository.save(roomJoined);
+        Room roomSaved = roomRepository.save(roomJoined);
 
-        gameNotificationService.sendRoomUpdate(roomJoined);
+        gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
 
-        return roomJoined;
+        return roomSaved;
     }
 
     @Transactional
@@ -144,7 +144,7 @@ public class RoomService {
         if(roomStarting.getStatus() != RoomStatus.WAITING) {
             throw new ConflictException("Room has already started");
         }
-        if(roomStarting.getUsers().size() < 1) {
+        if(roomStarting.getUsers().isEmpty()) {
             throw new BusinessException("Room needs at least 1 players to start");
         }
 
@@ -156,9 +156,9 @@ public class RoomService {
         Match match = matchService.createMatch(roomStarting, request);
 
         roomStarting.setStatus(RoomStatus.PLAYING);
-        Room savedRoom = roomRepository.save(roomStarting);
-        gameNotificationService.sendRoomUpdate(savedRoom);
-        return savedRoom;
+        Room roomSaved = roomRepository.save(roomStarting);
+        gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
+        return roomSaved;
 
     }
 
@@ -202,9 +202,9 @@ public class RoomService {
 
         }
 
-        roomRepository.save(roomLeaving);
-        gameNotificationService.sendRoomUpdate(roomLeaving);
-        return roomLeaving;
+        Room roomSaved = roomRepository.save(roomLeaving);
+        gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
+        return roomSaved;
     }
 
     @Transactional
@@ -239,10 +239,10 @@ public class RoomService {
 
         roomToBeUpdated.setMaxPlayers(request.getMaxPlayers());
 
-        Room roomUpdated = roomRepository.save(roomToBeUpdated);
-        gameNotificationService.sendRoomUpdate(roomUpdated);
+        Room roomSaved = roomRepository.save(roomToBeUpdated);
+        gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
 
-        return roomUpdated;
+        return roomSaved;
     }
 
 
@@ -261,6 +261,10 @@ public class RoomService {
         if(roomToBeEnded.getStatus() != (RoomStatus.PLAYING) ) {}*/
         return null;
 
+    }
+
+    public RoomResponseDTO buildRoomResponseDTO(Room room) {
+        return RoomResponseDTO.from(room);
     }
 
 }

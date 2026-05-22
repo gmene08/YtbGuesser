@@ -21,7 +21,7 @@ public class RoundController {
     @PatchMapping("/{roundId}")
     public ResponseEntity<ActiveRoundResponseDTO> updateRound(@PathVariable Integer roundId, @Valid @RequestBody UpdateRoundRequestDTO request){
         Round round = roundService.updateRound(roundId, request);
-        return ResponseEntity.ok(ActiveRoundResponseDTO.from(round));
+        return ResponseEntity.ok(roundService.buildActiveRoundResponseDTO(round));
     }
 
 }

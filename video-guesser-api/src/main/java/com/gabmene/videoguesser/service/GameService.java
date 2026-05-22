@@ -107,7 +107,7 @@ public class GameService {
             userMatchesToBeUpdated.add(userMatchToBeUpdated);
         }
         userMatchRepository.saveAll(userMatchesToBeUpdated);
-        gameNotificationService.sendRoundResults(round);
+        gameNotificationService.sendRoundResults(round.getId(), RoundResultResponseDTO.from(round));
     }
 
     public static Integer calculatePointsEarned(Long viewCount, Long userGuess){
@@ -130,5 +130,7 @@ public class GameService {
         return Math.max(0, (int) points);
 
     }
+
+    
 
 }

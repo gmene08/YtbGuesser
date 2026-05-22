@@ -4,9 +4,6 @@ import com.gabmene.videoguesser.dto.match.MatchResponseDTO;
 import com.gabmene.videoguesser.dto.room.RoomResponseDTO;
 import com.gabmene.videoguesser.dto.round.ActiveRoundResponseDTO;
 import com.gabmene.videoguesser.dto.round.RoundResultResponseDTO;
-import com.gabmene.videoguesser.entity.Match;
-import com.gabmene.videoguesser.entity.Room;
-import com.gabmene.videoguesser.entity.Round;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -18,17 +15,16 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 public class GameNotificationService {
     private final SimpMessagingTemplate messagingTemplate;
 
-    public void sendRoomUpdate(Room room) {
-        RoomResponseDTO roomData = RoomResponseDTO.from(room);
+    public void sendRoomUpdate(RoomResponseDTO room) {
         if (TransactionSynchronizationManager.isActualTransactionActive()){
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    messagingTemplate.convertAndSend("/topic/room/" + room.getCode() + "/lobby", roomData);
+                    messagingTemplate.convertAndSend("/topic/room/" + room.getCode() + "/lobby", room);
                 }
             });
         } else {
-            messagingTemplate.convertAndSend("/topic/room/" + room.getCode() + "/lobby", roomData);
+            messagingTemplate.convertAndSend("/topic/room/" + room.getCode() + "/lobby", room);
         }
     }
 
@@ -47,27 +43,24 @@ public class GameNotificationService {
 
     }
 
-    public void sendRoundUpdate(Round round) {
-
-        ActiveRoundResponseDTO roundData = ActiveRoundResponseDTO.from(round);
+    public void sendRoundUpdate(ActiveRoundResponseDTO round) {
 
         // check if the transaction is active, if it is, register a synchronization to send the message after the transaction is committed
         if(TransactionSynchronizationManager.isActualTransactionActive()){
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    messagingTemplate.convertAndSend("/topic/game/round/" + round.getId() + "/round-status", roundData);
+                    messagingTemplate.convertAndSend("/topic/game/round/" + round.getRoundId() + "/round-status", round);
                 }
             });
         } else {
-            messagingTemplate.convertAndSend("/topic/game/round/" + round.getId() + "/round-status", roundData);
+            messagingTemplate.convertAndSend("/topic/game/round/" + round.getRoundId() + "/round-status", round);
         }
 
     }
 
 
-    public void sendRoundResults(Round round) {
-        RoundResultResponseDTO roundResults = RoundResultResponseDTO.from(round);
-        messagingTemplate.convertAndSend("/topic/game/round/" + round.getId() + "/round-results", roundResults);
+    public void sendRoundResults(Integer roundId, RoundResultResponseDTO roundResults) {
+        messagingTemplate.convertAndSend("/topic/game/round/" + roundId + "/round-results", roundResults);
     }
 }
