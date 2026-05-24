@@ -100,7 +100,7 @@ export class GameWebsocketService {
             ...match,
             currentRound: {
               ...match.currentRound,
-              roundResult: roundResults,
+              roundDetails: roundResults,
             },
           };
         });
