@@ -1,5 +1,6 @@
 package com.gabmene.videoguesser.service;
 
+import com.gabmene.videoguesser.dto.round.ActiveRoundResponseDTO;
 import com.gabmene.videoguesser.dto.round.RoundResultResponseDTO;
 import com.gabmene.videoguesser.dto.round.UserGuessRequestDTO;
 import com.gabmene.videoguesser.entity.*;
@@ -64,8 +65,8 @@ public class GameService {
 
         Long viewCount = round.getVideo().getViewCount();
         Long userGuess = userGuessRequest.getGuessedViewCount();
-
         Integer points = GameService.calculatePointsEarned(viewCount, userGuess);
+
         UserRound userRound;
         userRound = UserRound.builder()
                 .user(user)
@@ -73,6 +74,21 @@ public class GameService {
                 .lastGuess(userGuess)
                 .pointsEarned(points).build();
         userRoundRepository.save(userRound);
+
+        // get the total number of players in the match and the number of guesses made so far
+        // if the number of guesses made is equal to or greater than the total number of players, set the round status to finished
+        int totalPlayersInMatch = round.getMatch().getUserMatches().size();
+        long guessCount = userRoundRepository.countByRoundId(round.getId());
+        if(guessCount >= totalPlayersInMatch) {
+            round.setStatus(RoundStatus.FINISHED);
+            roundRepository.save(round);
+
+            this.processRoundResults(round);
+
+            gameNotificationService.sendRoundUpdate(ActiveRoundResponseDTO.from(round));
+
+        }
+
         System.out.println("User " + user.getId() + " guessed " + userGuess + " in round " + round.getId() + " and earned " + points + " points");
         return userRound;
     }

@@ -20,4 +20,6 @@ public interface UserRoundRepository extends JpaRepository<UserRound, Integer> {
              AND ur.round.id = :roundId
            """)
     boolean existsByUserIdAndRoundId(@Param("userId") Integer userId, @Param("roundId") Integer roundId);
+
+    long countByRoundId(Integer roundId);
 }
