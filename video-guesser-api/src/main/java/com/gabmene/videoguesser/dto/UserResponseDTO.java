@@ -1,15 +1,13 @@
 package com.gabmene.videoguesser.dto;
 
 import com.gabmene.videoguesser.entity.User;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class UserResponseDTO {
     private Integer id;
     private String nickname;

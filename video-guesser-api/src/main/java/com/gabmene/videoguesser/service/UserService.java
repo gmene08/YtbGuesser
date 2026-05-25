@@ -1,12 +1,16 @@
 package com.gabmene.videoguesser.service;
 
+import com.gabmene.videoguesser.dto.UserResponseDTO;
 import com.gabmene.videoguesser.entity.User;
 import com.gabmene.videoguesser.exception.BusinessException;
 import com.gabmene.videoguesser.exception.ConflictException;
 import com.gabmene.videoguesser.exception.ResourceNotFoundException;
 import com.gabmene.videoguesser.repository.UserRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final JwtService jwtService;
 
     @Transactional
     public User save(User user) {
@@ -46,12 +51,26 @@ public class UserService {
     }
 
     @Transactional
-    public User createGuest(User user) {
+    public UserResponseDTO createGuest(User user, HttpServletResponse response) {
         if (userRepository.existsByNickname(user.getNickname())) {
             throw new ConflictException("Nickname already exists");
         }
         user.setIsGuest(true);
-        return userRepository.save(user);
+        User savedGuest = userRepository.save(user);
+        String token = jwtService.generateToken(savedGuest.getId(), savedGuest.getNickname());
+
+        ResponseCookie cookie = ResponseCookie.from("auth_token", token)
+                .httpOnly(true)
+                .secure(false) // change to true when uploading to cloud
+                .path("/")
+                .maxAge(86400)
+                .sameSite("Lax")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        return UserResponseDTO.from(savedGuest);
+
     }
 
     public User loginUser(String nickname, String password){

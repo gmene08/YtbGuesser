@@ -14,7 +14,7 @@ export class Auth {
   constructor(private http: HttpClient) {}
 
   createGuest(nickname: string) {
-    return this.http.post<UserResponse>(`${this.apiUrl}/guest`, { nickname: nickname }).pipe(
+    return this.http.post<UserResponse>(`${this.apiUrl}/guest`, { nickname: nickname}).pipe(
       tap((response) => {
         sessionStorage.setItem('userId', response.id.toString());
         sessionStorage.setItem('nickname', response.nickname);
