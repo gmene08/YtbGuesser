@@ -64,7 +64,6 @@ public class UserService {
                 .httpOnly(true) // forbid client-side Angular to access the cookie
                 .secure(false) // set to true if using HTTPS
                 .path("/") // available on all paths
-                .maxAge(86400)
                 .sameSite("Lax")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
