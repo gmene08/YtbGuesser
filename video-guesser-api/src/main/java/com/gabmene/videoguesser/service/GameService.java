@@ -36,10 +36,10 @@ public class GameService {
     private final GameNotificationService gameNotificationService;
 
     @Transactional
-    public UserRound processGuess(Integer roundId, UserGuessRequestDTO userGuessRequest){
+    public UserRound processGuess(Integer roundId, UserGuessRequestDTO userGuessRequest, Integer userId){
 
         Round round = roundRepository.findById(roundId).orElseThrow(()-> new ResourceNotFoundException("Round not found"));
-        User user = userRepository.findById(userGuessRequest.getUserId()).orElseThrow(()-> new ResourceNotFoundException("User not found"));
+        User user = userRepository.findById(userId).orElseThrow(()-> new ResourceNotFoundException("User not found"));
 
         if(round.getMatch() == null){
             throw new ResourceNotFoundException("Match from round:" + roundId + " not found");

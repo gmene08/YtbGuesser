@@ -13,8 +13,6 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UserGuessRequestDTO {
 
-    @NotNull(message = "User id cannot be null")
-    private Integer userId;
 
     @NotNull(message = "Guess cannot be null")
     @Min(value = 1, message = "Guess must be greater than 0")

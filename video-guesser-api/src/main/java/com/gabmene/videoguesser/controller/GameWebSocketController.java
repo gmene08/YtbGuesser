@@ -14,6 +14,8 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 
+import java.security.Principal;
+
 @Controller
 @RequiredArgsConstructor
 public class GameWebSocketController {
@@ -21,8 +23,8 @@ public class GameWebSocketController {
 
     @MessageMapping("/game/{roundId}/guess")
     @SendTo("/topic/game/round/{roundId}/guessed-status")
-    public UserGuessResponseDTO guess(@DestinationVariable Integer roundId, @Valid @Payload UserGuessRequestDTO userGuess){
-        UserRound userRound = gameService.processGuess(roundId, userGuess);
+    public UserGuessResponseDTO guess(@DestinationVariable Integer roundId, @Valid @Payload UserGuessRequestDTO userGuess, Principal principal){
+        UserRound userRound = gameService.processGuess(roundId, userGuess, Integer.parseInt(principal.getName()));
         return UserGuessResponseDTO.from(userRound, true);
     }
 }
