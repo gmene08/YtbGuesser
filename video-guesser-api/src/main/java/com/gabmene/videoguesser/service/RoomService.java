@@ -245,7 +245,6 @@ public class RoomService {
         return roomSaved;
     }
 
-
     @Transactional
     public Room endRoom(String roomCode, Integer userId) {
         /*Room roomToBeEnded = roomRepository.findByCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Room not found"));
@@ -262,6 +261,7 @@ public class RoomService {
         return null;
 
     }
+
 
     public RoomResponseDTO buildRoomResponseDTO(Room room) {
         return RoomResponseDTO.from(room);

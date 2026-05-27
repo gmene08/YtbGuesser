@@ -21,10 +21,12 @@ public class GameNotificationService {
                 @Override
                 public void afterCommit() {
                     messagingTemplate.convertAndSend("/topic/room/" + room.getCode() + "/lobby", room);
+                    System.out.println("Sending room update to " + room.getCode());
                 }
             });
         } else {
             messagingTemplate.convertAndSend("/topic/room/" + room.getCode() + "/lobby", room);
+            System.out.println("Sending room update to " + room.getCode());
         }
     }
 

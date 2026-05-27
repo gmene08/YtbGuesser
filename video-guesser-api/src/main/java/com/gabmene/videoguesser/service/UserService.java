@@ -21,6 +21,7 @@ import java.util.List;
 public class UserService {
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final RoomService roomService;
 
     @Transactional
     public User save(User user) {
@@ -80,5 +81,19 @@ public class UserService {
         }else{
             throw new BusinessException("Wrong credentials");
         }
+    }
+
+    @Transactional
+    public void handleUserDisconnect(Integer userId) {
+        userRepository.findById(userId).ifPresent(user ->{
+            if(user.getRoom() != null) {
+                roomService.leaveRoom(user.getRoom().getCode(), userId);
+            }
+
+            if(user.getIsGuest()){
+                userRepository.delete(user);
+                System.out.println("Guest user: " + userId + " disconnected");
+            }
+        });
     }
 }
