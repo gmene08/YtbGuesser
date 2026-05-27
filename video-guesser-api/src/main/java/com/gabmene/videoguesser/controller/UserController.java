@@ -3,6 +3,7 @@ package com.gabmene.videoguesser.controller;
 import com.gabmene.videoguesser.dto.UserResponseDTO;
 import com.gabmene.videoguesser.entity.User;
 import com.gabmene.videoguesser.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +14,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:4200")
 public class UserController {
 
     private final UserService userService;
@@ -30,8 +30,8 @@ public class UserController {
     }
 
     @PostMapping("/guest")
-    public ResponseEntity<UserResponseDTO> createGuest(@RequestBody User user) {
-        User savedUser = userService.createGuest(user);
+    public ResponseEntity<UserResponseDTO> createGuest(@RequestBody User user, HttpServletResponse response) {
+        User savedUser = userService.createGuest(user, response);
         return ResponseEntity.ok(UserResponseDTO.from(savedUser));
     }
 

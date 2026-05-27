@@ -5,8 +5,12 @@ import com.gabmene.videoguesser.exception.BusinessException;
 import com.gabmene.videoguesser.exception.ConflictException;
 import com.gabmene.videoguesser.exception.ResourceNotFoundException;
 import com.gabmene.videoguesser.repository.UserRepository;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import org.springframework.security.core.token.TokenService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +20,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final JwtService jwtService;
 
     @Transactional
     public User save(User user) {
@@ -46,12 +51,24 @@ public class UserService {
     }
 
     @Transactional
-    public User createGuest(User user) {
+    public User createGuest(User user, HttpServletResponse response) {
         if (userRepository.existsByNickname(user.getNickname())) {
             throw new ConflictException("Nickname already exists");
         }
         user.setIsGuest(true);
-        return userRepository.save(user);
+        User savedGuest = userRepository.save(user);
+
+        // generate token
+        String token = jwtService.generateToken(savedGuest.getId(), savedGuest.getNickname());
+        ResponseCookie cookie = ResponseCookie.from("auth_token", token)
+                .httpOnly(true) // forbid client-side Angular to access the cookie
+                .secure(false) // set to true if using HTTPS
+                .path("/") // available on all paths
+                .maxAge(86400)
+                .sameSite("Lax")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return savedGuest;
     }
 
     public User loginUser(String nickname, String password){
