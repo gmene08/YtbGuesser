@@ -55,9 +55,12 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserResponseDTO> getCurrentUser(Principal principal) {
+    public ResponseEntity<UserResponseDTO> getCurrentUser(Principal principal, HttpServletResponse response) {
         User user = userService.findUserByPrincipal(principal);
+        userService.refreshUserCookie(principal, response); // Refresh the user cookie every time the user logs in
         return ResponseEntity.ok(UserResponseDTO.from(user));
     }
+
+
 
 }

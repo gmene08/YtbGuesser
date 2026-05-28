@@ -62,15 +62,28 @@ public class UserService {
 
         // generate token
         String token = jwtService.generateToken(savedGuest.getId(), savedGuest.getNickname());
-        ResponseCookie cookie = ResponseCookie.from("auth_token", token)
-                .httpOnly(true) // forbid client-side Angular to access the cookie
-                .secure(false) // set to true if using HTTPS
-                .path("/") // available on all paths
+        ResponseCookie cookie = this.buildCookie(token);
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return savedGuest;
+    }
+
+    public void refreshUserCookie (Principal principal, HttpServletResponse response){
+        Integer userId = Integer.parseInt(principal.getName());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        String newToken = jwtService.generateToken(user.getId(), user.getNickname());
+        ResponseCookie cookie = this.buildCookie(newToken);
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    public ResponseCookie buildCookie (String token){
+        return ResponseCookie.from("auth_token", token)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
                 .sameSite("Lax")
                 .maxAge(86400)
                 .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return savedGuest;
     }
 
     public User loginUser(String nickname, String password){
