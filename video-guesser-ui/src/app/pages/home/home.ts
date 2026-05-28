@@ -1,7 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { Login } from './components/login/login';
 import { Menu } from './components/menu/menu';
-import { inject } from 'vitest';
 import { Auth } from '../../services/auth';
 import { NavBar } from '../../components/nav-bar/nav-bar';
 
@@ -15,14 +14,24 @@ export class Home {
   constructor(private auth: Auth) {}
 
   isUserLoggedIn = signal(false);
+  private authService = inject(Auth);
 
   ngOnInit() {
-    const userId = sessionStorage.getItem('userId');
+    this.authService.checkSession().subscribe({
+      next: (response) => {
+        console.log('Session check response: ', response);
+        sessionStorage.setItem('userId', response.id.toString());
+        sessionStorage.setItem('nickname', response.nickname);
 
-    if (userId && userId !== 'undefined') {
-      this.isUserLoggedIn.set(true);
-      console.log('User is logged in: ', userId);
-    }
+        this.isUserLoggedIn.set(true);
+      },
+      error: (error) => {
+        console.error('No session found ', error);
+        sessionStorage.removeItem('userId');
+        sessionStorage.removeItem('nickname');
+      }
+    })
+
   }
 
   handleLoginSuccess() {

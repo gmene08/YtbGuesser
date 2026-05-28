@@ -14,6 +14,7 @@ import org.springframework.security.core.token.TokenService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
 import java.util.List;
 
 @Service
@@ -95,5 +96,9 @@ public class UserService {
                 System.out.println("Guest user: " + userId + " disconnected");
             }
         });
+    }
+
+    public User findUserByPrincipal(Principal principal) {
+        return userRepository.findById(Integer.parseInt(principal.getName())).orElseThrow(()-> new ResourceNotFoundException("User not found"));
     }
 }

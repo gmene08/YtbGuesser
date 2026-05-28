@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -50,6 +51,12 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Integer id) {
         User user = userService.findUserById(id);
+        return ResponseEntity.ok(UserResponseDTO.from(user));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponseDTO> getCurrentUser(Principal principal) {
+        User user = userService.findUserByPrincipal(principal);
         return ResponseEntity.ok(UserResponseDTO.from(user));
     }
 

@@ -13,6 +13,10 @@ export class Auth {
 
   constructor(private http: HttpClient) {}
 
+  checkSession(){
+    return this.http.get<UserResponse>(`${this.apiUrl}/me`);
+  }
+
   createGuest(nickname: string) {
     return this.http.post<UserResponse>(`${this.apiUrl}/guest`, { nickname: nickname }).pipe(
       tap((response) => {
