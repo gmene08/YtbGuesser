@@ -267,4 +267,13 @@ public class RoomService {
         return RoomResponseDTO.from(room);
     }
 
+    @Transactional
+    public void handleRoomDisconnect(Integer userId) {
+        userRepository.findById(userId).ifPresent(user ->{
+            if(user.getRoom() != null) {
+                this.leaveRoom(user.getRoom().getCode(), userId);
+            }
+
+        });
+    }
 }

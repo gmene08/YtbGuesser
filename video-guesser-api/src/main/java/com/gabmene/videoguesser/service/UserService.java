@@ -67,6 +67,7 @@ public class UserService {
                 .secure(false) // set to true if using HTTPS
                 .path("/") // available on all paths
                 .sameSite("Lax")
+                .maxAge(86400)
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         return savedGuest;
@@ -87,10 +88,6 @@ public class UserService {
     @Transactional
     public void handleUserDisconnect(Integer userId) {
         userRepository.findById(userId).ifPresent(user ->{
-            if(user.getRoom() != null) {
-                roomService.leaveRoom(user.getRoom().getCode(), userId);
-            }
-
             if(user.getIsGuest()){
                 userRepository.delete(user);
                 System.out.println("Guest user: " + userId + " disconnected");

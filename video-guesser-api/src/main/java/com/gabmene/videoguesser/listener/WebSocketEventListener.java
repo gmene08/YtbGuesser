@@ -26,7 +26,8 @@ public class WebSocketEventListener {
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
-    private final Map<Integer, ScheduledFuture<?>> pendingDisconnects = new ConcurrentHashMap<>();
+    private final Map<Integer, ScheduledFuture<?>> pendingRoomDisconnects = new ConcurrentHashMap<>();
+    private final Map<Integer, ScheduledFuture<?>> pendingUserDeletions = new ConcurrentHashMap<>();
     private final UserService userService;
 
     @EventListener
@@ -37,12 +38,23 @@ public class WebSocketEventListener {
             Integer userId = Integer.parseInt(principal.getName());
             log.info("Received a new web socket connection: {}", userId);
 
-            ScheduledFuture<?> pendingKick = pendingDisconnects.remove(userId);
-            if(pendingKick != null){
-                pendingKick.cancel(false);
-                log.info("User {} reconnected in time! ", userId);
+            ScheduledFuture<?> pendingRoomDisconnect = pendingRoomDisconnects.remove(userId);
+            ScheduledFuture<?> pendingUserDeletion = pendingUserDeletions.remove(userId);
+
+            boolean wasRescued = false;
+
+            if(pendingRoomDisconnect != null){
+                pendingRoomDisconnect.cancel(false);
+                wasRescued = true;
+            }
+            if(pendingUserDeletion != null){
+                pendingUserDeletion.cancel(false);
+                wasRescued = true;
+            }
+            if (wasRescued) {
+                log.info("✅ User {} reconnected in time!", userId);
             } else {
-                log.info("User Id {} connected to WebSocket", userId);
+                log.info("🔌 User {} connected to WebSocket for the first time!", userId);
             }
         }
     }
@@ -54,22 +66,33 @@ public class WebSocketEventListener {
         Principal principal = acessor.getUser();
         if(principal != null){
             Integer userId = Integer.parseInt(principal.getName());
-            log.warn("User Disconnected: {}", userId, ", 60 seconds before disconnecting");
+            log.warn("User Disconnected: {}, 60 seconds before disconnecting", userId );
 
-            ScheduledFuture<?> future = scheduler.schedule(()->{
-                pendingDisconnects.remove(userId);
+            ScheduledFuture<?> roomDisconnectFuture = scheduler.schedule(()->{
+                pendingRoomDisconnects.remove(userId);
 
                 try {
-                    userService.handleUserDisconnect(userId);
+                    roomService.handleRoomDisconnect(userId);
                     log.info("User {} disconnected", userId);
                 } catch (Exception e) {
                     log.error("Error handling user disconnect: {}", e.getMessage());
                 }
 
+            },120, TimeUnit.SECONDS);
 
-            },5, TimeUnit.SECONDS);
+            ScheduledFuture<?> userDeletionFuture = scheduler.schedule(()->{
+                pendingUserDeletions.remove(userId);
 
-            pendingDisconnects.put(userId, future);
+                try {
+                    userService.handleUserDisconnect(userId);
+                    log.info("User {} deleted", userId);
+                } catch (Exception e) {
+                    log.error("Error handling user deletion: {}", e.getMessage());
+                }
+            }, 86400, TimeUnit.SECONDS);
+
+            pendingRoomDisconnects.put(userId, roomDisconnectFuture);
+            pendingUserDeletions.put(userId, userDeletionFuture);
         }
 
     }
