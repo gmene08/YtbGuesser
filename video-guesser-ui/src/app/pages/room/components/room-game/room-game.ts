@@ -310,6 +310,24 @@ export class RoomGame implements OnInit, OnDestroy {
     this.userGuess.set(rawValue ? parseInt(rawValue, 10) : 0);
   }
 
+  onKeyDown(event: KeyboardEvent) {
+    const allowedKeys = [
+      'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
+      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'
+    ];
+    if (allowedKeys.includes(event.key)) {
+      return; // Deixa passar
+    }
+
+    if ((event.ctrlKey || event.metaKey) && ['a', 'c', 'v', 'x'].includes(event.key.toLowerCase())) {
+      return; // Deixa passar
+    }
+
+    if (!/^[0-9]$/.test(event.key)) {
+      event.preventDefault(); // Corta a digitação pela raiz
+    }
+  }
+
   protected readonly RoundStatus = RoundStatus;
   protected readonly MatchStatus = MatchStatus;
 }
