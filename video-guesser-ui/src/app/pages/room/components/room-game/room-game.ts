@@ -31,7 +31,7 @@ import { Results } from './components/results/results';
   standalone: true,
 })
 export class RoomGame implements OnInit, OnDestroy {
-  currentUserId = Number(sessionStorage.getItem('userId') ?? -1);
+  currentUserId = Number(localStorage.getItem('userId') ?? -1);
   matchService = inject(MatchService);
   gameService = inject(GameWebsocketService);
   roundService = inject(RoundService);
@@ -63,10 +63,10 @@ export class RoomGame implements OnInit, OnDestroy {
   kickPlayer = output<number>();
   private previousStatus: RoundStatus | null = null;
   userGuess = signal<number>(0);
-  displayGuess = computed(()=>{
+  displayGuess = computed(() => {
     const guess = this.userGuess();
     return guess === 0 ? '' : guess.toLocaleString();
-  })
+  });
   timeLeft = signal<number>(30);
   videoStartTime = signal<number>(0);
   activityLogs = signal<LogMessage[]>([]);
@@ -308,11 +308,8 @@ export class RoomGame implements OnInit, OnDestroy {
     const input = event.target as HTMLInputElement;
     const rawValue = input.value.replace(/\D/g, '');
     this.userGuess.set(rawValue ? parseInt(rawValue, 10) : 0);
-
   }
 
   protected readonly RoundStatus = RoundStatus;
   protected readonly MatchStatus = MatchStatus;
-
-
 }

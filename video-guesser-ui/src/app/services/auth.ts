@@ -20,8 +20,8 @@ export class Auth {
   createGuest(nickname: string) {
     return this.http.post<UserResponse>(`${this.apiUrl}/guest`, { nickname: nickname }).pipe(
       tap((response) => {
-        sessionStorage.setItem('userId', response.id.toString());
-        sessionStorage.setItem('nickname', response.nickname);
+        localStorage.setItem('userId', response.id.toString());
+        localStorage.setItem('nickname', response.nickname);
         console.log('Guest ID saved in session:', response.id.toString());
       }),
     );
@@ -29,8 +29,8 @@ export class Auth {
 
   login(nickname: string, password: string) {
     return this.http.post<UserResponse>(`${this.apiUrl}/login`, { nickname: nickname, password: password }).pipe(tap((response) => {
-      sessionStorage.setItem('userId', response.id.toString());
-      sessionStorage.setItem('nickname', response.nickname);
+      localStorage.setItem('userId', response.id.toString());
+      localStorage.setItem('nickname', response.nickname);
       console.log('User ID saved in session: ', response.id.toString());
     }));
   }

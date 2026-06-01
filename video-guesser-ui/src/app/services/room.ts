@@ -15,7 +15,7 @@ export class RoomService {
   constructor(private http: HttpClient) {}
 
   createRoom() {
-    const ownerId = sessionStorage.getItem('userId');
+    const ownerId = localStorage.getItem('userId');
 
     if (ownerId === null) throw new Error("User not logged in");
 
@@ -28,13 +28,13 @@ export class RoomService {
 
   joinRoom(roomCode: string){
     return this.http.post<RoomResponse>(`${this.apiUrl}/join/${roomCode}`, {
-      userId: sessionStorage.getItem('userId'),
+      userId: localStorage.getItem('userId'),
     });
   }
 
   leaveRoom(roomCode: string){
     return this.http.delete(
-      `${this.apiUrl}/leave/${roomCode}?userId=${sessionStorage.getItem('userId')}`,
+      `${this.apiUrl}/leave/${roomCode}?userId=${localStorage.getItem('userId')}`,
       {},
     );
   }
@@ -51,7 +51,7 @@ export class RoomService {
 
   kickPlayer(roomCode: string, targetUserId: number){
     return this.http.delete<RoomResponse>(
-      `${this.apiUrl}/${roomCode}/kick/${targetUserId}?userId=${sessionStorage.getItem('userId')}`,
+      `${this.apiUrl}/${roomCode}/kick/${targetUserId}?userId=${localStorage.getItem('userId')}`,
       {},
     );
   }

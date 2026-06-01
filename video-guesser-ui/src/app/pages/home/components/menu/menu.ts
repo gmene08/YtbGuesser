@@ -13,7 +13,7 @@ export class Menu {
   private roomService = inject(RoomService);
   private router = inject(Router);
 
-  userNickname = signal<string | null>(sessionStorage.getItem('nickname') || null);
+  userNickname = signal<string | null>(localStorage.getItem('nickname') || null);
 
   showJoinRoomCodeInput = false;
   joinRoomCode = '';

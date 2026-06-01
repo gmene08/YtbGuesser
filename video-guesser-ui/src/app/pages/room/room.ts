@@ -19,7 +19,7 @@ import { retry } from 'rxjs';
   standalone: true,
 })
 export class Room implements OnInit {
-  currentUserId = Number(sessionStorage.getItem('userId') ?? -1);
+  currentUserId = Number(localStorage.getItem('userId') ?? -1);
 
   private roomService = inject(RoomService);
   private lobbyService = inject(LobbyWebsocket);
@@ -43,9 +43,7 @@ export class Room implements OnInit {
   startGameErrorMessage = signal<string>('');
   saveMaxPlayersErrorMessage = signal<string>('');
 
-  isUserOwner = computed(
-    () => this.roomData()?.ownerId === this.currentUserId,
-  );
+  isUserOwner = computed(() => this.roomData()?.ownerId === this.currentUserId);
 
   constructor() {
     effect(() => {
@@ -53,13 +51,14 @@ export class Room implements OnInit {
 
       const room = this.roomData();
 
-      const IsUserStillInRoom = room?.players.some(player => player.userId === this.currentUserId) ?? false;
+      const IsUserStillInRoom =
+        room?.players.some((player) => player.userId === this.currentUserId) ?? false;
       if (!IsUserStillInRoom) {
         console.log('User not in this room');
         this.lobbyService.disconnectFromLobby();
         this.rt.navigate(['/']);
       }
-    })
+    });
   }
 
   ngOnInit(): void {
@@ -74,7 +73,6 @@ export class Room implements OnInit {
     const code = this.router.snapshot.paramMap.get('code');
     if (code) {
       this.loadRoomData(code);
-
     } else {
       console.error('Room code not found in URL');
       this.rt.navigate(['/']);
@@ -86,29 +84,28 @@ export class Room implements OnInit {
     this.roomCode.set(code);
     console.log('Room code: ', code);
 
-    this.roomService.getRoomByCode(code)
-      .pipe(
-        retry({count:3, delay:500})
-      )
+    this.roomService
+      .getRoomByCode(code)
+      .pipe(retry({ count: 3, delay: 500 }))
       .subscribe({
-      next: (response) =>{
+        next: (response) => {
+          const isUserInThisRoom =
+            response.players.some((player) => player.userId === this.currentUserId) ?? false;
+          if (!isUserInThisRoom) {
+            console.log('User not in this room');
+            this.rt.navigate(['/']);
+            return;
+          }
 
-        const isUserInThisRoom = response.players.some(player => player.userId === this.currentUserId) ?? false;
-        if (!isUserInThisRoom) {
-          console.log('User not in this room');
+          this.lobbyService.setRoomData(response);
+          this.hasLoadedInitialRoomData.set(true);
+          this.lobbyService.connectToLobby(code);
+        },
+        error: (error) => {
+          console.error('Error fetching room data: ', error);
           this.rt.navigate(['/']);
-          return;
-        }
-
-        this.lobbyService.setRoomData(response);
-        this.hasLoadedInitialRoomData.set(true);
-        this.lobbyService.connectToLobby(code);
-      },
-      error: (error) => {
-        console.error('Error fetching room data: ', error);
-        this.rt.navigate(['/']);
-      },
-    })
+        },
+      });
   }
 
   leaveRoom() {

@@ -16,12 +16,16 @@ export class MatchService {
 
   changeToNextRound(matchId: number) {
     return this.http.patch(
-      `${this.apiUrl}/${matchId}/nextRound?userId=${sessionStorage.getItem('userId')}`, {},
+      `${this.apiUrl}/${matchId}/nextRound?userId=${localStorage.getItem('userId')}`,
+      {},
     );
   }
 
   endMatch(matchId: number) {
-    return this.http.delete(`${this.apiUrl}/${matchId}/end?userId=${sessionStorage.getItem('userId')}`, {});
+    return this.http.delete(
+      `${this.apiUrl}/${matchId}/end?userId=${localStorage.getItem('userId')}`,
+      {},
+    );
   }
 
   getMatchDataByMatchId(matchId: number) {

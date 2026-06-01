@@ -78,7 +78,7 @@ export class RoomSettings implements OnInit {
     );
 
     // check if valid id
-    const rawUserId = sessionStorage.getItem('userId');
+    const rawUserId = localStorage.getItem('userId');
     const userId = rawUserId !== null ? Number(rawUserId) : 0;
 
     let matchConfig: MatchConfigRequest = {

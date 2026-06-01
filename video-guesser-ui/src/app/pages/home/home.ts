@@ -17,21 +17,21 @@ export class Home {
   private authService = inject(Auth);
 
   ngOnInit() {
+
     this.authService.checkSession().subscribe({
       next: (response) => {
         console.log('Session check response: ', response);
-        sessionStorage.setItem('userId', response.id.toString());
-        sessionStorage.setItem('nickname', response.nickname);
+        localStorage.setItem('userId', response.id.toString());
+        localStorage.setItem('nickname', response.nickname);
 
         this.isUserLoggedIn.set(true);
       },
       error: (error) => {
         console.error('No session found ', error);
-        sessionStorage.removeItem('userId');
-        sessionStorage.removeItem('nickname');
-      }
-    })
-
+        localStorage.removeItem('userId');
+        localStorage.removeItem('nickname');
+      },
+    });
   }
 
   handleLoginSuccess() {
