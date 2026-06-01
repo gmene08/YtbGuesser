@@ -1,5 +1,6 @@
 package com.gabmene.videoguesser.service;
 
+import com.gabmene.videoguesser.dto.match.MatchResponseDTO;
 import com.gabmene.videoguesser.dto.room.JoinRoomRequestDTO;
 import com.gabmene.videoguesser.dto.match.MatchConfigRequestDTO;
 import com.gabmene.videoguesser.dto.room.RoomResponseDTO;
@@ -7,12 +8,15 @@ import com.gabmene.videoguesser.dto.room.RoomUpdateRequestDto;
 import com.gabmene.videoguesser.entity.Match;
 import com.gabmene.videoguesser.entity.Room;
 import com.gabmene.videoguesser.entity.User;
+import com.gabmene.videoguesser.entity.UserMatch;
+import com.gabmene.videoguesser.enums.MatchStatus;
 import com.gabmene.videoguesser.enums.RoomStatus;
 import com.gabmene.videoguesser.exception.BusinessException;
 import com.gabmene.videoguesser.exception.ConflictException;
 import com.gabmene.videoguesser.exception.ForbiddenException;
 import com.gabmene.videoguesser.exception.ResourceNotFoundException;
 import com.gabmene.videoguesser.repository.RoomRepository;
+import com.gabmene.videoguesser.repository.UserMatchRepository;
 import com.gabmene.videoguesser.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +36,7 @@ public class RoomService {
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
     private final MatchService matchService;
+    private final UserMatchRepository userMatchRepository;
 
     private final GameNotificationService gameNotificationService;
 
@@ -183,6 +188,19 @@ public class RoomService {
         // remove the user from the match
         playersInRoom.remove(userLeaving);
         userLeaving.setRoom(null);
+
+        // if the room is in PLAYING status, remove the user from the match
+        if (roomLeaving.getStatus() == RoomStatus.PLAYING) {
+            UserMatch userMatchLeaving = userMatchRepository.findByUserIdAndRoomIdAndStatus(userLeaving.getId(), roomLeaving.getId(), MatchStatus.PLAYING)
+                    .orElseThrow(()-> new ResourceNotFoundException("UserMatch not found"));
+            userMatchRepository.delete(userMatchLeaving);
+            userMatchRepository.flush();
+
+            Match matchLeaving = userMatchLeaving.getMatch();
+            gameNotificationService.sendMatchUpdate(matchService.buildMatchResponseDTO(matchLeaving));
+
+        }
+
         userRepository.save(userLeaving);
 
         // if the room is empty, delete it - if the owner leaves, assign a new owner
