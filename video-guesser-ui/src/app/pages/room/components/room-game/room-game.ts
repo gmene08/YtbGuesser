@@ -32,7 +32,6 @@ import { Results } from './components/results/results';
 })
 export class RoomGame implements OnInit, OnDestroy {
   currentUserId = Number(sessionStorage.getItem('userId') ?? -1);
-
   matchService = inject(MatchService);
   gameService = inject(GameWebsocketService);
   roundService = inject(RoundService);
@@ -40,44 +39,36 @@ export class RoomGame implements OnInit, OnDestroy {
   @ViewChild(Video) videoPlayer!: Video;
 
   roomData = input.required<RoomState | null>();
-
   matchData = computed(() => this.gameService.matchData());
   roundData = computed(() => this.gameService.roundData());
-
   playersWhoGuessed = computed(() => {
     return this.roundData()?.playersWhoGuessed ?? [];
   });
-
   isUserOwner = computed(() => this.roomData()?.ownerId === this.currentUserId);
-
   hasUserGuessedThisRound = computed(() => {
     return this.playersWhoGuessed().includes(this.currentUserId);
   });
-
   isRoundActive = computed(() => this.roundStatus() === RoundStatus.Guessing);
-
   videoUrl = computed(() => {
     const round = this.roundData();
     if (!round) return null;
     return round.video.url;
   });
-
   roundStatus = computed(() => {
     const round = this.roundData();
     if (!round) return null;
 
     return round.roundStatus;
   });
-
   kickPlayer = output<number>();
-
   private previousStatus: RoundStatus | null = null;
-
   userGuess = signal<number>(0);
-
+  displayGuess = computed(()=>{
+    const guess = this.userGuess();
+    return guess === 0 ? '' : guess.toLocaleString('pt-Br');
+  })
   timeLeft = signal<number>(30);
   videoStartTime = signal<number>(0);
-
   activityLogs = signal<LogMessage[]>([]);
 
   constructor() {
@@ -90,6 +81,7 @@ export class RoomGame implements OnInit, OnDestroy {
 
       if (currentStatus === RoundStatus.Guessing) {
         console.log('Status changed to GUESSING, starting timer...');
+        this.userGuess.set(0);
         this.startRoundTimer();
       }
 
@@ -312,6 +304,15 @@ export class RoomGame implements OnInit, OnDestroy {
     });
   }
 
+  protected onGuessInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const rawValue = input.value.replace(/\D/g, '');
+    this.userGuess.set(rawValue ? parseInt(rawValue, 10) : 0);
+
+  }
+
   protected readonly RoundStatus = RoundStatus;
   protected readonly MatchStatus = MatchStatus;
+
+
 }
