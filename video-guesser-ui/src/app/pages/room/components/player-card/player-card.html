@@ -1,26 +1,48 @@
-<div class="bg-red-50 border border-red-200 text-gray-800 rounded-lg p-4 font-bold shadow-sm flex items-center justify-between group">
+<div
+  class="w-full text-gray-800 rounded-lg p-4 font-bold flex items-center justify-between group transition-all border shadow-sm overflow-hidden"
+  [class.bg-red-100]="playerId() === currentUserId()"
+  [class.border-red-500]="playerId() === currentUserId()"
+  [class.shadow-md]="playerId() === currentUserId()"
+  [class.bg-red-50]="playerId() !== currentUserId()"
+  [class.border-red-200]="playerId() !== currentUserId()"
+>
 
-  <div class="flex items-center gap-2">
+  <div class="flex items-center gap-2 min-w-0 flex-1">
+
     @if(playerId() === ownerId()) {
-      <span title="Room Owner" class="text-xl">👑</span>
+      <span title="Room Owner" class="text-xl shrink-0">👑</span>
     }
-    <span class="truncate">{{ playerNickname() }}</span>
+
+    <span class="truncate min-w-0">
+      {{ playerNickname() }}
+    </span>
+
+    @if(isOwner() && playerId() !== ownerId()) {
+      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+
+        <button title="Promote to Host" class="text-sm text-blue-400 hover:text-blue-600 transition-colors">
+          👑
+        </button>
+
+        <button (click)="handleKickPlayer()" title="Kick Player" class="text-red-400 hover:text-red-700 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
+            <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm3 10.5a.75.75 0 000-1.5H9a.75.75 0 000 1.5h6z" clip-rule="evenodd" />
+          </svg>
+        </button>
+
+      </div>
+    }
+
   </div>
 
-  @if(isOwner() && playerId() !== ownerId()) {
 
-    <div class="flex items-center gap-1">
-      <button  title="Promote to Host"
-              class="text-blue-400 hover:text-blue-600 transition-colors opacity-0 group-hover:opacity-100">
-        👑
-      </button>
+  <div class="flex items-center gap-3 shrink-0 ml-3">
 
-      <button (click)="handleKickPlayer()" title="Kick Player" class="text-red-400 hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6">
-          <path fill-rule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm3 10.5a.75.75 0 000-1.5H9a.75.75 0 000 1.5h6z" clip-rule="evenodd" />
-        </svg>
-      </button>
+    <div class="shrink-0">
+      <ng-content select="[status-slot]"></ng-content>
     </div>
 
-  }
+    <ng-content select="[score-slot]"></ng-content>
+
+  </div>
 </div>

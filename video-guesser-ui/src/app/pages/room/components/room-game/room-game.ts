@@ -5,7 +5,7 @@ import {
   inject,
   input,
   OnDestroy,
-  OnInit,
+  OnInit, output,
   signal,
   ViewChild,
 } from '@angular/core';
@@ -69,6 +69,8 @@ export class RoomGame implements OnInit, OnDestroy {
     return round.roundStatus;
   });
 
+  kickPlayer = output<number>();
+
   private previousStatus: RoundStatus | null = null;
 
   userGuess = signal<number>(0);
@@ -98,7 +100,6 @@ export class RoomGame implements OnInit, OnDestroy {
 
       this.previousStatus = currentStatus;
     });
-
   }
 
   ngOnInit() {
@@ -120,6 +121,10 @@ export class RoomGame implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.gameService.disconnect();
+  }
+
+  handleKickPlayer(playerId: number) {
+    this.kickPlayer.emit(playerId);
   }
 
   loadData(roomCode: string) {
@@ -293,19 +298,18 @@ export class RoomGame implements OnInit, OnDestroy {
     });
   }
 
-  endMatch(){
+  endMatch() {
     const match = this.matchData();
     if (!match) return;
 
     this.matchService.endMatch(match.matchId).subscribe({
-      next: () =>{
+      next: () => {
         console.log('Match ended, back to lobby');
       },
       error: (error) => {
         console.log('Error ending match: ', error.error?.message);
-      }
-    })
-
+      },
+    });
   }
 
   protected readonly RoundStatus = RoundStatus;

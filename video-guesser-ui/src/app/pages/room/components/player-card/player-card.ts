@@ -6,18 +6,16 @@ import { Component, input, output } from '@angular/core';
   templateUrl: './player-card.html',
   styleUrl: './player-card.css',
   standalone: true,
+  host: {
+    class: 'block w-full',
+  },
 })
 export class PlayerCard {
   playerNickname = input.required<string>();
-
   playerId = input.required<number>();
-
-  isOwner = input.required<boolean>();
-
-  ownerId = input.required<number>();
-
-  currentUserId = sessionStorage.getItem('userId');
-
+  isOwner = input.required<boolean | null>();
+  ownerId = input.required<number | undefined>();
+  currentUserId = input.required<number | null>();
   onKickPlayer = output<number>();
 
   handleKickPlayer() {

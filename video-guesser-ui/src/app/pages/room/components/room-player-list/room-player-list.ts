@@ -18,6 +18,7 @@ export class RoomPlayerList {
         'kickPlayer($event)');*/
   room = input.required<RoomState | null>();
   isOwner = input.required<boolean>();
+  currentUserId = input.required<number | null>();
 
   onKickPlayer = output<number>();
   onLeaveRoom = output<void>();

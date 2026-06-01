@@ -1,12 +1,14 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { PlayerScore } from '../player-score/player-score';
 import { RoundStatus } from '../../../../../../enums/round-status.enum';
 import { RoomState } from '../../../../../../models/room.state';
 import { MatchState } from '../../../../../../models/match.state';
+import { PlayerCard } from '../../../player-card/player-card';
+import { RoundState } from '../../../../../../models/round.state';
 
 @Component({
   selector: 'app-player-leaderboard',
-  imports: [PlayerScore],
+  imports: [PlayerScore, PlayerCard],
   templateUrl: './player-leaderboard.html',
   styleUrl: './player-leaderboard.css',
   standalone: true,
@@ -15,6 +17,15 @@ export class PlayerLeaderboard {
   roomData = input.required<RoomState | null>();
   playersWhoGuessed = input.required<number[]>();
   matchData = input.required<MatchState | null>();
+  roundData = input.required<RoundState | null>();
+  currentUserId = input.required<number | null>();
+  isUserOwner = input.required<boolean>();
+
+  kickPlayer = output<number>();
+
+  playerHasGuessed (playerId: number){
+    return this.playersWhoGuessed().includes(playerId);
+  }
 
   getPlayerRoundScore(userId: number):number{
     const match = this.matchData();
@@ -27,6 +38,10 @@ export class PlayerLeaderboard {
 
     return result?.pointsScored || 0;
 
+  }
+
+  handleKickPlayer(playerId: number) {
+    this.kickPlayer.emit(playerId);
   }
 
   protected readonly RoundStatus = RoundStatus;

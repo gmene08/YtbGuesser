@@ -2,7 +2,6 @@
   <app-nav-bar></app-nav-bar>
   @if (!startedGame()) {
     <div class="flex-grow p-12 pt-4">
-
       <header>
         <app-room-header
           class="flex flex-col items-center gap-1 mb-10 group"
@@ -19,6 +18,7 @@
             class="flex flex-col justify-between w-full flex-grow"
             [room]="roomData()"
             [isOwner]="isUserOwner()"
+            [currentUserId]="currentUserId"
             (onKickPlayer)="kickPlayer($event)"
             (onLeaveRoom)="leaveRoom()"
           >
@@ -38,10 +38,11 @@
       </main>
     </div>
   } @else {
-    <app-room-game class="h-full flex flex-col flex-grow items-center p-6 gap-6 "
+    <app-room-game
+      class="h-full flex flex-col flex-grow items-center p-6 gap-6"
       [roomData]="roomData()"
+      (kickPlayer)="kickPlayer($event)"
     >
     </app-room-game>
-
   }
 </div>
