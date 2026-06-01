@@ -10,7 +10,7 @@ import { MatchConfigRequest, MatchDataResponse } from '../dtos/match.dto';
 })
 export class RoomService {
 
-  private apiUrl = 'http://localhost:8080/api/room';
+  private apiUrl = '/api/room';
 
   constructor(private http: HttpClient) {}
 
