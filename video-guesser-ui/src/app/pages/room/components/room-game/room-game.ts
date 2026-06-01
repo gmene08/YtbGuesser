@@ -65,7 +65,7 @@ export class RoomGame implements OnInit, OnDestroy {
   userGuess = signal<number>(0);
   displayGuess = computed(()=>{
     const guess = this.userGuess();
-    return guess === 0 ? '' : guess.toLocaleString('pt-Br');
+    return guess === 0 ? '' : guess.toLocaleString();
   })
   timeLeft = signal<number>(30);
   videoStartTime = signal<number>(0);
