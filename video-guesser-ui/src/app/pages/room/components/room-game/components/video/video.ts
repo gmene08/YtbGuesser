@@ -10,12 +10,12 @@ import {
   HostListener, inject,
 } from '@angular/core';
 import { YouTubePlayer } from '@angular/youtube-player';
-import { Timer } from '../timer/timer';
+import { PrepTimer } from '../prep-timer/prep-timer.component';
 import { RoundStatus } from '../../../../../../enums/round-status.enum';
 
 @Component({
   selector: 'app-video',
-  imports: [YouTubePlayer, Timer],
+  imports: [YouTubePlayer, PrepTimer],
   templateUrl: './video.html',
   styleUrl: './video.css',
 })

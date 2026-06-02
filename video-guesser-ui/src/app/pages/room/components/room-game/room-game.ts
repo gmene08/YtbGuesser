@@ -22,10 +22,12 @@ import { ChatBox, LogMessage } from './components/chat-box/chat-box';
 import { retry } from 'rxjs';
 import { MatchStatus } from '../../../../enums/match-status';
 import { Results } from './components/results/results';
+import { RoundTimer } from './components/round-timer/round-timer';
+import { GuessInput } from './components/guess-input/guess-input';
 
 @Component({
   selector: 'app-room-game',
-  imports: [PlayerLeaderboard, Video, VideoDetails, ChatBox, Results],
+  imports: [PlayerLeaderboard, Video, VideoDetails, ChatBox, Results, RoundTimer, GuessInput],
   templateUrl: './room-game.html',
   styleUrl: './room-game.css',
   standalone: true,
@@ -62,12 +64,6 @@ export class RoomGame implements OnInit, OnDestroy {
   });
   kickPlayer = output<number>();
   private previousStatus: RoundStatus | null = null;
-  userGuess = signal<number>(0);
-  displayGuess = computed(() => {
-    const guess = this.userGuess();
-    return guess === 0 ? '' : guess.toLocaleString();
-  });
-  timeLeft = signal<number>(30);
   videoStartTime = signal<number>(0);
   activityLogs = signal<LogMessage[]>([]);
 
@@ -79,15 +75,8 @@ export class RoomGame implements OnInit, OnDestroy {
         return;
       }
 
-      if (currentStatus === RoundStatus.Guessing) {
-        console.log('Status changed to GUESSING, starting timer...');
-        this.userGuess.set(0);
-        this.startRoundTimer();
-      }
-
       if (currentStatus === RoundStatus.Finished) {
-        console.log('Status changed to FINISHED, stopping timer...');
-        this.endRoundTimer();
+        this.videoPlayer?.pauseVideo();
       }
 
       this.previousStatus = currentStatus;
@@ -141,20 +130,20 @@ export class RoomGame implements OnInit, OnDestroy {
       });
   }
 
-  guess() {
+  submitGuessToBackend(guessedValue: number) {
     const matchData = this.matchData();
     if (!matchData) return;
 
-    if (this.userGuess() <= 0) {
+    if (guessedValue <= 0) {
       alert('Please enter a valid number');
       return;
     }
 
-    console.log('Guessing: ', this.userGuess());
+    console.log('Guessing: ', guessedValue);
 
     const userGuessRequest: UserGuessRequest = {
       userId: this.currentUserId,
-      guessedViewCount: this.userGuess(),
+      guessedViewCount: guessedValue,
     };
 
     this.gameService.sendGuess(matchData.currentRound.roundId, userGuessRequest);
@@ -186,33 +175,6 @@ export class RoomGame implements OnInit, OnDestroy {
       });
   }
 
-  startRoundTimer() {
-    const secondsLeft = this.calculateTimeLeft();
-    if (secondsLeft === undefined) return;
-
-    if (secondsLeft > 0) {
-      this.syncVideoStartTime(secondsLeft);
-      this.timeLeft.set(secondsLeft);
-
-      const interval = setInterval(() => {
-        this.timeLeft.update((v) => v - 1);
-        if (this.timeLeft() <= 0) {
-          clearInterval(interval);
-
-          if (this.currentUserId === this.roomData()?.ownerId) {
-            this.endRound();
-          }
-        }
-      }, 1000);
-    } else {
-      this.timeLeft.set(0);
-
-      if (this.currentUserId === this.roomData()?.ownerId) {
-        this.endRound();
-      }
-    }
-  }
-
   endRound() {
     const roundId = this.roundData()?.roundId;
     if (!roundId) return;
@@ -236,44 +198,6 @@ export class RoomGame implements OnInit, OnDestroy {
           console.error('Error ending round: ', error.error?.message || 'Server error');
         },
       });
-  }
-
-  endRoundTimer() {
-    this.videoPlayer?.pauseVideo();
-
-    console.log("Time's over");
-  }
-
-  syncVideoStartTime(secondsLeft: number) {
-    const originalStartTime = this.roundData()?.videoStartsAtSecond;
-    if (originalStartTime === undefined || originalStartTime === null) return;
-
-    // calculates
-    const roundDuration = 5; // hard coded for now
-    const secondsElapsed = roundDuration - secondsLeft;
-
-    this.videoStartTime.set(originalStartTime + secondsElapsed);
-  }
-
-  calculateTimeLeft() {
-    const endsAtString = this.roundData()?.endsAt;
-    if (!endsAtString) {
-      return;
-    }
-
-    const endsAtTime = new Date(endsAtString).getTime();
-    const now = new Date().getTime();
-
-    return Math.ceil((endsAtTime - now) / 1000);
-  }
-
-  addLog(text: string, type: 'info' | 'error' | 'success' = 'info') {
-    const time = new Date().toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-    this.activityLogs.update((logs) => [...logs, { type, text, time }]);
   }
 
   changeToNextRound() {
@@ -304,27 +228,9 @@ export class RoomGame implements OnInit, OnDestroy {
     });
   }
 
-  protected onGuessInput(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const rawValue = input.value.replace(/\D/g, '');
-    this.userGuess.set(rawValue ? parseInt(rawValue, 10) : 0);
-  }
-
-  onKeyDown(event: KeyboardEvent) {
-    const allowedKeys = [
-      'Backspace', 'Delete', 'Tab', 'Escape', 'Enter',
-      'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'
-    ];
-    if (allowedKeys.includes(event.key)) {
-      return; // Deixa passar
-    }
-
-    if ((event.ctrlKey || event.metaKey) && ['a', 'c', 'v', 'x'].includes(event.key.toLowerCase())) {
-      return; // Deixa passar
-    }
-
-    if (!/^[0-9]$/.test(event.key)) {
-      event.preventDefault(); // Corta a digitação pela raiz
+  handleTimeIsUp() {
+    if (this.currentUserId === this.roomData()?.ownerId) {
+      this.endRound();
     }
   }
 

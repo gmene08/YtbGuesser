@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Timer } from './timer';
+import { RoundTimer } from './round-timer';
 
-describe('Timer', () => {
-  let component: Timer;
-  let fixture: ComponentFixture<Timer>;
+describe('RoundTimer', () => {
+  let component: RoundTimer;
+  let fixture: ComponentFixture<RoundTimer>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Timer],
+      imports: [RoundTimer],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Timer);
+    fixture = TestBed.createComponent(RoundTimer);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

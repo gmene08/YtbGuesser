@@ -8,7 +8,7 @@ import { RoundState } from '../../../../../../models/round.state';
 
 @Component({
   selector: 'app-player-leaderboard',
-  imports: [PlayerScore, PlayerCard],
+  imports: [ PlayerCard ],
   templateUrl: './player-leaderboard.html',
   styleUrl: './player-leaderboard.css',
   standalone: true,

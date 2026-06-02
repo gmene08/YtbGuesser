@@ -8,8 +8,9 @@
 
         <div class="flex flex-col min-w-0">
           <span class="text-gray-400 text-sm">Video:</span>
-          <span class="font-normal truncate" [title]="videoDetails()?.title">
-            {{videoDetails()?.title}}
+          <span class="font-bold truncate text-sm"
+                [title]="videoDetails()?.title"
+                [innerHTML]="videoDetails()?.title">
           </span>
         </div>
 
