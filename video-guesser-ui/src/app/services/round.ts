@@ -6,7 +6,7 @@ import { UpdateRoundStatusRequest, UserGuessRequest } from '../dtos/round.dto';
   providedIn: 'root',
 })
 export class RoundService {
-  private apiUrl = 'http://localhost:8080/api/round';
+  private apiUrl = '/api/round';
 
   constructor(private http: HttpClient) {}
 

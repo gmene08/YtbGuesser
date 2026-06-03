@@ -11,8 +11,12 @@ export class CoreWebsocket {
   private connectionQueue: (() => void)[] = [];
 
   constructor() {
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+    const dynamicBrokerUrl = `${wsProtocol}//${window.location.host}/ws`;
+
     this.client = new Client({
-      brokerURL: 'ws://localhost:8080/ws',
+      brokerURL: dynamicBrokerUrl,
       reconnectDelay: 5000,
       debug: (str) => console.log('[STOMP Core]', str),
 
@@ -20,32 +24,30 @@ export class CoreWebsocket {
         console.log('Connected to WebSocket server');
         this.isConnected = true;
 
-        this.connectionQueue.forEach(callback => callback());
+        this.connectionQueue.forEach((callback) => callback());
         this.connectionQueue = [];
       },
 
       onDisconnect: () => {
         this.isConnected = false;
         console.log('Disconnected from WebSocket server');
-      }
+      },
     });
   }
 
   public connect() {
-    if(!this.client.active)
-      this.client.activate();
+    if (!this.client.active) this.client.activate();
   }
 
   public disconnect() {
-    if(this.client.active)
-      this.client.deactivate();
+    if (this.client.active) this.client.deactivate();
   }
 
   public subscribe(destination: string, callback: (message: any) => void) {
     // variable to store the subscription
     let stompSubscription: any = null;
 
-    const action = ()=>{
+    const action = () => {
       stompSubscription = this.client.subscribe(destination, callback);
       console.log(`[STOMP Core] Subscribed to ${destination}`);
     };
@@ -60,22 +62,21 @@ export class CoreWebsocket {
     // return an unsubscribe function
     return {
       unsubscribe: () => {
-
         // if the subscription is already active, unsubscribe. Otherwise, remove it from the queue.
-        if(stompSubscription){
+        if (stompSubscription) {
           stompSubscription.unsubscribe();
           console.log(`[STOMP Core] Unsubscribed from ${destination}`);
-        }
-        else {
+        } else {
           const index = this.connectionQueue.indexOf(action);
           if (index > -1) {
             this.connectionQueue.splice(index, 1);
-            console.log(`[STOMP Core] Removed queued subscription for ${destination} (was not connected yet)`);
+            console.log(
+              `[STOMP Core] Removed queued subscription for ${destination} (was not connected yet)`,
+            );
           }
         }
-
-      }
-    }
+      },
+    };
   }
 
   public publish(destination: string, body: any) {
@@ -86,5 +87,4 @@ export class CoreWebsocket {
     this.client.publish({ destination: destination, body: JSON.stringify(body) });
     console.log(`[STOMP Core] Published to ${destination}:`, body);
   }
-
 }
