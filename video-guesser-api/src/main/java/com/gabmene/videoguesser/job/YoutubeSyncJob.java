@@ -14,6 +14,7 @@ public class YoutubeSyncJob {
 
     private final VideoService videoService;
 
+    @Scheduled(initialDelay = 10000,fixedRate = 86400000)
     public void syncVideosJob() {
 
         System.out.println("Initializing Youtube Sync Job");
@@ -28,9 +29,7 @@ public class YoutubeSyncJob {
             }
 
             // create a new category object based on the enum value
-            Category category = new Category();
-            category.setName(categoryEnum);
-            category.setId(categoryEnum.getId());
+            Category category = new Category(categoryEnum.getId(), categoryEnum, categoryEnum.name().toLowerCase());
 
             String nextPageToken = null; // starts without a token (page 1)
             int pagesToFetch = 3;

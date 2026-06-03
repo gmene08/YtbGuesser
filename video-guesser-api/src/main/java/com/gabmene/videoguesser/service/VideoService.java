@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -107,15 +108,31 @@ public class VideoService {
                 (item1, item2) -> item1 // if ID is already present, keep the existing value
                 ));
 
-        // merge the videos and their details
-        for (Video video : videosToSave) {
+        Iterator<Video> videoIterator = videosToSave.iterator();
+
+        while(videoIterator.hasNext()){
+
+            Video video = videoIterator.next();
+
             YoutubeVideoDetailsResponseDTO.VideoDetailItemDTO details = detailsMap.get(video.getYoutubeId());
-            if (details != null) {
+            if(details != null){
+
+                // remove videos that are age-restricted
+                if(details.getContentDetails() != null && details.getContentDetails().getContentRating() != null) {
+                    String rating = details.getContentDetails().getContentRating().getYtRating();
+                    if("ytAgeRestricted".equals(rating)){
+                        System.out.println("Video " + video.getTitle() + " is age restricted, removing it from the list");
+                        videoIterator.remove();
+                        continue;
+                    }
+                }
 
                 // set the view count
-                Long views = (details.getStatistics() != null && details.getStatistics().getViewCount() != null) ? details.getStatistics().getViewCount() : 0l;
-                video.setViewCount(views);
+                if(details.getStatistics() != null && details.getStatistics().getViewCount() != null) {
+                    video.setViewCount(details.getStatistics().getViewCount());
+                }
 
+                // set the video duration, if available -- if not, set it to 0
                 if (details.getContentDetails() != null && details.getContentDetails().getDuration() != null) {
                     String isoDuration = details.getContentDetails().getDuration();
                     long durationInSeconds = java.time.Duration.parse(isoDuration).getSeconds();
@@ -123,6 +140,8 @@ public class VideoService {
                 } else {
                     video.setDurationSeconds(0);
                 }
+
+
             }
         }
     }

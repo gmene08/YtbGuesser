@@ -28,6 +28,13 @@ public class YoutubeVideoDetailsResponseDTO {
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class ContentDetailsDTO {
-        private String duration; // O YouTube retorna como "PT5M30S"
+        private String duration;
+        private ContentRatingDTO contentRating;
+    }
+
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class ContentRatingDTO {
+        private String ytRating;
     }
 }

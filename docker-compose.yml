@@ -31,7 +31,7 @@ services:
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
       #Limitis Java RAM usage
-      - JAVA_TOOL_OPTIONS="-Xmx350m -Xms150m -XX:+UseSerialGC"
+      - JAVA_TOOL_OPTIONS=-Xmx350m -Xms150m -XX:+UseSerialGC
     depends_on:
       - db
 
