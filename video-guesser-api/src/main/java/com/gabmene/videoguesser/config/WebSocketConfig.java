@@ -2,7 +2,7 @@ package com.gabmene.videoguesser.config;
 
 import com.gabmene.videoguesser.service.JwtService;
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -18,6 +18,7 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 import java.util.Map;
+import java.util.Objects;
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -28,7 +29,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("http://localhost:4200")
+                .setAllowedOriginPatterns(
+                        "http://localhost:4200",
+                        "https://ytbguesser.com.br",
+                        "https://www.ytbguesser.com.br"
+                )
                 .addInterceptors(new JwtHandshakeInterceptor());
     }
 
@@ -44,10 +49,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void configureClientInboundChannel(ChannelRegistration registration){
         registration.interceptors(new ChannelInterceptor() {
             @Override
-            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+            public Message<?> preSend(@NonNull Message<?> message, @NonNull MessageChannel channel) {
                 StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
-                if(accessor != null && accessor.getCommand().equals(StompCommand.CONNECT)){
+                if(accessor != null && Objects.equals(accessor.getCommand(), StompCommand.CONNECT)){
                     Map<String, Object> sessionAttributes = accessor.getSessionAttributes();
 
                     if(sessionAttributes != null){
