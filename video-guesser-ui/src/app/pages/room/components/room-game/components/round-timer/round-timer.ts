@@ -11,6 +11,7 @@ export class RoundTimer implements OnDestroy {
   endsAt = input<string | null | undefined>();
   roundStatus = input.required<RoundStatus | null>();
   videoStartsAtSecond = input<number | null | undefined>();
+  serverNow = input.required<string | null | undefined>();
 
   timeIsUp = output<void>();
   videoStartTimeUpdated = output<number>();
@@ -19,9 +20,9 @@ export class RoundTimer implements OnDestroy {
   isRoundActive = computed(() => this.roundStatus() === RoundStatus.Guessing);
 
   private intervalId: any = null;
+  private serverOffsetMs = 0;
 
   constructor() {
-
     effect(() => {
       const status = this.roundStatus();
 
@@ -36,6 +37,8 @@ export class RoundTimer implements OnDestroy {
   private startTimer() {
     this.stopTimer();
 
+    this.calculateServerOffset();
+
     const secondsLeft = this.calculateTimeLeft();
     if (secondsLeft === undefined) return;
 
@@ -44,7 +47,11 @@ export class RoundTimer implements OnDestroy {
       this.syncVideoStartTime(secondsLeft);
 
       this.intervalId = setInterval(() => {
-        this.timeLeft.update((v) => v - 1);
+        const updatedSecondsLeft = this.calculateTimeLeft();
+
+        if (updatedSecondsLeft === undefined) return;
+
+        this.timeLeft.set(Math.max(updatedSecondsLeft, 0));
 
         if (this.timeLeft() <= 0) {
           this.stopTimer();
@@ -64,12 +71,29 @@ export class RoundTimer implements OnDestroy {
     }
   }
 
+  private calculateServerOffset(){
+    const serverNowString = this.serverNow();
+
+    if(!serverNowString){
+      this.serverOffsetMs = 0;
+      return;
+    }
+
+    const serverNowTime = new Date(serverNowString).getTime();
+    const clientNowTime = new Date().getTime();
+    this.serverOffsetMs = serverNowTime - clientNowTime;
+  }
+
+  private getCorrectedNow(){
+    return Date.now() + this.serverOffsetMs;
+  }
+
   private calculateTimeLeft() {
     const endsAtString = this.endsAt();
     if (!endsAtString) return;
 
     const endsAtTime = new Date(endsAtString).getTime();
-    const now = new Date().getTime();
+    const now = this.getCorrectedNow();
 
     return Math.ceil((endsAtTime - now) / 1000);
   }
@@ -80,7 +104,6 @@ export class RoundTimer implements OnDestroy {
 
     const roundDuration = 30; // TODO: stop the hardcoding !!
     const secondsElapsed = roundDuration - secondsLeft;
-
 
     this.videoStartTimeUpdated.emit(originalStartTime + secondsElapsed);
   }

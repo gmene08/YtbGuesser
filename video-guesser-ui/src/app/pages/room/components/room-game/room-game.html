@@ -45,6 +45,7 @@
           [endsAt]="roundData()?.endsAt"
           [roundStatus]="roundStatus()"
           [videoStartsAtSecond]="roundData()?.videoStartsAtSecond"
+          [serverNow]="roundData()?.serverTime"
           (timeIsUp)="handleTimeIsUp()"
           (videoStartTimeUpdated)="videoStartTime.set($event)">
         </app-round-timer>

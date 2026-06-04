@@ -8,6 +8,7 @@ export interface ActiveRoundResponse {
   playersWhoGuessed: number[];
   video: ActiveVideoResponse;
   endsAt: string;
+  serverTime: string;
   videoStartsAtSecond: number;
 
   roundDetails?: EndOfRoundResponse; // Only available when round status is finished

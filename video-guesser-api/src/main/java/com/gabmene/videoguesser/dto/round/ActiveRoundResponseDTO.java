@@ -25,6 +25,7 @@ public class ActiveRoundResponseDTO {
     private List<Integer> playersWhoGuessed;
     private ActiveVideoResponseDTO video;
     private Instant endsAt;
+    private Instant serverTime;
     private Integer videoStartsAtSecond;
 
     private RoundResultResponseDTO roundDetails;
@@ -48,6 +49,7 @@ public class ActiveRoundResponseDTO {
                 round.getStatus(),
                 guesses,
                 video, round.getEndsAt(),
+                Instant.now(),
                 round.getVideoStartsAtSecond(),
                 roundResult );
     }
