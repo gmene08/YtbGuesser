@@ -18,7 +18,7 @@
 
   @if (roundStatus() === RoundStatus.Preparing){
     <app-prep-timer
-      (onFinish)="startRound()"
+      (onFinish)="onPrepTimerFinish()"
       [roundStatus]="roundStatus()"
     ></app-prep-timer>
   }

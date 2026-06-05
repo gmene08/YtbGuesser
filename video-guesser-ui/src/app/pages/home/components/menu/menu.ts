@@ -1,6 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
-import { RoomService } from '../../../../services/room';
-import { Router } from '@angular/router';
+import { Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -10,15 +8,16 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './menu.css',
 })
 export class Menu {
-  private roomService = inject(RoomService);
-  private router = inject(Router);
-
-  userNickname = signal<string | null>(localStorage.getItem('nickname') || null);
-
   showJoinRoomCodeInput = false;
   joinRoomCode = '';
+  private timeoutId: any = null;
+
+  isLoggedIn = input.required<boolean>();
 
   errorMessage = signal<string>('');
+
+  onJoinRoom = output<string>();
+  onCreateRoom = output<void>();
 
   toggleJoinRoomInput() {
     this.errorMessage.set('');
@@ -29,27 +28,28 @@ export class Menu {
   }
 
   joinRoom() {
-    this.roomService.joinRoom(this.joinRoomCode).subscribe(
-      (response) => {
-        console.log('Room joined successfully', response);
-        this.router.navigate(['/room', response.code]);
-      },
-      (error) => {
-        console.error('Error joining room', error);
-        this.errorMessage.set(error.error?.message || 'Server error. Try again later.');
-      },
-    );
+    if (!this.isLoggedIn()) {
+      this.setErrorMessage('Enter your nickname to join a room');
+      return;
+    }
+
+    this.onJoinRoom.emit(this.joinRoomCode);
   }
 
   createRoom() {
-    this.roomService.createRoom().subscribe(
-      (response) => {
-        console.log('Room created successfully', response);
-        this.router.navigate(['/room', response.code]);
-      },
-      (error) => {
-        console.error('Error creating room', error);
-      },
-    );
+    if (!this.isLoggedIn()) {
+      this.setErrorMessage('Enter your nickname to create a room');
+      return;
+    }
+
+    this.onCreateRoom.emit();
+  }
+
+  setErrorMessage(message: string) {
+    this.errorMessage.set(message);
+    clearTimeout(this.timeoutId);
+    this.timeoutId = setTimeout(() => {
+      this.errorMessage.set('');
+    }, 5000);
   }
 }

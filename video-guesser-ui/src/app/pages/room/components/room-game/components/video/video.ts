@@ -7,7 +7,7 @@ import {
   effect,
   computed,
   ElementRef,
-  HostListener, inject,
+  HostListener,
 } from '@angular/core';
 import { YouTubePlayer } from '@angular/youtube-player';
 import { PrepTimer } from '../prep-timer/prep-timer.component';
@@ -23,7 +23,6 @@ export class Video {
   @ViewChild(YouTubePlayer) private videoPlayer!: YouTubePlayer;
   @ViewChild('videoContainer') private videoContainer!: ElementRef;
 
-  private el = inject(ElementRef);
 
   roundStatus = input.required<string | null>();
   videoUrl = input.required<string | null>();
@@ -36,7 +35,7 @@ export class Video {
 
   private ytPlayerInstance: any = null;
 
-  startRoundTimer = output<void>();
+  startRound = output<void>();
 
   playerVars = computed(() => ({
     autoplay: this.roundStatus() === 'GUESSING' ? 1 : 0,
@@ -65,8 +64,8 @@ export class Video {
     }
   }
 
-  startRound() {
-    this.startRoundTimer.emit();
+  onPrepTimerFinish() {
+    this.startRound.emit();
   }
 
   onPlayerReady(event: any) {
