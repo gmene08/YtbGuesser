@@ -15,6 +15,7 @@ public class UserResponseDTO {
     private String nickname;
     private String email;
     private Boolean isGuest;
+    private String roomIsIn;
 
     public static UserResponseDTO from(User user) {
         if (user == null) {
@@ -25,7 +26,9 @@ public class UserResponseDTO {
                 user.getId(),
                 user.getNickname(),
                 user.getEmail(),
-                user.getIsGuest());
+                user.getIsGuest(),
+                user.getRoom() == null ? null : user.getRoom().getCode()
+                );
     }
 
 }

@@ -1,0 +1,22 @@
+<div class="flex flex-col gap-2 items-center">
+  <app-error-message></app-error-message>
+
+  <div class="flex flex-col items-center">
+    <span  class="text-3xl font-bold text-gray-800">You are already in a room</span>
+    <div  class="text-3xl font-bold text-gray-800">
+      <button
+        (click)="reconnect()"
+        class=" text-red-700 hover:text-red-600 underline transition"
+      >
+        Reconnect
+      </button>
+      or
+      <button
+        (click)="leaveRoom()"
+        class=" text-red-700 hover:text-red-600 underline transition"
+      >
+        Leave
+      </button>
+    </div>
+  </div>
+</div>

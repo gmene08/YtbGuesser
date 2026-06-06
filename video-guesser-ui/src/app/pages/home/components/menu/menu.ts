@@ -1,9 +1,10 @@
-import { Component, input, output, signal } from '@angular/core';
+import { Component, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ErrorMessage } from '../../../../components/error-message/error-message';
 
 @Component({
   selector: 'app-menu',
-  imports: [FormsModule],
+  imports: [FormsModule, ErrorMessage],
   templateUrl: './menu.html',
   styleUrl: './menu.css',
 })
@@ -14,13 +15,13 @@ export class Menu {
 
   isLoggedIn = input.required<boolean>();
 
-  errorMessage = signal<string>('');
+  errorMsgComponent = viewChild(ErrorMessage);
 
   onJoinRoom = output<string>();
   onCreateRoom = output<void>();
 
   toggleJoinRoomInput() {
-    this.errorMessage.set('');
+    this.errorMsgComponent()?.setErrorMessage('');
     this.showJoinRoomCodeInput = !this.showJoinRoomCodeInput;
     if (this.showJoinRoomCodeInput) {
       this.joinRoomCode = '';
@@ -29,7 +30,7 @@ export class Menu {
 
   joinRoom() {
     if (!this.isLoggedIn()) {
-      this.setErrorMessage('Enter your nickname to join a room');
+      this.errorMsgComponent()?.setErrorMessage('Enter your nickname to join a room');
       return;
     }
 
@@ -38,18 +39,10 @@ export class Menu {
 
   createRoom() {
     if (!this.isLoggedIn()) {
-      this.setErrorMessage('Enter your nickname to create a room');
+      this.errorMsgComponent()?.setErrorMessage('Enter your nickname to create a room');
       return;
     }
 
     this.onCreateRoom.emit();
-  }
-
-  setErrorMessage(message: string) {
-    this.errorMessage.set(message);
-    clearTimeout(this.timeoutId);
-    this.timeoutId = setTimeout(() => {
-      this.errorMessage.set('');
-    }, 5000);
   }
 }

@@ -1,13 +1,7 @@
 <div class="flex flex-col gap-8 items-center">
 
   <div class="flex flex-col gap-2 items-center">
-    <div class="h-6 w-full flex justify-center items-center">
-      @if (errorMessage()) {
-        <span class="text-red-500 text-sm font-semibold animate-pulse">
-          {{ errorMessage() }}
-        </span>
-      }
-    </div>
+    <app-error-message></app-error-message>
 
     @if (!showJoinRoomCodeInput) {
       <div class="flex flex-col gap-4 items-center w-full">
@@ -25,6 +19,7 @@
           Join Room
         </button>
       </div>
+
     } @else {
       <div class="flex flex-col gap-4 items-center w-full">
         <input

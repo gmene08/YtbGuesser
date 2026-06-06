@@ -117,7 +117,7 @@ export class Room implements OnInit {
       },
       error: (error) => {
         console.error('Error leaving room: ', error);
-        alert('Error leaving room');
+        this.rt.navigate(['/']);
       },
     });
   }

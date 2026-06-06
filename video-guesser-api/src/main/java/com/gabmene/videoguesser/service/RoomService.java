@@ -1,6 +1,5 @@
 package com.gabmene.videoguesser.service;
 
-import com.gabmene.videoguesser.dto.match.MatchResponseDTO;
 import com.gabmene.videoguesser.dto.room.JoinRoomRequestDTO;
 import com.gabmene.videoguesser.dto.match.MatchConfigRequestDTO;
 import com.gabmene.videoguesser.dto.room.RoomResponseDTO;
@@ -22,16 +21,14 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
 public class RoomService {
-    private final SimpMessagingTemplate messagingTemplate;
 
     private final RoomRepository roomRepository;
     private final UserRepository userRepository;
@@ -170,9 +167,18 @@ public class RoomService {
     @Transactional
     public Room leaveRoom(String roomCode, Integer userLeavingId) {
 
-        Room roomLeaving = roomRepository.findByCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Room not found"));
-
         User userLeaving = userRepository.findById(userLeavingId).orElseThrow(()-> new ResourceNotFoundException("User not found"));
+
+        Optional<Room> roomOptional = roomRepository.findByCode(roomCode);
+
+        // if the room does not exist, clear the user's room and return null
+        if (roomOptional.isEmpty()) {
+            userLeaving.setRoom(null);
+            userRepository.save(userLeaving);
+            return null;
+        }
+
+        Room roomLeaving = roomOptional.get();
 
         if(userLeaving.getRoom() == null) {
             throw new ConflictException("User is not in a room");
@@ -262,24 +268,6 @@ public class RoomService {
 
         return roomSaved;
     }
-
-    @Transactional
-    public Room endRoom(String roomCode, Integer userId) {
-        /*Room roomToBeEnded = roomRepository.findByCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Room not found"));
-
-        if(roomToBeEnded.getOwner() == null) {
-            throw new ResourceNotFoundException("Room owner not found");
-        }
-
-        if(!roomToBeEnded.getOwner().getId().equals(userId)) {
-            throw new ForbiddenException("Only the owner can end the room");
-        }
-
-        if(roomToBeEnded.getStatus() != (RoomStatus.PLAYING) ) {}*/
-        return null;
-
-    }
-
 
     public RoomResponseDTO buildRoomResponseDTO(Room room) {
         return RoomResponseDTO.from(room);

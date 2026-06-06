@@ -3,4 +3,5 @@ export interface UserResponse {
   nickname: string;
   email: string;
   isGuest: boolean;
+  roomIsIn: string;
 }
