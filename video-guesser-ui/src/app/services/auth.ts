@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs';
 import { UserResponse } from '../dtos/auth.dto';
@@ -13,8 +13,21 @@ export class Auth {
 
   constructor(private http: HttpClient) {}
 
+  public currentUser = signal<{id:number, nickname:string} | null>(this.getInitialUser());
+
+  getInitialUser(){
+    const userId = localStorage.getItem('userId');
+    const nickname = localStorage.getItem('nickname');
+    return userId && nickname ? {id: Number(userId), nickname: nickname} : null;
+  }
+
   checkSession(){
-    return this.http.get<UserResponse>(`${this.apiUrl}/me`);
+    return this.http.get<UserResponse>(`${this.apiUrl}/me`).pipe(tap((response) => {
+      localStorage.setItem('userId', response.id.toString());
+      localStorage.setItem('nickname', response.nickname);
+
+      this.currentUser.set({id: response.id, nickname: response.nickname});
+    }));
   }
 
   createGuest(nickname: string) {
@@ -22,6 +35,9 @@ export class Auth {
       tap((response) => {
         localStorage.setItem('userId', response.id.toString());
         localStorage.setItem('nickname', response.nickname);
+
+        this.currentUser.set({id: response.id, nickname: response.nickname});
+
         console.log('Guest ID saved in session:', response.id.toString());
       }),
     );
@@ -32,6 +48,17 @@ export class Auth {
       localStorage.setItem('userId', response.id.toString());
       localStorage.setItem('nickname', response.nickname);
       console.log('User ID saved in session: ', response.id.toString());
+    }));
+  }
+
+  logout (userId: number) {
+    return this.http.delete(`${this.apiUrl}/${userId}/logout`, {}).pipe(tap(() => {
+      localStorage.removeItem('userId');
+      localStorage.removeItem('nickname');
+
+      this.currentUser.set(null);
+
+      console.log('User logged out');
     }));
   }
 }

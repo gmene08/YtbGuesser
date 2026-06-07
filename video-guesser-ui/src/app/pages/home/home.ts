@@ -1,4 +1,4 @@
-import { Component, signal, inject, viewChild, effect } from '@angular/core';
+import { Component, signal, inject, viewChild, effect, computed } from '@angular/core';
 import { Login } from './components/login/login';
 import { Menu } from './components/menu/menu';
 import { Auth } from '../../services/auth';
@@ -14,9 +14,13 @@ import { Reconnect } from './components/reconnect/reconnect';
   styleUrl: './home.css',
 })
 export class Home {
-  isUserLoggedIn = signal(false);
   isLoading = signal(true);
-  userNickname = signal<string | null>(localStorage.getItem('nickname') || null);
+  userNickname = computed(()=>{
+    return this.authService.currentUser()?.nickname || null;
+  })
+  isUserLoggedIn = computed(()=>{
+    return !!this.authService.currentUser();
+  })
 
   roomUserIsIn = signal<string | null>(null);
 
@@ -32,10 +36,7 @@ export class Home {
     this.authService.checkSession().subscribe({
       next: (response) => {
         console.log('Session check response: ', response);
-        localStorage.setItem('userId', response.id.toString());
-        localStorage.setItem('nickname', response.nickname);
 
-        this.isUserLoggedIn.set(true);
         this.roomUserIsIn.set(response.roomIsIn || null);
         this.isLoading.set(false);
       },
@@ -52,8 +53,6 @@ export class Home {
     this.authService.createGuest(guestNickname).subscribe({
       next: (response) => {
         console.log('Login successful from home page', response);
-        this.isUserLoggedIn.set(true);
-        this.userNickname.set(localStorage.getItem('nickname') || null);
         this.loginComponent()?.errorMsgComponent()?.setErrorMessage('');
         this.menuComponent()?.errorMsgComponent()?.setErrorMessage('');
       },

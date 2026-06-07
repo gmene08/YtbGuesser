@@ -15,4 +15,7 @@ public final class AppConstants {
     public static final int TIME_FOR_USER_DELETION_HOURS = 24;
     public static final int JWT_EXPIRATION_TIME_SECONDS = 86400;
     public static final int TIME_BEFORE_FIRST_GUEST_DELETION_MINUTES = 10;
+
+    public static final int MAX_NICKNAME_LENGTH = 16;
+    public static final int MIN_NICKNAME_LENGTH = 3;
 }

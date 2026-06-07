@@ -12,6 +12,7 @@ import { Player } from '../../models/room.state';
 import { retry } from 'rxjs';
 import { GameWebsocketService } from '../../services/websocket/game-websocket';
 import { CoreWebsocket } from '../../services/websocket/core-websocket';
+import { Auth } from '../../services/auth';
 
 @Component({
   selector: 'app-room',
@@ -21,14 +22,18 @@ import { CoreWebsocket } from '../../services/websocket/core-websocket';
   standalone: true,
 })
 export class Room implements OnInit, OnDestroy {
-  currentUserId = Number(localStorage.getItem('userId') ?? -1);
 
+  private authService = inject(Auth);
   private roomService = inject(RoomService);
   private lobbyWebSocket = inject(LobbyWebsocket);
   private gameWebSocket = inject(GameWebsocketService);
   private coreWebSocket = inject(CoreWebsocket);
   private router = inject(ActivatedRoute);
   private rt = inject(Router);
+
+  currentUserId = computed(()=>{
+    return this.authService.currentUser()?.id || -1;
+  })
 
   roomData = computed(() => {
     const room = this.lobbyWebSocket.roomData();
@@ -47,7 +52,7 @@ export class Room implements OnInit, OnDestroy {
   startGameErrorMessage = signal<string>('');
   saveMaxPlayersErrorMessage = signal<string>('');
 
-  isUserOwner = computed(() => this.roomData()?.ownerId === this.currentUserId);
+  isUserOwner = computed(() => this.roomData()?.ownerId === this.currentUserId());
 
   constructor() {
     effect(() => {
@@ -56,7 +61,7 @@ export class Room implements OnInit, OnDestroy {
       const room = this.roomData();
 
       const IsUserStillInRoom =
-        room?.players.some((player) => player.userId === this.currentUserId) ?? false;
+        room?.players.some((player) => player.userId === this.currentUserId()) ?? false;
       if (!IsUserStillInRoom) {
         console.log('User not in this room');
         this.lobbyWebSocket.disconnectFromLobby();
@@ -66,7 +71,7 @@ export class Room implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    console.log('💥 Room component destroyed. Running safety cleanup...');
+    console.log('Room component destroyed. Running safety cleanup...');
 
     this.gameWebSocket.disconnect();
     this.lobbyWebSocket.disconnectFromLobby();
@@ -75,7 +80,7 @@ export class Room implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Redirect to home if not logged in
-    if (this.currentUserId === -1) {
+    if (this.currentUserId() === -1) {
       console.log('User not logged in');
       this.rt.navigate(['/']);
       return;
@@ -102,7 +107,7 @@ export class Room implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           const isUserInThisRoom =
-            response.players.some((player) => player.userId === this.currentUserId) ?? false;
+            response.players.some((player) => player.userId === this.currentUserId()) ?? false;
           if (!isUserInThisRoom) {
             console.log('User not in this room');
             this.rt.navigate(['/']);

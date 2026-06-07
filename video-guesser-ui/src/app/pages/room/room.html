@@ -18,7 +18,7 @@
             class="flex flex-col justify-between w-full flex-grow"
             [room]="roomData()"
             [isOwner]="isUserOwner()"
-            [currentUserId]="currentUserId"
+            [currentUserId]="currentUserId()"
             (onKickPlayer)="kickPlayer($event)"
             (onLeaveRoom)="leaveRoom()"
           >
@@ -42,6 +42,7 @@
       class="h-full flex flex-col flex-grow items-center p-6 gap-6"
       [roomData]="roomData()"
       (kickPlayer)="kickPlayer($event)"
+      (onLeaveRoom)="leaveRoom()"
     >
     </app-room-game>
   }

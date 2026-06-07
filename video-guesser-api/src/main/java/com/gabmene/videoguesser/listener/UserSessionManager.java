@@ -167,4 +167,16 @@ public class UserSessionManager {
         }, AppConstants.TIME_FOR_USER_DELETION_HOURS, TimeUnit.HOURS);
         pendingUserDeletions.put(userId, newUserDeletionFuture);
     }
+
+    public void clearAllPendingUserTimers(Integer userId) {
+        ScheduledFuture<?> userDeletion = pendingUserDeletions.remove(userId);
+        if (userDeletion != null) {
+            userDeletion.cancel(false);
+        }
+        ScheduledFuture<?> roomDisconnect = pendingRoomDisconnects.remove(userId);
+        if (roomDisconnect != null) {
+            roomDisconnect.cancel(false);
+        }
+        log.warn("Cleaned up all memory timers for logging out user: {}", userId);
+    }
 }

@@ -24,6 +24,7 @@ import { MatchStatus } from '../../../../enums/match-status';
 import { Results } from './components/results/results';
 import { RoundTimer } from './components/round-timer/round-timer';
 import { GuessInput } from './components/guess-input/guess-input';
+import { Auth } from '../../../../services/auth';
 
 @Component({
   selector: 'app-room-game',
@@ -33,10 +34,13 @@ import { GuessInput } from './components/guess-input/guess-input';
   standalone: true,
 })
 export class RoomGame implements OnInit, OnDestroy {
-  currentUserId = Number(localStorage.getItem('userId') ?? -1);
   matchService = inject(MatchService);
   gameService = inject(GameWebsocketService);
   roundService = inject(RoundService);
+  authService = inject(Auth);
+  currentUserId = computed(()=>{
+    return this.authService.currentUser()?.id || -1;
+  })
 
   @ViewChild(Video) videoPlayer!: Video;
 
@@ -46,9 +50,9 @@ export class RoomGame implements OnInit, OnDestroy {
   playersWhoGuessed = computed(() => {
     return this.roundData()?.playersWhoGuessed ?? [];
   });
-  isUserOwner = computed(() => this.roomData()?.ownerId === this.currentUserId);
+  isUserOwner = computed(() => this.roomData()?.ownerId === this.currentUserId());
   hasUserGuessedThisRound = computed(() => {
-    return this.playersWhoGuessed().includes(this.currentUserId);
+    return this.playersWhoGuessed().includes(this.currentUserId());
   });
   isRoundActive = computed(() => this.roundStatus() === RoundStatus.Guessing);
   videoUrl = computed(() => {
@@ -63,6 +67,7 @@ export class RoomGame implements OnInit, OnDestroy {
     return round.roundStatus;
   });
   kickPlayer = output<number>();
+  onLeaveRoom = output<void>();
   private previousStatus: RoundStatus | null = null;
   videoStartTime = signal<number>(0);
   activityLogs = signal<LogMessage[]>([]);
@@ -142,7 +147,7 @@ export class RoomGame implements OnInit, OnDestroy {
     console.log('Guessing: ', guessedValue);
 
     const userGuessRequest: UserGuessRequest = {
-      userId: this.currentUserId,
+      userId: this.currentUserId(),
       guessedViewCount: guessedValue,
     };
 
@@ -151,7 +156,7 @@ export class RoomGame implements OnInit, OnDestroy {
 
   startRound() {
     // Using the ownerId so only one http method is called to start a round
-    if (this.currentUserId != this.roomData()?.ownerId) {
+    if (!this.isUserOwner()) {
       return;
     }
 
@@ -162,7 +167,7 @@ export class RoomGame implements OnInit, OnDestroy {
 
     this.roundService
       .changeRoundStatus(roundId, {
-        userId: this.currentUserId,
+        userId: this.currentUserId(),
         status: RoundStatus.Guessing,
       })
       .subscribe({
@@ -181,13 +186,13 @@ export class RoomGame implements OnInit, OnDestroy {
 
     if (this.roundStatus() !== RoundStatus.Guessing) return;
 
-    if (this.currentUserId != this.roomData()?.ownerId) {
+    if (!this.isUserOwner()) {
       return;
     }
 
     this.roundService
       .changeRoundStatus(roundId, {
-        userId: this.currentUserId,
+        userId: this.currentUserId(),
         status: RoundStatus.Finished,
       })
       .subscribe({
@@ -229,8 +234,14 @@ export class RoomGame implements OnInit, OnDestroy {
   }
 
   handleTimeIsUp() {
-    if (this.currentUserId === this.roomData()?.ownerId) {
+    if (this.isUserOwner()) {
       this.endRound();
+    }
+  }
+
+  handleLeaveRoom() {
+    if (confirm('Are you sure you want to leave the room?')) {
+      this.onLeaveRoom.emit();
     }
   }
 

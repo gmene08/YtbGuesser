@@ -30,5 +30,6 @@ export class Login {
     }
 
     this.onLogin.emit(this.guestNicknameInput);
+    this.guestNicknameInput = '';
   }
 }

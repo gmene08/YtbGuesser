@@ -1,5 +1,6 @@
 package com.gabmene.videoguesser.service;
 
+import com.gabmene.videoguesser.constants.AppConstants;
 import com.gabmene.videoguesser.entity.User;
 import com.gabmene.videoguesser.exception.BusinessException;
 import com.gabmene.videoguesser.exception.ConflictException;
@@ -54,6 +55,12 @@ public class UserService {
         if (userRepository.existsByNickname(user.getNickname())) {
             throw new ConflictException("Nickname already exists");
         }
+        if( user.getNickname() == null || user.getNickname().isBlank() ||
+                user.getNickname().length() < AppConstants.MIN_NICKNAME_LENGTH ||
+                user.getNickname().length() > AppConstants.MAX_NICKNAME_LENGTH) {
+            throw new BusinessException("Nickname must be between 3 and 16 characters");
+        }
+
         user.setIsGuest(true);
         User savedGuest = userRepository.save(user);
 
@@ -70,7 +77,12 @@ public class UserService {
         return user;
     }
 
-
+    @Transactional
+    public void userLogout(Integer id, HttpServletResponse response){
+        roomService.handleRoomDisconnect(id);
+        this.handleUserDisconnect(id);
+        jwtService.removeTokenFromCookie(response);
+    }
 
     public User loginUser(String nickname, String password){
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();

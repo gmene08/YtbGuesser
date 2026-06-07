@@ -64,5 +64,8 @@ public class JwtService {
                 .maxAge(86400)
                 .build();
     }
+    public void removeTokenFromCookie(HttpServletResponse response){
+        response.addHeader(HttpHeaders.SET_COOKIE, "auth_token=; Path=/; Max-Age=0");
+    }
 
 }

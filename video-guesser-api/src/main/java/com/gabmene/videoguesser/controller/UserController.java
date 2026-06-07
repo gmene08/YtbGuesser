@@ -63,6 +63,12 @@ public class UserController {
         return ResponseEntity.ok(UserResponseDTO.from(user));
     }
 
+    @DeleteMapping("/{id}/logout")
+    public ResponseEntity<Void> logout(@PathVariable Integer id, HttpServletResponse response) {
+        userSessionManager.clearAllPendingUserTimers(id);
+        userService.userLogout(id ,response);
+        return ResponseEntity.ok().build();
+    }
 
 
 }
