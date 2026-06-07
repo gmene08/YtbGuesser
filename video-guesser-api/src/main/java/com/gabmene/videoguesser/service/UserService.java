@@ -67,13 +67,14 @@ public class UserService {
         return savedGuest;
     }
 
-    public void refreshUserCookie (Principal principal, HttpServletResponse response){
+    public User refreshUserCookie (Principal principal, HttpServletResponse response){
         Integer userId = Integer.parseInt(principal.getName());
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         String newToken = jwtService.generateToken(user.getId(), user.getNickname());
         ResponseCookie cookie = this.buildCookie(newToken);
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        return user;
     }
 
     public ResponseCookie buildCookie (String token){
