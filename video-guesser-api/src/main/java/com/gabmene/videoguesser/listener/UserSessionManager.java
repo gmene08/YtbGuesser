@@ -1,8 +1,7 @@
 package com.gabmene.videoguesser.listener;
 
-import com.gabmene.videoguesser.entity.User;
+import com.gabmene.videoguesser.constants.AppConstants;
 import com.gabmene.videoguesser.repository.RoomRepository;
-import com.gabmene.videoguesser.repository.UserRepository;
 import com.gabmene.videoguesser.service.RoomService;
 import com.gabmene.videoguesser.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +22,6 @@ import java.util.concurrent.*;
 @Slf4j
 public class UserSessionManager {
 
-    private final UserRepository userRepository;
     private final RoomService roomService;
     private final RoomRepository roomRepository;
 
@@ -103,34 +101,37 @@ public class UserSessionManager {
 
             Integer userId = Integer.parseInt(principal.getName());
 
-            // if the user didn't leave the room, disconnect him
+            // if the user didn't leave the room via button, only closed the tab, the user would still be in the room.
             if(roomRepository.findRoomCodeByUserId(userId).isPresent()){
-                log.warn("User Disconnected: {}, 120 seconds before disconnecting", userId );
+                log.warn("User Disconnected: {}, {} seconds before disconnecting from room", userId, AppConstants.TIME_FOR_ROOM_DISCONNECT_SECONDS);
 
                 ScheduledFuture<?> roomDisconnectFuture = scheduler.schedule(()->{
                     pendingRoomDisconnects.remove(userId);
 
                     try {
                         roomService.handleRoomDisconnect(userId);
-                        log.warn("User {} disconnected", userId);
+                        log.warn("User {} disconnected from his old room", userId);
                     } catch (Exception e) {
                         log.error("Error handling user disconnect: {}", e.getMessage());
                     }
 
-                },120, TimeUnit.SECONDS);
+                }, AppConstants.TIME_FOR_ROOM_DISCONNECT_SECONDS, TimeUnit.SECONDS);
 
                 pendingRoomDisconnects.put(userId, roomDisconnectFuture);
+
+                // If he left the room via button, this timer should be skipped since the user would be redirected to home page.
+                // Which means this timer would be called already through /me.
+                this.resetUserDeletionTimer(userId);
             }
 
-            // reset the 24-hour deletion timer
-            this.resetUserDeletionTimer(userId);
+
         }
 
     }
 
-    // If guest, after its creation, doesn't connect to WebSocket in 10 minutes, delete him
+    // If guest, after its creation, doesn't connect to WebSocket in 10 minutes, delete him -- called in POST /guest
     public void scheduleInitialDestruction(Integer userId) {
-        log.warn("Scheduling deletion for user {}, has 10 minutes to connect to WebSocket", userId);
+        log.warn("Scheduling deletion for user {}, has {} minutes to connect to WebSocket", userId, AppConstants.TIME_BEFORE_FIRST_GUEST_DELETION_MINUTES);
 
         ScheduledFuture<?> userDeletionFuture = scheduler.schedule(()->{
             pendingUserDeletions.remove(userId);
@@ -141,14 +142,14 @@ public class UserSessionManager {
             } catch (Exception e) {
                 log.error("Error handling zombie user deletion: {}", e.getMessage());
             }
-        }, 10, TimeUnit.MINUTES);
+        }, AppConstants.TIME_BEFORE_FIRST_GUEST_DELETION_MINUTES, TimeUnit.MINUTES);
 
         pendingUserDeletions.put(userId, userDeletionFuture);
     }
 
-    // 24-hour timer to delete users that didn't log in for 24 hours
+    // 24-hour timer to delete users that didn't log in for 24 hours -- called in GET /me
     public void resetUserDeletionTimer(Integer userId){
-        log.warn("Resetting deletion timer for user {} (24 hours)", userId);
+        log.warn("Resetting deletion timer for user {} ({} hours)", userId, AppConstants.TIME_FOR_USER_DELETION_HOURS);
 
         ScheduledFuture<?> userDeletionFuture = pendingUserDeletions.remove(userId);
         if(userDeletionFuture != null){
@@ -159,11 +160,11 @@ public class UserSessionManager {
             pendingUserDeletions.remove(userId);
             try{
                 userService.handleUserDisconnect(userId);
-                log.warn("User {} deleted, didn't re-log after 24 hours", userId);
+                log.warn("User {} deleted, didn't re-log after {} hours", userId, AppConstants.TIME_FOR_USER_DELETION_HOURS);
             } catch (Exception e) {
                 log.error("Error handling user deletion: {}", e.getMessage());
             }
-        }, 86400, TimeUnit.SECONDS);
+        }, AppConstants.TIME_FOR_USER_DELETION_HOURS, TimeUnit.HOURS);
         pendingUserDeletions.put(userId, newUserDeletionFuture);
     }
 }

@@ -1,5 +1,6 @@
 package com.gabmene.videoguesser.service;
 
+import com.gabmene.videoguesser.constants.AppConstants;
 import com.gabmene.videoguesser.dto.room.JoinRoomRequestDTO;
 import com.gabmene.videoguesser.dto.match.MatchConfigRequestDTO;
 import com.gabmene.videoguesser.dto.room.RoomResponseDTO;
@@ -19,7 +20,6 @@ import com.gabmene.videoguesser.repository.UserMatchRepository;
 import com.gabmene.videoguesser.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -53,7 +53,7 @@ public class RoomService {
         // config room
         room.setCode(generateUniqueCode());
         room.setStatus(RoomStatus.WAITING);
-        room.setMaxPlayers(5);
+        room.setMaxPlayers(AppConstants.ROOM_MAX_PLAYERS_DEFAULT);
 
         room.setOwner(owner);
         room.setUsers(new java.util.ArrayList<>());
@@ -72,8 +72,8 @@ public class RoomService {
         String code;
 
         do {
-            StringBuilder sb = new StringBuilder(5);
-            for (int i = 0; i < 5; i++) {
+            StringBuilder sb = new StringBuilder(AppConstants.ROOM_CODE_LENGTH);
+            for (int i = 0; i < AppConstants.ROOM_CODE_LENGTH; i++) {
                 sb.append(chars.charAt(rnd.nextInt(chars.length())));
             }
             code = sb.toString();

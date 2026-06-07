@@ -8,9 +8,6 @@ import com.gabmene.videoguesser.repository.UserRepository;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
-import org.springframework.security.core.token.TokenService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -61,9 +58,7 @@ public class UserService {
         User savedGuest = userRepository.save(user);
 
         // generate token
-        String token = jwtService.generateToken(savedGuest.getId(), savedGuest.getNickname());
-        ResponseCookie cookie = this.buildCookie(token);
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        jwtService.applyTokenToCookie(savedGuest, response);
         return savedGuest;
     }
 
@@ -71,21 +66,11 @@ public class UserService {
         Integer userId = Integer.parseInt(principal.getName());
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-        String newToken = jwtService.generateToken(user.getId(), user.getNickname());
-        ResponseCookie cookie = this.buildCookie(newToken);
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        jwtService.applyTokenToCookie(user, response);
         return user;
     }
 
-    public ResponseCookie buildCookie (String token){
-        return ResponseCookie.from("auth_token", token)
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .sameSite("Lax")
-                .maxAge(86400)
-                .build();
-    }
+
 
     public User loginUser(String nickname, String password){
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
