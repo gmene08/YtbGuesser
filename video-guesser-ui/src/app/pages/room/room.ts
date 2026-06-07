@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RoomSettings } from './components/room-settings/room-settings';
 import { RoomService } from '../../services/room';
@@ -10,6 +10,8 @@ import { RoomGame } from './components/room-game/room-game';
 import { LobbyWebsocket } from '../../services/websocket/lobby-websocket';
 import { Player } from '../../models/room.state';
 import { retry } from 'rxjs';
+import { GameWebsocketService } from '../../services/websocket/game-websocket';
+import { CoreWebsocket } from '../../services/websocket/core-websocket';
 
 @Component({
   selector: 'app-room',
@@ -18,16 +20,18 @@ import { retry } from 'rxjs';
   styleUrl: './room.css',
   standalone: true,
 })
-export class Room implements OnInit {
+export class Room implements OnInit, OnDestroy {
   currentUserId = Number(localStorage.getItem('userId') ?? -1);
 
   private roomService = inject(RoomService);
-  private lobbyService = inject(LobbyWebsocket);
+  private lobbyWebSocket = inject(LobbyWebsocket);
+  private gameWebSocket = inject(GameWebsocketService);
+  private coreWebSocket = inject(CoreWebsocket);
   private router = inject(ActivatedRoute);
   private rt = inject(Router);
 
   roomData = computed(() => {
-    const room = this.lobbyService.roomData();
+    const room = this.lobbyWebSocket.roomData();
     if (!room) return null;
     return {
       ...room,
@@ -55,10 +59,18 @@ export class Room implements OnInit {
         room?.players.some((player) => player.userId === this.currentUserId) ?? false;
       if (!IsUserStillInRoom) {
         console.log('User not in this room');
-        this.lobbyService.disconnectFromLobby();
+        this.lobbyWebSocket.disconnectFromLobby();
         this.rt.navigate(['/']);
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    console.log('💥 Room component destroyed. Running safety cleanup...');
+
+    this.gameWebSocket.disconnect();
+    this.lobbyWebSocket.disconnectFromLobby();
+    this.coreWebSocket.disconnect();
   }
 
   ngOnInit(): void {
@@ -97,9 +109,9 @@ export class Room implements OnInit {
             return;
           }
 
-          this.lobbyService.setRoomData(response);
+          this.lobbyWebSocket.setRoomData(response);
           this.hasLoadedInitialRoomData.set(true);
-          this.lobbyService.connectToLobby(code);
+          this.lobbyWebSocket.connectToLobby(code);
         },
         error: (error) => {
           console.error('Error fetching room data: ', error);
@@ -113,6 +125,13 @@ export class Room implements OnInit {
       // Go to the home page
       next: (response) => {
         console.log('User left room');
+
+        this.gameWebSocket.disconnect();
+
+        this.lobbyWebSocket.disconnectFromLobby();
+
+        this.coreWebSocket.disconnect();
+
         this.rt.navigate(['/']);
       },
       error: (error) => {
