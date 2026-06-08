@@ -16,6 +16,7 @@ public class RoomResponseDTO {
     private String status;
     private Integer maxPlayers;
     private List<PlayerDTO> players;
+    private List<Integer> playersWhoDisconnected;
     private Integer ownerId;
     private Integer currentPlayers;
 
@@ -29,6 +30,21 @@ public class RoomResponseDTO {
                 room.getStatus() != null ? room.getStatus().name() : null,
                 room.getMaxPlayers(),
                 players,
+                null,
+                room.getOwner() != null ? room.getOwner().getId() : null,
+                players.size()
+        );
+    }
+    public static RoomResponseDTO from(Room room, List<Integer> playersWhoDisconnected) {
+        List<PlayerDTO> players = mapPlayers(room);
+
+        return new RoomResponseDTO(
+                room.getId(),
+                room.getCode(),
+                room.getStatus() != null ? room.getStatus().name() : null,
+                room.getMaxPlayers(),
+                players,
+                playersWhoDisconnected,
                 room.getOwner() != null ? room.getOwner().getId() : null,
                 players.size()
         );

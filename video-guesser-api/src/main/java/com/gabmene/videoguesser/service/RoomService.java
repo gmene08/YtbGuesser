@@ -11,15 +11,18 @@ import com.gabmene.videoguesser.entity.User;
 import com.gabmene.videoguesser.entity.UserMatch;
 import com.gabmene.videoguesser.enums.MatchStatus;
 import com.gabmene.videoguesser.enums.RoomStatus;
+import com.gabmene.videoguesser.event.UserLeftRoomEvent;
 import com.gabmene.videoguesser.exception.BusinessException;
 import com.gabmene.videoguesser.exception.ConflictException;
 import com.gabmene.videoguesser.exception.ForbiddenException;
 import com.gabmene.videoguesser.exception.ResourceNotFoundException;
+import com.gabmene.videoguesser.listener.UserConnectionRegistry;
 import com.gabmene.videoguesser.repository.RoomRepository;
 import com.gabmene.videoguesser.repository.UserMatchRepository;
 import com.gabmene.videoguesser.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,8 +37,10 @@ public class RoomService {
     private final UserRepository userRepository;
     private final MatchService matchService;
     private final UserMatchRepository userMatchRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     private final GameNotificationService gameNotificationService;
+    private final UserConnectionRegistry userConnectionRegistry;
 
     @Transactional
     public Room createRoom(Integer ownerId) {
@@ -57,7 +62,7 @@ public class RoomService {
 
         room.setOwner(owner);
         room.setUsers(new java.util.ArrayList<>());
-        room.getUsers().add(owner); // add the ownerId to the users list
+        room.getUsers().add(owner); // add the ownerId to the user list
 
         // synchronous save
         Room savedRoom = roomRepository.save(room);
@@ -155,7 +160,7 @@ public class RoomService {
         }
 
         // Match is created right when the room starts
-        Match match = matchService.createMatch(roomStarting, request);
+        matchService.createMatch(roomStarting, request);
 
         roomStarting.setStatus(RoomStatus.PLAYING);
         Room roomSaved = roomRepository.save(roomStarting);
@@ -226,8 +231,15 @@ public class RoomService {
 
         }
 
+        if(this.userConnectionRegistry.isDisconnected(userLeaving.getId())) {
+            userConnectionRegistry.markAsConnected(userLeaving.getId(), false);
+        }
+
+        eventPublisher.publishEvent(new UserLeftRoomEvent(userLeaving.getId()));
+
         Room roomSaved = roomRepository.save(roomLeaving);
         gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
+
         return roomSaved;
     }
 
@@ -270,7 +282,8 @@ public class RoomService {
     }
 
     public RoomResponseDTO buildRoomResponseDTO(Room room) {
-        return RoomResponseDTO.from(room);
+        List<Integer> disconnectedUsers = userConnectionRegistry.getDisconnectedUsersInRoom(room);
+        return RoomResponseDTO.from(room, disconnectedUsers);
     }
 
     @Transactional

@@ -16,6 +16,8 @@ public interface RoomRepository extends JpaRepository<Room,Integer> {
     @Query("SELECT r.code FROM User u JOIN u.room r WHERE u.id = :userId")
     Optional<String> findRoomCodeByUserId(Integer userId);
 
+    @Query("SELECT r FROM User u JOIN u.room r WHERE u.id = :userId")
+    Optional<Room> findRoomByUserId(Integer userId);
 
     Optional<Room> findByCode(String code);
     Optional<Room> findByOwner(User owner);

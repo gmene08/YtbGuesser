@@ -5,6 +5,7 @@ export interface RoomResponse {
   code: string;
   ownerId: number;
   players: PlayerResponse[];
+  playersWhoDisconnected: number[];
   status: string;
   maxPlayers: number;
 }

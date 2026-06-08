@@ -44,6 +44,7 @@ export class Home {
         console.error('No session found ');
         localStorage.removeItem('userId');
         localStorage.removeItem('nickname');
+        this.authService.currentUser.set(null);
         this.isLoading.set(false);
       },
     });

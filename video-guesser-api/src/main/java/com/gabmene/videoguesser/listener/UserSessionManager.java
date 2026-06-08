@@ -1,6 +1,7 @@
 package com.gabmene.videoguesser.listener;
 
 import com.gabmene.videoguesser.constants.AppConstants;
+import com.gabmene.videoguesser.event.UserLeftRoomEvent;
 import com.gabmene.videoguesser.repository.RoomRepository;
 import com.gabmene.videoguesser.service.RoomService;
 import com.gabmene.videoguesser.service.UserService;
@@ -23,12 +24,15 @@ import java.util.concurrent.*;
 public class UserSessionManager {
 
     private final RoomService roomService;
+
     private final RoomRepository roomRepository;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     private final Map<Integer, ScheduledFuture<?>> pendingRoomDisconnects = new ConcurrentHashMap<>();
     private final Map<Integer, ScheduledFuture<?>> pendingUserDeletions = new ConcurrentHashMap<>();
+
+    private final UserConnectionRegistry userConnectionRegistry;
     private final UserService userService;
 
     @EventListener
@@ -37,146 +41,170 @@ public class UserSessionManager {
         if(principal != null){
 
             Integer userId = Integer.parseInt(principal.getName());
-            log.warn("Received a new web socket connection: {}", userId);
+            log.warn("Received a new web socket connection: user {}", userId);
 
-            ScheduledFuture<?> pendingUserDeletion = pendingUserDeletions.remove(userId);
-
-            boolean wasRescued = false;
-
-            if(pendingUserDeletion != null){
-                pendingUserDeletion.cancel(false);
-                wasRescued = true;
-            }
-            if (wasRescued) {
-                log.warn("✅ User {} connected to WebSocket - canceled deletion", userId);
-            } else {
-                log.warn("🔌 User {} connected to WebSocket for the first time!", userId);
+            if(this.clearUserDeletionTimer(userId)){
+                log.warn("User {} connected to WebSocket - deletion timer cleared", userId);
             }
         }
     }
 
     @EventListener
-    public void handleUserSubscribeEvent(SessionSubscribeEvent event){
+    public void handleUserSubscribeToRoomEvent(SessionSubscribeEvent event){
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
         Principal principal = accessor.getUser();
         String destination = accessor.getDestination();
+
+        // Check the room subscription
         if(principal != null && (destination != null && destination.startsWith("/topic/room/"))){
             Integer userId = Integer.parseInt(principal.getName());
-            String roomCode = destination.split("/")[3];
+            String subRoomCode = destination.split("/")[3];
 
+            // Check the room the user is in
             roomRepository.findRoomCodeByUserId(userId).ifPresentOrElse(userRoomCode -> {
-                    if(roomCode.equals(userRoomCode)){
-                        ScheduledFuture<?> pendingRoomDisconnect = pendingRoomDisconnects.remove(userId);
 
-                        if(pendingRoomDisconnect != null){
-                            pendingRoomDisconnect.cancel(false);
-                            log.warn("✅ User {} reconnected to room {} in time!", userId , roomCode);
+
+                    // check if the room the user is trying to subscribe to is the same as the room the user is in
+                    if(subRoomCode.equals(userRoomCode)){
+                        userConnectionRegistry.markAsConnected(userId, true); // mark the user as connected
+                        if (this.clearRoomDisconnectTimer(userId)){
+                            log.warn("✅ User {} reconnected to room {} in time!", userId , subRoomCode);
                         }
+
                     } else {
-                        log.warn("User {} tried to subscribe to room {} but is not in it, belongs to {}. Forcing disconnect", userId, roomCode, userRoomCode);
-                        ScheduledFuture<?> pendingRoomDisconnect = pendingRoomDisconnects.remove(userId);
-                        if(pendingRoomDisconnect != null){
-                            pendingRoomDisconnect.cancel(false);
-                        }
-
+                        log.warn("User {} tried to subscribe to room {} but is not in it, belongs to {}. Forcing disconnect", userId, subRoomCode, userRoomCode);
+                        this.clearRoomDisconnectTimer(userId);
                         try {
                             roomService.handleRoomDisconnect(userId);
-                            log.warn("User {} disconnected from old room", userId);
+                            log.warn("User {} kicked from old room", userId);
                         } catch (Exception e) {
                             log.error("Error handling user disconnect: {}", e.getMessage());
                         }
                     }
-                },()->{
-                    log.warn("User {} tried to subscribe to room {} but has no room assigned in DB.", userId, roomCode);
-                });
+                },()-> log.warn("User {} tried to subscribe to room {} but has no room assigned in DB.", userId, subRoomCode));
         }
     }
 
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
-        log.warn("Received a WebScoket disconnect event");
-        StompHeaderAccessor acessor = StompHeaderAccessor.wrap(event.getMessage());
-        Principal principal = acessor.getUser();
+        StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
+        Principal principal = accessor.getUser();
         if(principal != null){
 
             Integer userId = Integer.parseInt(principal.getName());
+            log.warn("Received a WebSocket disconnect event: user {}", userId);
 
             // if the user didn't leave the room via button, only closed the tab, the user would still be in the room.
-            if(roomRepository.findRoomCodeByUserId(userId).isPresent()){
-                log.warn("User Disconnected: {}, {} seconds before disconnecting from room", userId, AppConstants.TIME_FOR_ROOM_DISCONNECT_SECONDS);
+            roomRepository.findRoomCodeByUserId(userId).ifPresent(roomCode->{
+                log.warn("Lost Connection - User {} lost connectin to room {}, {} {} for rejoining", userId, roomCode, AppConstants.TIME_FOR_ROOM_DISCONNECT_SECONDS, TimeUnit.SECONDS);
 
-                ScheduledFuture<?> roomDisconnectFuture = scheduler.schedule(()->{
-                    pendingRoomDisconnects.remove(userId);
+                // Logic to alert the frontend that the user has disconnected.
+                userConnectionRegistry.markAsDisconnected(userId, true);
 
-                    try {
-                        roomService.handleRoomDisconnect(userId);
-                        log.warn("User {} disconnected from his old room", userId);
-                    } catch (Exception e) {
-                        log.error("Error handling user disconnect: {}", e.getMessage());
-                    }
+                // Schedule a timer to kick the user from the room.
+                this.scheduleRoomDisconnect(
+                        userId,
+                        roomCode,
+                        AppConstants.TIME_FOR_ROOM_DISCONNECT_SECONDS,
+                        TimeUnit.SECONDS,
+                        "Disconnected - User {} disconnected from room {} for not rejoining in {} {}");
 
-                }, AppConstants.TIME_FOR_ROOM_DISCONNECT_SECONDS, TimeUnit.SECONDS);
-
-                pendingRoomDisconnects.put(userId, roomDisconnectFuture);
-
-                // If he left the room via button, this timer should be skipped since the user would be redirected to home page.
+                // If he left the room via button, this timer should be skipped since the user would be redirected to the home page.
                 // Which means this timer would be called already through /me.
                 this.resetUserDeletionTimer(userId);
-            }
-
-
+            });
         }
-
     }
 
-    // If guest, after its creation, doesn't connect to WebSocket in 10 minutes, delete him -- called in POST /guest
-    public void scheduleInitialDestruction(Integer userId) {
-        log.warn("Scheduling deletion for user {}, has {} minutes to connect to WebSocket", userId, AppConstants.TIME_BEFORE_FIRST_GUEST_DELETION_MINUTES);
-
-        ScheduledFuture<?> userDeletionFuture = scheduler.schedule(()->{
-            pendingUserDeletions.remove(userId);
-
-            try {
-                userService.handleUserDisconnect(userId);
-                log.warn("User {} deleted, didn't connect to WebSocket", userId);
-            } catch (Exception e) {
-                log.error("Error handling zombie user deletion: {}", e.getMessage());
-            }
-        }, AppConstants.TIME_BEFORE_FIRST_GUEST_DELETION_MINUTES, TimeUnit.MINUTES);
-
-        pendingUserDeletions.put(userId, userDeletionFuture);
+    @EventListener
+    public void handleUserLeftRoomEvent(UserLeftRoomEvent event){
+        Integer userId = event.userId();
+        if(this.clearRoomDisconnectTimer(userId))
+            log.warn("Timer canceled - User {} left the room (or was kicked) before the disconnect timer expired.", userId);
     }
 
     // 24-hour timer to delete users that didn't log in for 24 hours -- called in GET /me
     public void resetUserDeletionTimer(Integer userId){
-        log.warn("Resetting deletion timer for user {} ({} hours)", userId, AppConstants.TIME_FOR_USER_DELETION_HOURS);
-
-        ScheduledFuture<?> userDeletionFuture = pendingUserDeletions.remove(userId);
-        if(userDeletionFuture != null){
-            userDeletionFuture.cancel(false);
+        if(this.clearUserDeletionTimer(userId)){
+            log.warn("Deletion Timer Reset - User {} deletion in {} {} ", userId, AppConstants.TIME_FOR_USER_DELETION_HOURS, TimeUnit.HOURS);
         }
 
+        this.scheduleUserDeletion(
+                userId,
+                AppConstants.TIME_FOR_USER_DELETION_HOURS,
+                TimeUnit.HOURS,
+                "User {} Deleted - Not logging in for {} {}"
+        );
+    }
+
+    // If guest, after its creation, doesn't connect to WebSocket in 10 minutes, delete him -- called in POST /guest
+    public void scheduleInitialDestruction(Integer userId) {
+        log.warn("Initial Destruction Scheduling - User {} deletion in {} {} if not connected to WebSocket until then", userId, AppConstants.TIME_BEFORE_FIRST_GUEST_DELETION_MINUTES, TimeUnit.MINUTES);
+        this.scheduleUserDeletion(
+                userId,
+                AppConstants.TIME_BEFORE_FIRST_GUEST_DELETION_MINUTES,
+                TimeUnit.MINUTES,
+                "User {} Deleted - Not connecting to WebSocket for a first time in {} {}"
+        );
+    }
+
+    public void scheduleRoomDisconnect(Integer userId, String roomCode, int timeForRoomDisconnect, TimeUnit timeUnit, String message) {
+        ScheduledFuture<?> roomDisconnectFuture = scheduler.schedule(()->{
+            pendingRoomDisconnects.remove(userId);
+
+            // not sending update to frontend because the user is supposed to be disconnected, not reconnected.
+            // If sent, the player-card would show the user as connected for a short time before being kicked.
+            userConnectionRegistry.markAsConnected(userId, false);
+
+            try {
+                roomService.handleRoomDisconnect(userId);
+                log.warn(message, userId, roomCode, timeForRoomDisconnect, timeUnit);
+            } catch (Exception e) {
+                log.error("Error handling user disconnect from room: {}", e.getMessage());
+            }
+
+        }, timeForRoomDisconnect, timeUnit);
+
+        pendingRoomDisconnects.put(userId, roomDisconnectFuture);
+    }
+
+    public void scheduleUserDeletion(Integer userId, int timeForDeletion, TimeUnit timeUnit, String message) {
         ScheduledFuture<?> newUserDeletionFuture = scheduler.schedule(()->{
             pendingUserDeletions.remove(userId);
             try{
                 userService.handleUserDisconnect(userId);
-                log.warn("User {} deleted, didn't re-log after {} hours", userId, AppConstants.TIME_FOR_USER_DELETION_HOURS);
+                log.warn(message, userId, timeForDeletion, timeUnit);
             } catch (Exception e) {
                 log.error("Error handling user deletion: {}", e.getMessage());
             }
-        }, AppConstants.TIME_FOR_USER_DELETION_HOURS, TimeUnit.HOURS);
+        }, timeForDeletion, timeUnit);
+
         pendingUserDeletions.put(userId, newUserDeletionFuture);
     }
 
-    public void clearAllPendingUserTimers(Integer userId) {
-        ScheduledFuture<?> userDeletion = pendingUserDeletions.remove(userId);
-        if (userDeletion != null) {
-            userDeletion.cancel(false);
-        }
+    public boolean clearRoomDisconnectTimer(Integer userId) {
         ScheduledFuture<?> roomDisconnect = pendingRoomDisconnects.remove(userId);
         if (roomDisconnect != null) {
             roomDisconnect.cancel(false);
+            return true;
         }
+        return false;
+    }
+
+    public boolean clearUserDeletionTimer(Integer userId) {
+        ScheduledFuture<?> userDeletion = pendingUserDeletions.remove(userId);
+        if (userDeletion != null) {
+            userDeletion.cancel(false);
+            return true;
+        }
+        return false;
+    }
+
+    public void clearAllPendingUserTimers(Integer userId) {
+        clearRoomDisconnectTimer(userId);
+        clearUserDeletionTimer(userId);
         log.warn("Cleaned up all memory timers for logging out user: {}", userId);
     }
+
+
 }

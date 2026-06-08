@@ -13,6 +13,7 @@
         [ownerId]="roomData()?.ownerId"
         [currentUserId]="currentUserId()"
         [isOwner]="isUserOwner()"
+        [isDisconnected]="roomData()?.playersWhoDisconnected?.includes(player.userId)"
         (onKickPlayer)="handleKickPlayer($event)"
       >
         <div status-slot>
