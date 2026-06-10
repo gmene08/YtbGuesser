@@ -1,10 +1,12 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, Input, input, output } from '@angular/core';
 import { PlayerScore } from '../player-score/player-score';
 import { RoundStatus } from '../../../../../../enums/round-status.enum';
 import { RoomState } from '../../../../../../models/room.state';
 import { MatchState } from '../../../../../../models/match.state';
 import { PlayerCard } from '../../../player-card/player-card';
 import { RoundState } from '../../../../../../models/round.state';
+import { EndOfRoundResponse } from '../../../../../../dtos/round.dto';
+import { PlayerResultResponse } from '../../../../../../dtos/player.dto';
 
 @Component({
   selector: 'app-player-leaderboard',
@@ -18,6 +20,7 @@ export class PlayerLeaderboard {
   playersWhoGuessed = input.required<number[]>();
   matchData = input.required<MatchState | null>();
   roundData = input.required<RoundState | null>();
+  playersScore = input.required<PlayerResultResponse[] | null>();
   currentUserId = input.required<number | null>();
   isUserOwner = input.required<boolean>();
 
@@ -28,13 +31,12 @@ export class PlayerLeaderboard {
   }
 
   getPlayerRoundScore(userId: number):number{
-    const match = this.matchData();
 
-    if(!match?.currentRound?.roundDetails?.playersScore){
+    if (!this.playersScore()) {
       return 0;
     }
 
-    const result = match.currentRound.roundDetails.playersScore.find(player => player.userId === userId);
+    const result = this.playersScore()?.find((player) => player.userId === userId);
 
     return result?.pointsScored || 0;
 

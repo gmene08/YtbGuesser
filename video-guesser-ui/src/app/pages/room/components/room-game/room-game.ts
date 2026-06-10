@@ -25,6 +25,7 @@ import { Results } from './components/results/results';
 import { RoundTimer } from './components/round-timer/round-timer';
 import { GuessInput } from './components/guess-input/guess-input';
 import { Auth } from '../../../../services/auth';
+import { MatchDataResponse } from '../../../../dtos/match.dto';
 
 @Component({
   selector: 'app-room-game',
@@ -36,35 +37,48 @@ import { Auth } from '../../../../services/auth';
 export class RoomGame implements OnInit, OnDestroy {
   matchService = inject(MatchService);
   gameService = inject(GameWebsocketService);
-  roundService = inject(RoundService);
   authService = inject(Auth);
-  currentUserId = computed(()=>{
+  currentUserId = computed(() => {
     return this.authService.currentUser()?.id || -1;
-  })
+  });
+  currentUserNickname = computed(() => {
+    return this.authService.currentUser()?.nickname || '';
+  });
 
   @ViewChild(Video) videoPlayer!: Video;
 
   roomData = input.required<RoomState | null>();
-  matchData = computed(() => this.gameService.matchData());
-  roundData = computed(() => this.gameService.roundData());
-  playersWhoGuessed = computed(() => {
-    return this.roundData()?.playersWhoGuessed ?? [];
+  matchData = signal<MatchDataResponse | null>(null);
+  roundData = computed(() => this.matchData()?.currentRound || null);
+
+
+  timeLeft = computed(() => {
+    return this.gameService.timeLeft();
   });
+  roundStatus = computed(() => {
+    return this.gameService.roundStatus();
+  });
+  playersWhoGuessed = computed(() => {
+    return this.gameService.playersWhoGuessed();
+  })
+  playersScore = computed(()=>{
+    return this.gameService.latestRoundResult()?.playersScore || null;
+  })
+  videoDetails = computed(()=>{
+    return this.gameService.latestRoundResult()?.videoDetails || null;
+  })
+
   isUserOwner = computed(() => this.roomData()?.ownerId === this.currentUserId());
+
   hasUserGuessedThisRound = computed(() => {
     return this.playersWhoGuessed().includes(this.currentUserId());
   });
+
   isRoundActive = computed(() => this.roundStatus() === RoundStatus.Guessing);
   videoUrl = computed(() => {
     const round = this.roundData();
     if (!round) return null;
     return round.video.url;
-  });
-  roundStatus = computed(() => {
-    const round = this.roundData();
-    if (!round) return null;
-
-    return round.roundStatus;
   });
   kickPlayer = output<number>();
   onLeaveRoom = output<void>();
@@ -74,17 +88,12 @@ export class RoomGame implements OnInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      const currentStatus = this.roundStatus();
 
-      if (currentStatus === this.previousStatus) {
-        return;
+      const updatedMatch = this.gameService.latestMatchData();
+      if (updatedMatch) {
+        this.matchData.set(updatedMatch);
       }
 
-      if (currentStatus === RoundStatus.Finished) {
-        this.videoPlayer?.pauseVideo();
-      }
-
-      this.previousStatus = currentStatus;
     });
   }
 
@@ -120,12 +129,13 @@ export class RoomGame implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           console.log('Match data loaded: ', response);
-          this.gameService.matchData.set(response);
+          this.matchData.set(response);
 
           // connect to websocket
-          this.gameService.connectToMatch(
-            this.roundData()?.roundId || 0,
-            this.matchData()?.matchId || 0,
+          this.gameService.connectToGameEngine(
+            roomCode,
+            this.currentUserId(),
+            this.currentUserNickname(),
           );
         },
 
@@ -136,74 +146,12 @@ export class RoomGame implements OnInit, OnDestroy {
   }
 
   submitGuessToBackend(guessedValue: number) {
-    const matchData = this.matchData();
-    if (!matchData) return;
+    const roomData = this.roomData();
+    if (!roomData) return
 
-    if (guessedValue <= 0) {
-      alert('Please enter a valid number');
-      return;
-    }
-
-    console.log('Guessing: ', guessedValue);
-
-    const userGuessRequest: UserGuessRequest = {
-      userId: this.currentUserId(),
-      guessedViewCount: guessedValue,
-    };
-
-    this.gameService.sendGuess(matchData.currentRound.roundId, userGuessRequest);
+    this.gameService.sendGuess(roomData.code, this.currentUserId(), guessedValue);
   }
 
-  startRound() {
-    // Using the ownerId so only one http method is called to start a round
-    if (!this.isUserOwner()) {
-      return;
-    }
-
-    const roundId = this.roundData()?.roundId;
-    if (!roundId) return;
-
-    if (this.roundStatus() !== RoundStatus.Preparing) return;
-
-    this.roundService
-      .changeRoundStatus(roundId, {
-        userId: this.currentUserId(),
-        status: RoundStatus.Guessing,
-      })
-      .subscribe({
-        next: (response) => {
-          console.log('Round started: ', response);
-        },
-        error: (error) => {
-          console.error('Error starting round: ', error.error?.message || 'Server error');
-        },
-      });
-  }
-
-  endRound() {
-    const roundId = this.roundData()?.roundId;
-    if (!roundId) return;
-
-    if (this.roundStatus() !== RoundStatus.Guessing) return;
-
-    if (!this.isUserOwner()) {
-      return;
-    }
-
-    this.roundService
-      .changeRoundStatus(roundId, {
-        userId: this.currentUserId(),
-        status: RoundStatus.Finished,
-      })
-      .subscribe({
-        next: (response) => {
-          console.log('Round ended: ', response);
-        },
-        error: (error) => {
-          console.error('Error ending round: ', error.error?.message || 'Server error');
-        },
-      });
-  }
 
   changeToNextRound() {
     const match = this.matchData();
@@ -231,12 +179,6 @@ export class RoomGame implements OnInit, OnDestroy {
         console.log('Error ending match: ', error.error?.message);
       },
     });
-  }
-
-  handleTimeIsUp() {
-    if (this.isUserOwner()) {
-      this.endRound();
-    }
   }
 
   handleLeaveRoom() {

@@ -1,5 +1,8 @@
 package com.gabmene.videoguesser.service;
 
+import com.gabmene.videoguesser.dto.engine.EngineRoundEndResponseDTO;
+import com.gabmene.videoguesser.dto.engine.EngineRoundReportDTO;
+import com.gabmene.videoguesser.dto.match.MatchResponseDTO;
 import com.gabmene.videoguesser.dto.round.ActiveRoundResponseDTO;
 import com.gabmene.videoguesser.dto.round.RoundResultResponseDTO;
 import com.gabmene.videoguesser.dto.round.UserGuessRequestDTO;
@@ -32,66 +35,11 @@ public class GameService {
     private final UserRepository userRepository;
     private final UserRoundRepository userRoundRepository;
     private final UserMatchRepository userMatchRepository;
+    private final MatchService matchService;
+    private final RoundService roundService;
 
     private final GameNotificationService gameNotificationService;
 
-    @Transactional
-    public UserRound processGuess(Integer roundId, UserGuessRequestDTO userGuessRequest, Integer userId){
-
-        Round round = roundRepository.findById(roundId).orElseThrow(()-> new ResourceNotFoundException("Round not found"));
-        User user = userRepository.findById(userId).orElseThrow(()-> new ResourceNotFoundException("User not found"));
-
-        if(round.getMatch() == null){
-            throw new ResourceNotFoundException("Match from round:" + roundId + " not found");
-        }
-        Room room = round.getMatch().getRoom();
-
-        if(room == null){
-            throw new ResourceNotFoundException("room from match:" + round.getMatch().getId() + " not found");
-        }
-
-        if(round.getStatus() != RoundStatus.GUESSING ) {
-            throw new BusinessException("Round is not in guessing state");
-        }
-
-        if( user.getRoom() == null || !user.getRoom().equals(room)) {
-            throw new ForbiddenException("User is not in the room");
-        }
-
-        // check if the user has already guessed in this round
-        if (userRoundRepository.existsByUserIdAndRoundId(user.getId(), round.getId())) {
-            throw new ConflictException("User already guessed in this round");
-        }
-
-        Long viewCount = round.getVideo().getViewCount();
-        Long userGuess = userGuessRequest.getGuessedViewCount();
-        Integer points = GameService.calculatePointsEarned(viewCount, userGuess);
-
-        UserRound userRound;
-        userRound = UserRound.builder()
-                .user(user)
-                .round(round)
-                .lastGuess(userGuess)
-                .pointsEarned(points).build();
-        userRoundRepository.save(userRound);
-
-        // get the total number of players in the match and the number of guesses made so far
-        // if the number of guesses made is equal to or greater than the total number of players, set the round status to finished
-        int totalPlayersInMatch = round.getMatch().getUserMatches().size();
-        long guessCount = userRoundRepository.countByRoundId(round.getId());
-        if(guessCount >= totalPlayersInMatch) {
-            round.setStatus(RoundStatus.FINISHED);
-            roundRepository.save(round);
-
-            this.processRoundResults(round);
-
-            gameNotificationService.sendRoundUpdate(ActiveRoundResponseDTO.from(round));
-
-        }
-
-        System.out.println("User " + user.getId() + " guessed " + userGuess + " in round " + round.getId() + " and earned " + points + " points");
-        return userRound;
-    }
 
     @Transactional
     public void processRoundResults(Round round) {
@@ -123,7 +71,7 @@ public class GameService {
             userMatchesToBeUpdated.add(userMatchToBeUpdated);
         }
         userMatchRepository.saveAll(userMatchesToBeUpdated);
-        gameNotificationService.sendRoundResults(round.getId(), RoundResultResponseDTO.from(round));
+        //gameNotificationService.sendRoundResults(round.getId(), RoundResultResponseDTO.from(round));
     }
 
     public static Integer calculatePointsEarned(Long viewCount, Long userGuess){
@@ -147,6 +95,56 @@ public class GameService {
 
     }
 
-    
+    @Transactional
+    public EngineRoundEndResponseDTO processEngineReport(EngineRoundReportDTO report) {
 
+        Round currentRound = roundRepository.findCurrentRoundByRoomCode(report.getRoomCode())
+                .orElseThrow(() -> new ResourceNotFoundException("Active round not found for room " + report.getRoomCode()));
+
+        if (currentRound.getStatus() != RoundStatus.GUESSING) {
+            throw new BusinessException("Round is not in guessing state to process results");
+        }
+
+        Long viewCount = currentRound.getVideo().getViewCount();
+
+
+        for (EngineRoundReportDTO.EngineGuessDTO engineGuess : report.getGuesses()) {
+            User user = userRepository.findById(engineGuess.getUserId()).orElse(null);
+            if (user == null) continue; // Ignora se o usuário não existir
+
+            // Fail-safe: garante que o usuário não seja salvo duas vezes no mesmo round
+            if (userRoundRepository.existsByUserIdAndRoundId(user.getId(), currentRound.getId())) {
+                continue;
+            }
+
+            Integer points = GameService.calculatePointsEarned(viewCount, engineGuess.getGuessValue());
+
+            UserRound userRound = UserRound.builder()
+                    .user(user)
+                    .round(currentRound)
+                    .lastGuess(engineGuess.getGuessValue())
+                    .pointsEarned(points)
+                    .build();
+
+            userRoundRepository.save(userRound);
+        }
+
+        // 3. O Node já encerrou o tempo, então o Java oficializa o fim do round
+        currentRound.setStatus(RoundStatus.FINISHED);
+        roundRepository.save(currentRound);
+
+        // 4. Chama o seu método que já existe para somar os pontos no placar geral (UserMatch)
+        this.processRoundResults(currentRound);
+
+        // 5. Constrói e retorna o DTO atualizado da partida para o Node.js enviar pro Angular
+        // (Altere 'buildMatchResponseDTO' para o nome exato do método que você usa no MatchService para gerar o MatchDataResponse)
+        MatchResponseDTO matchData = matchService.buildMatchResponseDTO(currentRound.getMatch());
+        RoundResultResponseDTO roundResult = roundService.buildRoundResultResponseDTO(currentRound);
+
+        // Retorna os dois juntos empacotados!
+        return EngineRoundEndResponseDTO.builder()
+                .matchData(matchData)
+                .roundResult(roundResult)
+                .build();
+    }
 }

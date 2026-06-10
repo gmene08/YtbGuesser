@@ -35,6 +35,7 @@
         [roomData]="roomData()"
         [matchData]="matchData()"
         [roundData]="roundData()"
+        [playersScore] = "playersScore()"
         [playersWhoGuessed]="playersWhoGuessed()"
         [currentUserId]="currentUserId()"
         [isUserOwner]="isUserOwner()"
@@ -49,17 +50,13 @@
         [roundStatus]="roundStatus()"
         [videoUrl]="videoUrl()"
         [videoStartTime]="videoStartTime()"
-        (startRound)="startRound()"
       ></app-video>
 
       <div class="w-full max-w-2xl flex justify-center flex flex-col gap-2">
         <app-round-timer
-          [endsAt]="roundData()?.endsAt"
+          [timeLeft]="timeLeft()"
           [roundStatus]="roundStatus()"
-          [videoStartsAtSecond]="roundData()?.videoStartsAtSecond"
-          [serverNow]="roundData()?.serverTime"
-          (timeIsUp)="handleTimeIsUp()"
-          (videoStartTimeUpdated)="videoStartTime.set($event)">
+        >
         </app-round-timer>
 
         <app-guess-input
@@ -80,6 +77,7 @@
           class="w-full xl:w-80 font-bold"
           [roundData]="roundData()"
           [roundStatus]="roundStatus()"
+          [videoDetails]="videoDetails()"
         ></app-video-details>
 
         <app-chat-box

@@ -27,4 +27,12 @@ public interface RoundRepository extends JpaRepository<Round,Integer> {
             "AND m.status = 'PLAYING' " +
             "AND m.currentRound = r.roundNumber")
     Optional<Round> findCurrentRoundByMatchId(Integer matchId);
+
+    @Query("Select r from Round r " +
+            "JOIN r.match m " +
+            "JOIN m.room room " +
+            "WHERE room.code =:roomCode " +
+            "AND m.status = 'PLAYING' " +
+            "AND m.currentRound = r.roundNumber")
+    Optional<Round> findCurrentRoundByRoomCode(String roomCode);
 }

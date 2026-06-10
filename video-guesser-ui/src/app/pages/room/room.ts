@@ -34,6 +34,9 @@ export class Room implements OnInit, OnDestroy {
   currentUserId = computed(()=>{
     return this.authService.currentUser()?.id || -1;
   })
+  currentUserNickname = computed(()=>{
+    return this.authService.currentUser()?.nickname || '';
+  })
 
   roomData = computed(() => {
     const room = this.lobbyWebSocket.roomData();
@@ -177,7 +180,7 @@ export class Room implements OnInit, OnDestroy {
     this.roomService.startRoom(this.roomCode(), matchConfig).subscribe({
       next: (response) => {
         console.log('Game started');
-        //this.roomData.set(response);
+        this.gameWebSocket.connectToGameEngine(response.code, this.currentUserId(), this.currentUserNickname());
       },
       error: (error) => {
         console.error('Error starting game: ', error);

@@ -35,7 +35,7 @@ public class RoundService {
     private final RoundRepository roundRepository;
     private final VideoRepository videoRepository;
 
-    private final GameService gameService;
+    //private final GameService gameService;
     private final GameNotificationService gameNotificationService;
 
     @Transactional
@@ -73,30 +73,18 @@ public class RoundService {
     }
 
     @Transactional
-    public Round updateRound(Integer roundId, UpdateRoundRequestDTO request) {
-        Round roundToBeUpdated = roundRepository.findById(roundId).orElseThrow(()->new ResourceNotFoundException("Round not found"));
+    public void updateStatusFromEngine(String roomCode, RoundStatus status){
+        Round round = roundRepository.findCurrentRoundByRoomCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Round not found"));
+        round.setStatus(status);
 
-        if(!request.getUserId().equals(roundToBeUpdated.getMatch().getRoom().getOwner().getId())) {
-            throw new BusinessException("User is not the owner of the room");
+        if(status == RoundStatus.GUESSING) {
+            round.setEndsAt(Instant.now().plusSeconds(AppConstants.ROUND_GUESSING_DURATION_SECONDS));
         }
-
-        roundToBeUpdated.setStatus(request.getStatus());
-
-        // if the round is to be updated to guessing state, set the end time to 30 seconds from now
-        if(request.getStatus() == RoundStatus.GUESSING) {
-            roundToBeUpdated.setEndsAt(Instant.now().plusSeconds(AppConstants.ROUND_GUESSING_DURATION_SECONDS));
-        }
-
-        // if the round is to be updated to finished state, process the round results and send the results
-        if(request.getStatus() == RoundStatus.FINISHED) {
-            gameService.processRoundResults(roundToBeUpdated);
-        }
-
-        Round roundUpdated = roundRepository.save(roundToBeUpdated);
-        gameNotificationService.sendRoundUpdate(ActiveRoundResponseDTO.from(roundUpdated));
-
-        return roundUpdated;
+        roundRepository.save(round);
+        System.out.println("Round status from Room " + roomCode + " updated from engine: " + status);
     }
+
+
 
     private Integer generateRandomStart(Round round){
         Integer roundDuration = AppConstants.ROUND_GUESSING_DURATION_SECONDS;

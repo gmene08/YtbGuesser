@@ -16,13 +16,6 @@
   />
 
   @if (roundFinished()) {
-    <button
-      [disabled]="!isOwner()"
-      (click)="nextRound.emit()"
-      class="px-8 py-4 bg-green-500 hover:bg-green-600 text-white font-bold text-xl rounded-lg shadow-md transition transform active:scale-95 disabled:bg-gray-400 disabled:active:scale-100 disabled:cursor-not-allowed"
-    >
-      {{ isOwner() ? 'NEXT ROUND' : 'WAITING...' }}
-    </button>
   } @else {
     <button
       [disabled]="!isRoundActive() || hasGuessed()"

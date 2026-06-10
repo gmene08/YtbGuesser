@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/guest", "/api/users/login", "/api/users/register").permitAll()
                         .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/api/engine/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

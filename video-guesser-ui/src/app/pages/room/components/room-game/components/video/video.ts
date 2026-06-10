@@ -35,8 +35,6 @@ export class Video {
 
   private ytPlayerInstance: any = null;
 
-  startRound = output<void>();
-
   playerVars = computed(() => ({
     autoplay: this.roundStatus() === 'GUESSING' ? 1 : 0,
     mute: 1,
@@ -48,6 +46,9 @@ export class Video {
     effect(() => {
       if (this.roundStatus() === 'GUESSING' && this.videoPlayer) {
         this.playVideo();
+      }
+      if (this.roundStatus() === 'FINISHED' && this.videoPlayer) {
+        this.pauseVideo();
       }
     });
   }
@@ -62,10 +63,6 @@ export class Video {
       this.playerWidth.set(this.videoContainer.nativeElement.clientWidth);
       this.playerHeight.set(this.videoContainer.nativeElement.clientHeight);
     }
-  }
-
-  onPrepTimerFinish() {
-    this.startRound.emit();
   }
 
   onPlayerReady(event: any) {

@@ -1,0 +1,53 @@
+package com.gabmene.videoguesser.controller;
+
+import com.gabmene.videoguesser.dto.engine.EngineRoundEndResponseDTO;
+import com.gabmene.videoguesser.dto.engine.EngineRoundReportDTO;
+import com.gabmene.videoguesser.dto.match.MatchResponseDTO;
+import com.gabmene.videoguesser.enums.RoundStatus;
+import com.gabmene.videoguesser.service.GameService;
+import com.gabmene.videoguesser.service.MatchService;
+import com.gabmene.videoguesser.service.RoundService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/engine")
+@RequiredArgsConstructor
+public class EngineController {
+
+    private final RoundService roundService;
+    private final GameService gameService;
+    private final MatchService matchService;
+
+    @PatchMapping("/{roomCode}/status")
+    public ResponseEntity<Void> updateRoundStatus(@PathVariable String roomCode, @RequestBody Map<String, String> request) {
+        String statusStr = request.get("status");
+
+        if (statusStr != null) {
+            RoundStatus newStatus = RoundStatus.valueOf(statusStr.toUpperCase());
+            roundService.updateStatusFromEngine(roomCode, newStatus);
+        }
+
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/end-round")
+    public ResponseEntity<EngineRoundEndResponseDTO> processRoundResultsFromEngine(@RequestBody EngineRoundReportDTO report) {
+
+        EngineRoundEndResponseDTO response = gameService.processEngineReport(report);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{roomCode}/change-round")
+    public ResponseEntity<MatchResponseDTO> changeRoundsFromEngine(@PathVariable String roomCode){
+
+        MatchResponseDTO response = matchService.changeToNextRound(roomCode);
+        return ResponseEntity.ok(response);
+    }
+
+}
+
