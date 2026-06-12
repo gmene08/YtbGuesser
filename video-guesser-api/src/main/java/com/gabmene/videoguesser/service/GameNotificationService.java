@@ -1,4 +1,4 @@
-package com.gabmene.videoguesser.service;
+/*package com.gabmene.videoguesser.service;
 
 import com.gabmene.videoguesser.dto.match.MatchResponseDTO;
 import com.gabmene.videoguesser.dto.room.RoomResponseDTO;
@@ -65,4 +65,4 @@ public class GameNotificationService {
     public void sendRoundResults(Integer roundId, RoundResultResponseDTO roundResults) {
         messagingTemplate.convertAndSend("/topic/game/round/" + roundId + "/round-results", roundResults);
     }
-}
+}*/

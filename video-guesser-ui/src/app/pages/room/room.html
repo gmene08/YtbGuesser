@@ -1,6 +1,9 @@
+@if(!hasLoadedInitialRoomData()){
+  carregando
+} @else{
 <div class="min-h-screen flex flex-col bg-gray-50">
-  <app-nav-bar></app-nav-bar>
   @if (!startedGame()) {
+    <app-nav-bar></app-nav-bar>
     <div class="flex-grow p-12 pt-4">
       <header>
         <app-room-header
@@ -47,3 +50,4 @@
     </app-room-game>
   }
 </div>
+}

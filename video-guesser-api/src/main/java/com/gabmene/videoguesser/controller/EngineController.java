@@ -6,6 +6,7 @@ import com.gabmene.videoguesser.dto.match.MatchResponseDTO;
 import com.gabmene.videoguesser.enums.RoundStatus;
 import com.gabmene.videoguesser.service.GameService;
 import com.gabmene.videoguesser.service.MatchService;
+import com.gabmene.videoguesser.service.RoomService;
 import com.gabmene.videoguesser.service.RoundService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +20,7 @@ import java.util.Map;
 public class EngineController {
 
     private final RoundService roundService;
+    private final RoomService roomService;
     private final GameService gameService;
     private final MatchService matchService;
 
@@ -47,6 +49,12 @@ public class EngineController {
 
         MatchResponseDTO response = matchService.changeToNextRound(roomCode);
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/disconnect")
+    public ResponseEntity<Void> disconnect(@RequestParam Integer userId){
+        roomService.handleRoomDisconnect(userId);
+        return ResponseEntity.ok().build();
     }
 
 }

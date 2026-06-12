@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class GameService {
-    private final SimpMessagingTemplate messagingTemplate;
+    //private final SimpMessagingTemplate messagingTemplate;
 
     private final RoundRepository roundRepository;
     private final UserRepository userRepository;
@@ -38,7 +38,7 @@ public class GameService {
     private final MatchService matchService;
     private final RoundService roundService;
 
-    private final GameNotificationService gameNotificationService;
+    // private final GameNotificationService gameNotificationService;
 
 
     @Transactional

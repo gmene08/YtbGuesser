@@ -26,6 +26,7 @@ import { RoundTimer } from './components/round-timer/round-timer';
 import { GuessInput } from './components/guess-input/guess-input';
 import { Auth } from '../../../../services/auth';
 import { MatchDataResponse } from '../../../../dtos/match.dto';
+import { MatchState } from '../../../../models/match.state';
 
 @Component({
   selector: 'app-room-game',
@@ -48,33 +49,46 @@ export class RoomGame implements OnInit, OnDestroy {
   @ViewChild(Video) videoPlayer!: Video;
 
   roomData = input.required<RoomState | null>();
-  matchData = signal<MatchDataResponse | null>(null);
-  roundData = computed(() => this.matchData()?.currentRound || null);
 
+  matchData = computed(()=>{
+      return this.gameService.latestMatchData();
+    });
+  roundData = computed(() => this.matchData()?.currentRound || null);
 
   timeLeft = computed(() => {
     return this.gameService.timeLeft();
   });
-  roundStatus = computed(() => {
-    return this.gameService.roundStatus();
-  });
-  playersWhoGuessed = computed(() => {
-    return this.gameService.playersWhoGuessed();
-  })
-  playersScore = computed(()=>{
-    return this.gameService.latestRoundResult()?.playersScore || null;
-  })
-  videoDetails = computed(()=>{
-    return this.gameService.latestRoundResult()?.videoDetails || null;
-  })
 
   isUserOwner = computed(() => this.roomData()?.ownerId === this.currentUserId());
 
+  playersWhoGuessed = computed(() => {
+    const currentRound = this.matchData()?.currentRound;
+    if(!currentRound) return null;
+    return currentRound.playersWhoGuessed;
+  })
   hasUserGuessedThisRound = computed(() => {
-    return this.playersWhoGuessed().includes(this.currentUserId());
+    return this.playersWhoGuessed()?.includes(this.currentUserId());
   });
 
-  isRoundActive = computed(() => this.roundStatus() === RoundStatus.Guessing);
+  roundStatus = computed(() => {
+    const currentRound = this.matchData()?.currentRound;
+    if (!currentRound) return null;
+    return currentRound.roundStatus;
+  })
+
+  videoDetails = computed(()=>{
+    const roundDetails = this.matchData()?.currentRound.roundDetails;
+    if (!roundDetails) return null;
+    return roundDetails.videoDetails;
+  })
+
+  playersScore = computed(()=>{
+    const roundDetails = this.matchData()?.currentRound.roundDetails;
+    if (!roundDetails) return null;
+    return roundDetails.playersScore;
+  })
+
+  isRoundActive = computed(() => this.matchData()?.currentRound.roundStatus === RoundStatus.Guessing);
   videoUrl = computed(() => {
     const round = this.roundData();
     if (!round) return null;
@@ -87,14 +101,7 @@ export class RoomGame implements OnInit, OnDestroy {
   activityLogs = signal<LogMessage[]>([]);
 
   constructor() {
-    effect(() => {
 
-      const updatedMatch = this.gameService.latestMatchData();
-      if (updatedMatch) {
-        this.matchData.set(updatedMatch);
-      }
-
-    });
   }
 
   ngOnInit() {
@@ -129,13 +136,17 @@ export class RoomGame implements OnInit, OnDestroy {
       .subscribe({
         next: (response) => {
           console.log('Match data loaded: ', response);
-          this.matchData.set(response);
+          this.gameService.latestMatchData.set(response);
 
-          // connect to websocket
+          // sync time if user is reconnecting
+          const timeRemaining =
+            (new Date(response.currentRound.endsAt).getTime() -
+              new Date(response.currentRound.serverTime).getTime()) /
+            1000;
+
+          this.gameService.timeLeft.set(Math.round(timeRemaining));
           this.gameService.connectToGameEngine(
             roomCode,
-            this.currentUserId(),
-            this.currentUserNickname(),
           );
         },
 
@@ -147,11 +158,10 @@ export class RoomGame implements OnInit, OnDestroy {
 
   submitGuessToBackend(guessedValue: number) {
     const roomData = this.roomData();
-    if (!roomData) return
+    if (!roomData) return;
 
     this.gameService.sendGuess(roomData.code, this.currentUserId(), guessedValue);
   }
-
 
   changeToNextRound() {
     const match = this.matchData();

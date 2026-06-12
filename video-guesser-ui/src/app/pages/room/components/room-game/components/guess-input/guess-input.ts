@@ -7,7 +7,7 @@ import { Component, computed, input, output, signal } from '@angular/core';
 })
 export class GuessInput {
   isRoundActive = input.required<boolean>();
-  hasGuessed = input.required<boolean>();
+  hasGuessed = input.required<boolean | undefined>();
   isOwner = input.required<boolean>();
   roundFinished = input.required<boolean>();
 

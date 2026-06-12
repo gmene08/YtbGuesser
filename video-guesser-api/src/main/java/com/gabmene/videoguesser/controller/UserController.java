@@ -2,7 +2,6 @@ package com.gabmene.videoguesser.controller;
 
 import com.gabmene.videoguesser.dto.UserResponseDTO;
 import com.gabmene.videoguesser.entity.User;
-import com.gabmene.videoguesser.listener.UserSessionManager;
 import com.gabmene.videoguesser.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +17,7 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
-    private final UserSessionManager userSessionManager;
+    //private final UserSessionManager userSessionManager;
 
     public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
         List<User> users = userService.findAll();
@@ -34,7 +33,7 @@ public class UserController {
     @PostMapping("/guest")
     public ResponseEntity<UserResponseDTO> createGuest(@RequestBody User user, HttpServletResponse response) {
         User savedUser = userService.createGuest(user, response);
-        userSessionManager.scheduleInitialDestruction(savedUser.getId());
+        //userSessionManager.scheduleInitialDestruction(savedUser.getId());
         return ResponseEntity.ok(UserResponseDTO.from(savedUser));
     }
 
@@ -59,13 +58,13 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<UserResponseDTO> getCurrentUser(Principal principal, HttpServletResponse response) {
         User user = userService.refreshUserCookie(principal, response);
-        userSessionManager.resetUserDeletionTimer(user.getId());
+        //userSessionManager.resetUserDeletionTimer(user.getId());
         return ResponseEntity.ok(UserResponseDTO.from(user));
     }
 
     @DeleteMapping("/{id}/logout")
     public ResponseEntity<Void> logout(@PathVariable Integer id, HttpServletResponse response) {
-        userSessionManager.clearAllPendingUserTimers(id);
+        //userSessionManager.clearAllPendingUserTimers(id);
         userService.userLogout(id ,response);
         return ResponseEntity.ok().build();
     }

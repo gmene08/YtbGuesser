@@ -30,13 +30,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RoundService {
 
-    private final SimpMessagingTemplate messagingTemplate;
+    //private final SimpMessagingTemplate messagingTemplate;
 
     private final RoundRepository roundRepository;
     private final VideoRepository videoRepository;
 
     //private final GameService gameService;
-    private final GameNotificationService gameNotificationService;
+    //private final GameNotificationService gameNotificationService;
 
     @Transactional
     public void createRound(Match match, Integer roundNumber){

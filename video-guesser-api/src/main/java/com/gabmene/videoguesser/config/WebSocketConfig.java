@@ -1,4 +1,8 @@
-package com.gabmene.videoguesser.config;
+/* package com.gabmene.videoguesser.config;
+
+    ***** UNUSED - KEEPING IT FOR EDUCATIONAL PURPOSES *****
+
+    - This was made before migrating the WebSocket stuff fully to the node engine
 
 import com.gabmene.videoguesser.service.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +23,7 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 import java.util.Map;
 import java.util.Objects;
+
 
 @Configuration
 @EnableWebSocketMessageBroker
@@ -71,3 +76,5 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         });
     }
 }
+
+*/

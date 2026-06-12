@@ -1,4 +1,8 @@
-package com.gabmene.videoguesser.config;
+/*package com.gabmene.videoguesser.config;
+
+    ***** UNUSED - KEEPING IT FOR EDUCATIONAL PURPOSES *****
+
+    - This was made before migrating the WebSocket stuff fully to the node engine
 
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,3 +39,5 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
 
     }
 }
+*/
+

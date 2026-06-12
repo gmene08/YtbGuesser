@@ -29,10 +29,10 @@ public class MatchService {
     private final MatchRepository matchRepository;
     private final RoomRepository roomRepository;
     private final UserMatchRepository userMatchRepository;
-    private final SimpMessagingTemplate messagingTemplate;
+    //private final SimpMessagingTemplate messagingTemplate;
 
     private final RoundService roundService;
-    private final GameNotificationService gameNotificationService;
+    //private final GameNotificationService gameNotificationService;
 
 
     @Transactional
@@ -146,7 +146,7 @@ public class MatchService {
             room.setStatus(RoomStatus.WAITING);
             Room roomSaved = roomRepository.save(room);
 
-            gameNotificationService.sendRoomUpdate(RoomResponseDTO.from(roomSaved));
+            //gameNotificationService.sendRoomUpdate(RoomResponseDTO.from(roomSaved));
         }
 
         matchRepository.delete(match); // delete the match to save database space for now

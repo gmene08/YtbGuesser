@@ -16,7 +16,6 @@ import com.gabmene.videoguesser.exception.BusinessException;
 import com.gabmene.videoguesser.exception.ConflictException;
 import com.gabmene.videoguesser.exception.ForbiddenException;
 import com.gabmene.videoguesser.exception.ResourceNotFoundException;
-import com.gabmene.videoguesser.listener.UserConnectionRegistry;
 import com.gabmene.videoguesser.repository.RoomRepository;
 import com.gabmene.videoguesser.repository.UserMatchRepository;
 import com.gabmene.videoguesser.repository.UserRepository;
@@ -41,8 +40,8 @@ public class RoomService {
     private final UserMatchRepository userMatchRepository;
     private final ApplicationEventPublisher eventPublisher;
 
-    private final GameNotificationService gameNotificationService;
-    private final UserConnectionRegistry userConnectionRegistry;
+    //private final GameNotificationService gameNotificationService;
+    //private final UserConnectionRegistry userConnectionRegistry;
 
     @Transactional
     public Room createRoom(Integer ownerId) {
@@ -69,6 +68,8 @@ public class RoomService {
         // synchronous save
         Room savedRoom = roomRepository.save(room);
         owner.setRoom(savedRoom);
+
+        this.syncLobbyInEngine(this.buildRoomResponseDTO(savedRoom));
 
         return savedRoom;
     }
@@ -127,7 +128,8 @@ public class RoomService {
         roomJoined.addUser(userJoining);
         Room roomSaved = roomRepository.save(roomJoined);
 
-        gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
+        //gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
+        this.syncLobbyInEngine(this.buildRoomResponseDTO(roomSaved));
 
         return roomSaved;
     }
@@ -168,13 +170,15 @@ public class RoomService {
 
         roomStarting.setStatus(RoomStatus.PLAYING);
         Room roomSaved = roomRepository.save(roomStarting);
-        gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
+        //gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
+        this.syncLobbyInEngine(this.buildRoomResponseDTO(roomSaved));
         return roomSaved;
 
     }
 
     @Transactional
     public Room leaveRoom(String roomCode, Integer userLeavingId) {
+        System.out.println("User "+ userLeavingId + " leaving room: " + roomCode);
 
         User userLeaving = userRepository.findById(userLeavingId).orElseThrow(()-> new ResourceNotFoundException("User not found"));
 
@@ -212,7 +216,7 @@ public class RoomService {
             userMatchRepository.flush();
 
             Match matchLeaving = userMatchLeaving.getMatch();
-            gameNotificationService.sendMatchUpdate(matchService.buildMatchResponseDTO(matchLeaving));
+            //gameNotificationService.sendMatchUpdate(matchService.buildMatchResponseDTO(matchLeaving));
 
         }
 
@@ -220,8 +224,8 @@ public class RoomService {
 
         // if the room is empty, delete it - if the owner leaves, assign a new owner
         if(playersInRoom.isEmpty()) {
-
             roomRepository.delete(roomLeaving);
+            this.deleteLobbyInEngine(roomCode);
             return null;
 
         }
@@ -235,15 +239,15 @@ public class RoomService {
 
         }
 
-        if(this.userConnectionRegistry.isDisconnected(userLeaving.getId())) {
-            userConnectionRegistry.markAsConnected(userLeaving.getId(), false);
-        }
+        /*if(this.userConnectionRegistry.isDisconnected(userLeaving.getId())) {
+            userConnectionRegistry.markAsConnected(userLeaving.getId(), false);  //old code
+        }*/
 
         eventPublisher.publishEvent(new UserLeftRoomEvent(userLeaving.getId()));
 
         Room roomSaved = roomRepository.save(roomLeaving);
-        gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
-
+        //gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved)); // old code
+        this.syncLobbyInEngine(this.buildRoomResponseDTO(roomSaved));
         return roomSaved;
     }
 
@@ -280,14 +284,14 @@ public class RoomService {
         roomToBeUpdated.setMaxPlayers(request.getMaxPlayers());
 
         Room roomSaved = roomRepository.save(roomToBeUpdated);
-        gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
+       //gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
+        this.syncLobbyInEngine(this.buildRoomResponseDTO(roomSaved));
 
         return roomSaved;
     }
 
     public RoomResponseDTO buildRoomResponseDTO(Room room) {
-        List<Integer> disconnectedUsers = userConnectionRegistry.getDisconnectedUsersInRoom(room);
-        return RoomResponseDTO.from(room, disconnectedUsers);
+        return RoomResponseDTO.from(room);
     }
 
     @Transactional
@@ -328,6 +332,29 @@ public class RoomService {
             System.err.println("❌ Falha crítica ao contactar o Árbitro Node.js: " + e.getMessage());
             // Se o Node estiver desligado, impedimos a partida de começar no Java!
             throw new BusinessException("Servidor de partida indisponível no momento.");
+        }
+    }
+
+    public void syncLobbyInEngine(RoomResponseDTO roomData){
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String nodeEngineUrl = "http://localhost:3000/api/engine/lobby/update";
+            restTemplate.postForEntity(nodeEngineUrl, roomData, String.class);
+            System.out.println(" Synching lobby from room " + roomData.getCode() + " with node: ");
+        } catch (Exception e) {
+            System.err.println("Failed to sync lobby with node: " + e.getMessage());
+        }
+    }
+
+    public void deleteLobbyInEngine(String roomCode){
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String nodeEngineUrl = "http://localhost:3000/api/engine/lobby/" + roomCode;
+
+            restTemplate.delete(nodeEngineUrl);
+            System.out.println("🗑️ Delete lobby " + roomCode + " from node engine.");
+        } catch (Exception e) {
+            System.err.println("❌ Error deleting lobby from node: " + e.getMessage());
         }
     }
 }

@@ -1,37 +1,37 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
+import { RoundStatus } from '../../enums/round-status.enum';
+import { MatchState } from '../../models/match.state';
+import { EndOfRoundResponse } from '../../dtos/round.dto';
 import { CoreWebsocket } from './core-websocket';
-import { RoomResponse } from '../../dtos/room.dto';
 import { RoomState } from '../../models/room.state';
 
 @Injectable({
   providedIn: 'root',
 })
-export class LobbyWebsocket {
-  private core = inject(CoreWebsocket);
+export class LobbyWebsocketService {
+  private coreWs = inject(CoreWebsocket);
 
   public roomData = signal<RoomState | null>(null);
 
-  private lobbySubscription: any = null;
+  connectToLobby(roomCode: string) {
+    this.coreWs.connect();
 
-  connectToLobby(roomCode: string){
-    this.core.connect(); // make sure the connection is established
+    this.coreWs.on('connect', () => {
+      console.log('⚡ Connected to Engine Node.js!:');
+      this.coreWs.send('joinLobbyRoom', { roomCode });
+    });
 
-   this.lobbySubscription =  this.core.subscribe(`/topic/room/${roomCode}/lobby`, (message) => {
-      const data = JSON.parse(message.body);
-      console.log('Received room data: ', data);
-
-      this.roomData.set(data);
+    this.coreWs.on('lobbyUpdate', (data) => {
+      console.log('Lobby updated with data: ', data);
+      if(data){
+        this.roomData.set(data);
+      }
     })
-  }
-  disconnectFromLobby(){
-    if(this.lobbySubscription){
-      this.lobbySubscription.unsubscribe();
-      this.lobbySubscription = null;
-    }
-    this.roomData.set(null);
+
   }
 
-  setRoomData(data: RoomResponse){
-    this.roomData.set(data);
+  disconnect() {
+    this.coreWs.disconnect();
+    this.roomData.set(null);
   }
 }

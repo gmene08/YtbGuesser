@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { LobbyWebsocket } from './lobby-websocket';
+import { LobbyWebsocketService } from './lobby-websocket';
 
 describe('LobbyWebsocket', () => {
-  let service: LobbyWebsocket;
+  let service: LobbyWebsocketService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(LobbyWebsocket);
+    service = TestBed.inject(LobbyWebsocketService);
   });
 
   it('should be created', () => {

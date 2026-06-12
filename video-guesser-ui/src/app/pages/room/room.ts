@@ -7,12 +7,13 @@ import { RoomPlayerList } from './components/room-player-list/room-player-list';
 import { NavBar } from '../../components/nav-bar/nav-bar';
 import { RoomHeader } from './components/room-header/room-header';
 import { RoomGame } from './components/room-game/room-game';
-import { LobbyWebsocket } from '../../services/websocket/lobby-websocket';
+import { StompLobbyWebsocket } from '../../services/websocket/stomp/stompLobbyWebSocket';
 import { Player } from '../../models/room.state';
 import { retry } from 'rxjs';
 import { GameWebsocketService } from '../../services/websocket/game-websocket';
 import { CoreWebsocket } from '../../services/websocket/core-websocket';
 import { Auth } from '../../services/auth';
+import { LobbyWebsocketService } from '../../services/websocket/lobby-websocket';
 
 @Component({
   selector: 'app-room',
@@ -25,9 +26,14 @@ export class Room implements OnInit, OnDestroy {
 
   private authService = inject(Auth);
   private roomService = inject(RoomService);
-  private lobbyWebSocket = inject(LobbyWebsocket);
+
+  private lobbyWebSocket = inject(StompLobbyWebsocket);
   private gameWebSocket = inject(GameWebsocketService);
   private coreWebSocket = inject(CoreWebsocket);
+
+  private lobbyWs = inject(LobbyWebsocketService);
+  private gameWs = inject(GameWebsocketService)
+
   private router = inject(ActivatedRoute);
   private rt = inject(Router);
 
@@ -39,14 +45,16 @@ export class Room implements OnInit, OnDestroy {
   })
 
   roomData = computed(() => {
-    const room = this.lobbyWebSocket.roomData();
+    const room = this.lobbyWs.roomData();
     if (!room) return null;
     return {
       ...room,
       players: this.sortPlayers(room.players, room.ownerId),
     };
   });
-  hasLoadedInitialRoomData = signal(false);
+  hasLoadedInitialRoomData = computed(()=>{
+    return !!this.roomData()
+  })
 
   roomCode = signal<string>('');
 
@@ -67,7 +75,8 @@ export class Room implements OnInit, OnDestroy {
         room?.players.some((player) => player.userId === this.currentUserId()) ?? false;
       if (!IsUserStillInRoom) {
         console.log('User not in this room');
-        this.lobbyWebSocket.disconnectFromLobby();
+        this.lobbyWs.disconnect();
+        this.gameWs.disconnect();
         this.rt.navigate(['/']);
       }
     });
@@ -76,9 +85,11 @@ export class Room implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     console.log('Room component destroyed. Running safety cleanup...');
 
-    this.gameWebSocket.disconnect();
+    /*this.gameWebSocket.disconnect();
     this.lobbyWebSocket.disconnectFromLobby();
-    this.coreWebSocket.disconnect();
+    this.coreWebSocket.disconnect();*/
+
+    this.lobbyWs.disconnect();
   }
 
   ngOnInit(): void {
@@ -116,10 +127,9 @@ export class Room implements OnInit, OnDestroy {
             this.rt.navigate(['/']);
             return;
           }
+          this.lobbyWs.roomData.set(response);
+          this.lobbyWs.connectToLobby(code);
 
-          this.lobbyWebSocket.setRoomData(response);
-          this.hasLoadedInitialRoomData.set(true);
-          this.lobbyWebSocket.connectToLobby(code);
         },
         error: (error) => {
           console.error('Error fetching room data: ', error);
@@ -133,12 +143,11 @@ export class Room implements OnInit, OnDestroy {
       // Go to the home page
       next: (response) => {
         console.log('User left room');
+        //this.gameWebSocket.disconnect();
+        //this.lobbyWebSocket.disconnectFromLobby();
+        //this.coreWebSocket.disconnect();
 
-        this.gameWebSocket.disconnect();
-
-        this.lobbyWebSocket.disconnectFromLobby();
-
-        this.coreWebSocket.disconnect();
+        this.lobbyWs.disconnect();
 
         this.rt.navigate(['/']);
       },
@@ -180,7 +189,9 @@ export class Room implements OnInit, OnDestroy {
     this.roomService.startRoom(this.roomCode(), matchConfig).subscribe({
       next: (response) => {
         console.log('Game started');
-        this.gameWebSocket.connectToGameEngine(response.code, this.currentUserId(), this.currentUserNickname());
+        //this.gameWebSocket.connectToGameEngine(response.code, this.currentUserId(), this.currentUserNickname());
+        // code above already is in room-game, match-status is changed through the backend and notified via lobbyUpdate, in which the room-game perceives the change and
+        // loads data
       },
       error: (error) => {
         console.error('Error starting game: ', error);

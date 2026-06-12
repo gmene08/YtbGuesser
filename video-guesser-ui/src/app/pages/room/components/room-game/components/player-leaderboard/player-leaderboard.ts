@@ -17,7 +17,7 @@ import { PlayerResultResponse } from '../../../../../../dtos/player.dto';
 })
 export class PlayerLeaderboard {
   roomData = input.required<RoomState | null>();
-  playersWhoGuessed = input.required<number[]>();
+  playersWhoGuessed = input.required<number[] | null>();
   matchData = input.required<MatchState | null>();
   roundData = input.required<RoundState | null>();
   playersScore = input.required<PlayerResultResponse[] | null>();
@@ -27,7 +27,7 @@ export class PlayerLeaderboard {
   kickPlayer = output<number>();
 
   playerHasGuessed (playerId: number){
-    return this.playersWhoGuessed().includes(playerId);
+    return this.playersWhoGuessed()?.includes(playerId);
   }
 
   getPlayerRoundScore(userId: number):number{

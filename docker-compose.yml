@@ -30,6 +30,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=root
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
       - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+      - JWT_SECRET=${JWT_SECRET}
       #Limitis Java RAM usage
       - JAVA_TOOL_OPTIONS=-Xmx350m -Xms150m -XX:+UseSerialGC
     depends_on:

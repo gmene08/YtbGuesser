@@ -11,6 +11,7 @@ export interface ActiveRoundResponse {
   serverTime: string;
   videoStartsAtSecond: number;
 
+  roundDetails?: EndOfRoundResponse | null;
 }
 
 export interface EndOfRoundResponse {
