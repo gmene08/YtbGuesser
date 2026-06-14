@@ -37,9 +37,9 @@ public class EngineController {
     }
 
     @PostMapping("/end-round")
-    public ResponseEntity<EngineRoundEndResponseDTO> processRoundResultsFromEngine(@RequestBody EngineRoundReportDTO report) {
+    public ResponseEntity<MatchResponseDTO> processRoundResultsFromEngine(@RequestBody EngineRoundReportDTO report) {
 
-        EngineRoundEndResponseDTO response = gameService.processEngineReport(report);
+        MatchResponseDTO response = gameService.processEngineReport(report);
 
         return ResponseEntity.ok(response);
     }

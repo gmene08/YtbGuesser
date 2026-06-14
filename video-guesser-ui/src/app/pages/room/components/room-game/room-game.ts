@@ -50,9 +50,9 @@ export class RoomGame implements OnInit, OnDestroy {
 
   roomData = input.required<RoomState | null>();
 
-  matchData = computed(()=>{
-      return this.gameService.latestMatchData();
-    });
+  matchData = computed(() => {
+    return this.gameService.latestMatchData();
+  });
   roundData = computed(() => this.matchData()?.currentRound || null);
 
   timeLeft = computed(() => {
@@ -63,9 +63,9 @@ export class RoomGame implements OnInit, OnDestroy {
 
   playersWhoGuessed = computed(() => {
     const currentRound = this.matchData()?.currentRound;
-    if(!currentRound) return null;
+    if (!currentRound) return null;
     return currentRound.playersWhoGuessed;
-  })
+  });
   hasUserGuessedThisRound = computed(() => {
     return this.playersWhoGuessed()?.includes(this.currentUserId());
   });
@@ -74,21 +74,23 @@ export class RoomGame implements OnInit, OnDestroy {
     const currentRound = this.matchData()?.currentRound;
     if (!currentRound) return null;
     return currentRound.roundStatus;
-  })
+  });
 
-  videoDetails = computed(()=>{
+  videoDetails = computed(() => {
     const roundDetails = this.matchData()?.currentRound.roundDetails;
     if (!roundDetails) return null;
     return roundDetails.videoDetails;
-  })
+  });
 
-  playersScore = computed(()=>{
+  playersScore = computed(() => {
     const roundDetails = this.matchData()?.currentRound.roundDetails;
     if (!roundDetails) return null;
     return roundDetails.playersScore;
-  })
+  });
 
-  isRoundActive = computed(() => this.matchData()?.currentRound.roundStatus === RoundStatus.Guessing);
+  isRoundActive = computed(
+    () => this.matchData()?.currentRound.roundStatus === RoundStatus.Guessing,
+  );
   videoUrl = computed(() => {
     const round = this.roundData();
     if (!round) return null;
@@ -100,8 +102,13 @@ export class RoomGame implements OnInit, OnDestroy {
   videoStartTime = signal<number>(0);
   activityLogs = signal<LogMessage[]>([]);
 
-  constructor() {
+  constructor() {}
 
+  ngOnDestroy(): void {
+    const roomCode = this.roomData()?.code;
+    if (roomCode) {
+      this.gameService.leaveGameEngine(roomCode);
+    }
   }
 
   ngOnInit() {
@@ -119,10 +126,6 @@ export class RoomGame implements OnInit, OnDestroy {
     tag.id = 'youtube-iframe-api';
     tag.src = 'https://www.youtube.com/iframe_api';
     document.body.appendChild(tag);
-  }
-
-  ngOnDestroy() {
-    this.gameService.disconnect();
   }
 
   handleKickPlayer(playerId: number) {
@@ -145,9 +148,7 @@ export class RoomGame implements OnInit, OnDestroy {
             1000;
 
           this.gameService.timeLeft.set(Math.round(timeRemaining));
-          this.gameService.connectToGameEngine(
-            roomCode,
-          );
+          this.gameService.connectToGameEngine(roomCode);
         },
 
         error: (error) => {

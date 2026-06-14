@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const socketConfig = require('./src/config/socket');
-const { startRoundTimer } = require('./src/services/timerService');
+const { startRoundTimer, startRoundSequence } = require('./src/services/timerService');
 
 const app = express();
 const server = http.createServer(app);
@@ -10,6 +10,8 @@ const server = http.createServer(app);
 
 const activeLobbies = new Map();
 server.activeLobbies = activeLobbies;
+server.keepAliveTimeout = 60000; // 60 segundos para evitar timeouts prematuros
+server.headersTimeout = 61000;
 
 // Inicializa o Socket.io passando o servidor HTTP
 socketConfig.init(server);
@@ -18,8 +20,9 @@ app.use(cors({ origin: 'http://localhost:4200', credentials: true }));
 app.use(express.json());
 
 // Endpoint Rest que o Java chama quando o Dono clica em Start Game
-app.post('/api/engine/start-match', (req, res) => {
-  const { roomCode, players, maxRounds } = req.body;
+app.post('/api/engine/lobby/:roomCode/match', (req, res) => {
+  const { maxRounds, players, prepDurationSeconds, guessingDurationSeconds, finishedDurationSeconds } = req.body;
+  const roomCode = req.params.roomCode;
 
   if (!roomCode || !players) {
     return res.status(400).json({ error: 'Dados insuficientes.' });
@@ -40,17 +43,24 @@ app.post('/api/engine/start-match', (req, res) => {
 
   console.log(`🎮 Partida criada na Engine para a sala [${roomCode}]`);
 
-  setTimeout(() => {
-    const match = activeLobbies.get(roomCode)?.match;
-    if (match && match.currentRound.status === 'PREPARING') {
-      startRoundTimer(roomCode, activeLobbies, 5);
-    }
-  }, 5000);
-  
+  startRoundSequence(roomCode, activeLobbies, prepDurationSeconds, guessingDurationSeconds, finishedDurationSeconds);
+   
   return res.status(200).json({ message: 'Engine assumiu controle.' });
 });
 
-app.post('/api/engine/lobby/update', (req,res)=>{
+app.delete('/api/engine/lobby/:roomCode/match', (req, res) => {
+  const roomCode = req.params.roomCode;
+
+  const lobby = activeLobbies.get(roomCode);
+  if (lobby) {
+    lobby.match = null;
+    console.log(`🧹 Partida da sala [${roomCode}] foi DELETADA da memória RAM.`);
+  }
+  return res.status(200).json({ message: 'Partida removida com sucesso do motor.' });
+
+})
+
+app.put('/api/engine/lobby/:roomCode', (req,res)=>{
   const {code, status, maxPlayers, ownerId, players} = req.body;
 
   if(!code){

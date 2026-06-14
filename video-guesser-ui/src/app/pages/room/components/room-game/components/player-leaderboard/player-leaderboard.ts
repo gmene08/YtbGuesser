@@ -23,11 +23,16 @@ export class PlayerLeaderboard {
   playersScore = input.required<PlayerResultResponse[] | null>();
   currentUserId = input.required<number | null>();
   isUserOwner = input.required<boolean>();
+  isGuessing = computed(()=>{
+    return !!this.roundData()?.roundStatus && this.roundData()?.roundStatus !== RoundStatus.Finished ;
+  })
 
   kickPlayer = output<number>();
 
   playerHasGuessed (playerId: number){
-    return this.playersWhoGuessed()?.includes(playerId);
+    const pwg = this.playersWhoGuessed();
+    if (!pwg) return false;
+    return pwg.includes(playerId);
   }
 
   getPlayerRoundScore(userId: number):number{

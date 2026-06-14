@@ -45,6 +45,7 @@
   @if (roundStatus() === RoundStatus.Preparing){
     <app-prep-timer
       [roundStatus]="roundStatus()"
+      [timeLeft]="prepTimeLeft()"
     ></app-prep-timer>
   }
 </div>

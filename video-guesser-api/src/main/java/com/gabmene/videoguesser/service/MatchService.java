@@ -32,6 +32,7 @@ public class MatchService {
     //private final SimpMessagingTemplate messagingTemplate;
 
     private final RoundService roundService;
+    private final EngineService engineService;
     //private final GameNotificationService gameNotificationService;
 
 
@@ -147,8 +148,10 @@ public class MatchService {
             Room roomSaved = roomRepository.save(room);
 
             //gameNotificationService.sendRoomUpdate(RoomResponseDTO.from(roomSaved));
+            engineService.syncLobbyInEngine(RoomResponseDTO.from(roomSaved));
         }
 
+        engineService.stopMatchInEngine(room.getCode());
         matchRepository.delete(match); // delete the match to save database space for now
 
 

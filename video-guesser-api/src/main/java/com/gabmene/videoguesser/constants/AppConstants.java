@@ -10,7 +10,9 @@ public final class AppConstants {
     public static final int ROOM_MAX_PLAYERS_MIN = 1;
     public static final int ROOM_MAX_PLAYERS_MAX = 10;
     public static final int ROOM_CODE_LENGTH = 5;
-    public static final int ROUND_GUESSING_DURATION_SECONDS = 30;
+    public static final int ROUND_GUESSING_DURATION_SECONDS = 3;
+    public static final int ROUND_PREPARING_DURATION_SECONDS = 3;
+    public static final int ROUND_FINISHED_DURATION_SECONDS = 30;
     public static final int TIME_FOR_ROOM_DISCONNECT_SECONDS = 20;
     public static final int TIME_FOR_USER_DELETION_HOURS = 24;
     public static final int JWT_EXPIRATION_TIME_SECONDS = 86400;

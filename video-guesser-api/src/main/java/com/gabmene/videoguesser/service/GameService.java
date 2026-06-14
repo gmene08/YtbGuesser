@@ -36,8 +36,6 @@ public class GameService {
     private final UserRoundRepository userRoundRepository;
     private final UserMatchRepository userMatchRepository;
     private final MatchService matchService;
-    private final RoundService roundService;
-
     // private final GameNotificationService gameNotificationService;
 
 
@@ -96,8 +94,8 @@ public class GameService {
     }
 
     @Transactional
-    public EngineRoundEndResponseDTO processEngineReport(EngineRoundReportDTO report) {
-
+    public MatchResponseDTO processEngineReport(EngineRoundReportDTO report) {
+        System.out.println("Processing engine report for room " + report.getRoomCode());
         Round currentRound = roundRepository.findCurrentRoundByRoomCode(report.getRoomCode())
                 .orElseThrow(() -> new ResourceNotFoundException("Active round not found for room " + report.getRoomCode()));
 
@@ -110,9 +108,8 @@ public class GameService {
 
         for (EngineRoundReportDTO.EngineGuessDTO engineGuess : report.getGuesses()) {
             User user = userRepository.findById(engineGuess.getUserId()).orElse(null);
-            if (user == null) continue; // Ignora se o usuário não existir
+            if (user == null) continue;
 
-            // Fail-safe: garante que o usuário não seja salvo duas vezes no mesmo round
             if (userRoundRepository.existsByUserIdAndRoundId(user.getId(), currentRound.getId())) {
                 continue;
             }
@@ -129,22 +126,14 @@ public class GameService {
             userRoundRepository.save(userRound);
         }
 
-        // 3. O Node já encerrou o tempo, então o Java oficializa o fim do round
         currentRound.setStatus(RoundStatus.FINISHED);
         roundRepository.save(currentRound);
 
-        // 4. Chama o seu método que já existe para somar os pontos no placar geral (UserMatch)
         this.processRoundResults(currentRound);
 
-        // 5. Constrói e retorna o DTO atualizado da partida para o Node.js enviar pro Angular
-        // (Altere 'buildMatchResponseDTO' para o nome exato do método que você usa no MatchService para gerar o MatchDataResponse)
-        MatchResponseDTO matchData = matchService.buildMatchResponseDTO(currentRound.getMatch());
-        RoundResultResponseDTO roundResult = roundService.buildRoundResultResponseDTO(currentRound);
+        System.out.println("Round " + currentRound.getRoundNumber() + " is finished");
+        return matchService.buildMatchResponseDTO(currentRound.getMatch());
 
-        // Retorna os dois juntos empacotados!
-        return EngineRoundEndResponseDTO.builder()
-                .matchData(matchData)
-                .roundResult(roundResult)
-                .build();
     }
+
 }

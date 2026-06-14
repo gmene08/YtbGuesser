@@ -13,13 +13,11 @@ export class GameWebsocketService {
   timeLeft = signal<number>(0);
   latestMatchData = signal<MatchState | null>(null);
 
-
-
-  connectToGameEngine(roomCode: string){
+  connectToGameEngine(roomCode: string) {
     this.coreWs.connect();
     this.coreWs.send('joinGameRoom', { roomCode });
 
-    this.coreWs.on('roundStarted', (data) => {
+    this.coreWs.on('guessingStarted', (data) => {
       console.log('▶️ Round started with time:', data.totalTime);
 
       this.latestMatchData.update((match) => {
@@ -73,8 +71,8 @@ export class GameWebsocketService {
     this.coreWs.on('roundResults', (data) => {
       console.log('🏆 Round results received:', data);
 
-      if (data.matchData) {
-        this.latestMatchData.set(data.matchData); // TODO: reduce unnecessary data transfer later
+      if (data) {
+        this.latestMatchData.set(data); // TODO: reduce unnecessary data transfer later
       }
     });
 
@@ -94,6 +92,13 @@ export class GameWebsocketService {
   sendGuess(roomCode: string, userId: number, guessValue: number) {
     this.coreWs.send('submitGuess', { roomCode, userId, guessValue });
     console.log(`🚀 Guess of ${guessValue} sent!`);
+  }
+
+  leaveGameEngine(roomCode: string) {
+    this.coreWs.send('leaveGameRoom', { roomCode });
+
+    this.latestMatchData.set(null);
+
   }
 
   disconnect() {

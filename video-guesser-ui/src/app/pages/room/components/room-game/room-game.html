@@ -1,28 +1,32 @@
-@if (matchData()?.status === MatchStatus.Playing) {
-  <header class="w-full max-w-[2000px] mx-auto flex justify-between items-center">
-    <div class="flex items-center gap-4">
-      <button
-        (click)="handleLeaveRoom()"
-        class="flex items-center justify-center w-11 h-11 bg-white text-gray-600 hover:text-red-600 hover:bg-red-50 border border-gray-200 shadow-sm rounded-full transition-all duration-200 active:scale-95"
-        title="Leave match"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-5 h-5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-        </svg>
-      </button>
-
-      <h1 class="text-3xl md:text-4xl font-black tracking-tight text-gray-800 uppercase select-none">
-        Youtube <span class="text-red-600">Guesser</span>
-      </h1>
-    </div>
-
-    <div
-      class="px-6 py-2 bg-red-100 text-red-700 font-black rounded-full text-xl border-2 border-red-200 shadow-sm"
+<header class="w-full max-w-[2000px] mx-auto flex justify-between items-center">
+  <div class="flex items-center gap-4">
+    <button
+      (click)="handleLeaveRoom()"
+      class="flex items-center justify-center w-11 h-11 bg-white text-gray-600 hover:text-red-600 hover:bg-red-50 border border-gray-200 shadow-sm rounded-full transition-all duration-200 active:scale-95"
+      title="Leave match"
     >
-      ROUND {{ matchData()?.roundNumber }}
-      <span class="opacity-50 font-bold">/ {{ matchData()?.maxRounds }}</span>
-    </div>
-  </header>
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" class="w-5 h-5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+      </svg>
+    </button>
+
+    <h1 class="text-3xl md:text-4xl font-black tracking-tight text-gray-800 uppercase select-none">
+      Youtube <span class="text-red-600">Guesser</span>
+    </h1>
+  </div>
+
+  @if (matchData()?.status === MatchStatus.Playing) {
+  <div
+    class="px-6 py-2 bg-red-100 text-red-700 font-black rounded-full text-xl border-2 border-red-200 shadow-sm"
+  >
+    ROUND {{ matchData()?.roundNumber }}
+    <span class="opacity-50 font-bold">/ {{ matchData()?.maxRounds }}</span>
+  </div>
+  }
+</header>
+
+@if (matchData()?.status === MatchStatus.Playing) {
+
 
   <main
     class="flex flex-col xl:flex-row gap-6 2xl:gap-10 w-full max-w-[2000px] mx-auto h-full items-stretch"
@@ -50,6 +54,7 @@
         [roundStatus]="roundStatus()"
         [videoUrl]="videoUrl()"
         [videoStartTime]="videoStartTime()"
+        [prepTimeLeft]="timeLeft()"
       ></app-video>
 
       <div class="w-full max-w-2xl flex justify-center flex flex-col gap-2">
@@ -60,10 +65,10 @@
         </app-round-timer>
 
         <app-guess-input
-          [isRoundActive]="isRoundActive()"
+          [roundStatus]="roundStatus()"
           [hasGuessed]="hasUserGuessedThisRound()"
           [isOwner]="isUserOwner()"
-          [roundFinished]="roundStatus() === RoundStatus.Finished"
+          [timeLeft]="timeLeft()"
           (guess)="submitGuessToBackend($event)"
           (nextRound)="changeToNextRound()"
         >

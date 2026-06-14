@@ -23,10 +23,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
@@ -39,6 +37,7 @@ public class RoomService {
     private final MatchService matchService;
     private final UserMatchRepository userMatchRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final EngineService engineService;
 
     //private final GameNotificationService gameNotificationService;
     //private final UserConnectionRegistry userConnectionRegistry;
@@ -69,7 +68,7 @@ public class RoomService {
         Room savedRoom = roomRepository.save(room);
         owner.setRoom(savedRoom);
 
-        this.syncLobbyInEngine(this.buildRoomResponseDTO(savedRoom));
+        engineService.syncLobbyInEngine(this.buildRoomResponseDTO(savedRoom));
 
         return savedRoom;
     }
@@ -129,7 +128,7 @@ public class RoomService {
         Room roomSaved = roomRepository.save(roomJoined);
 
         //gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
-        this.syncLobbyInEngine(this.buildRoomResponseDTO(roomSaved));
+        engineService.syncLobbyInEngine(this.buildRoomResponseDTO(roomSaved));
 
         return roomSaved;
     }
@@ -166,12 +165,12 @@ public class RoomService {
         // Match is created right when the room starts
         matchService.createMatch(roomStarting, request);
 
-        this.startRoomInEngine(roomStarting, request, roomCode);
+        engineService.startMatchInEngine(roomStarting, request);
 
         roomStarting.setStatus(RoomStatus.PLAYING);
         Room roomSaved = roomRepository.save(roomStarting);
         //gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
-        this.syncLobbyInEngine(this.buildRoomResponseDTO(roomSaved));
+        engineService.syncLobbyInEngine(this.buildRoomResponseDTO(roomSaved));
         return roomSaved;
 
     }
@@ -225,7 +224,7 @@ public class RoomService {
         // if the room is empty, delete it - if the owner leaves, assign a new owner
         if(playersInRoom.isEmpty()) {
             roomRepository.delete(roomLeaving);
-            this.deleteLobbyInEngine(roomCode);
+            engineService.deleteLobbyInEngine(roomCode);
             return null;
 
         }
@@ -247,7 +246,7 @@ public class RoomService {
 
         Room roomSaved = roomRepository.save(roomLeaving);
         //gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved)); // old code
-        this.syncLobbyInEngine(this.buildRoomResponseDTO(roomSaved));
+        engineService.syncLobbyInEngine(this.buildRoomResponseDTO(roomSaved));
         return roomSaved;
     }
 
@@ -285,7 +284,7 @@ public class RoomService {
 
         Room roomSaved = roomRepository.save(roomToBeUpdated);
        //gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
-        this.syncLobbyInEngine(this.buildRoomResponseDTO(roomSaved));
+        engineService.syncLobbyInEngine(this.buildRoomResponseDTO(roomSaved));
 
         return roomSaved;
     }
@@ -304,57 +303,4 @@ public class RoomService {
         });
     }
 
-    public void startRoomInEngine(Room roomStarting, MatchConfigRequestDTO request, String roomCode){
-        try {
-            RestTemplate restTemplate = new RestTemplate();
-            String nodeEngineUrl = "http://localhost:3000/api/engine/start-match";
-
-            // 1. Mapeamos os jogadores da sala para um formato simples
-            List<Map<String, Object>> playersData = roomStarting.getUsers().stream().map(u ->
-                    Map.<String, Object>of(
-                            "userId", u.getId(),
-                            "nickname", u.getNickname()
-                    )
-            ).toList();
-
-            // 2. Montamos o pacote (Payload) JSON idêntico ao que o Node espera
-            Map<String, Object> enginePayload = Map.of(
-                    "roomCode", roomCode,
-                    "maxRounds", request.getNumberOfRounds(),
-                    "players", playersData
-            );
-
-            // 3. Disparamos a requisição POST "por debaixo dos panos" para o Node.js
-            restTemplate.postForEntity(nodeEngineUrl, enginePayload, String.class);
-            System.out.println("✅ Comando enviado: Node.js assumiu a sala " + roomCode);
-
-        } catch (Exception e) {
-            System.err.println("❌ Falha crítica ao contactar o Árbitro Node.js: " + e.getMessage());
-            // Se o Node estiver desligado, impedimos a partida de começar no Java!
-            throw new BusinessException("Servidor de partida indisponível no momento.");
-        }
-    }
-
-    public void syncLobbyInEngine(RoomResponseDTO roomData){
-        try {
-            RestTemplate restTemplate = new RestTemplate();
-            String nodeEngineUrl = "http://localhost:3000/api/engine/lobby/update";
-            restTemplate.postForEntity(nodeEngineUrl, roomData, String.class);
-            System.out.println(" Synching lobby from room " + roomData.getCode() + " with node: ");
-        } catch (Exception e) {
-            System.err.println("Failed to sync lobby with node: " + e.getMessage());
-        }
-    }
-
-    public void deleteLobbyInEngine(String roomCode){
-        try {
-            RestTemplate restTemplate = new RestTemplate();
-            String nodeEngineUrl = "http://localhost:3000/api/engine/lobby/" + roomCode;
-
-            restTemplate.delete(nodeEngineUrl);
-            System.out.println("🗑️ Delete lobby " + roomCode + " from node engine.");
-        } catch (Exception e) {
-            System.err.println("❌ Error deleting lobby from node: " + e.getMessage());
-        }
-    }
 }
