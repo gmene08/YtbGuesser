@@ -10,7 +10,7 @@ import { GameWebsocketService } from '../../../../../../services/websocket/game-
 export class RoundTimer {
 
   // O Angular lê o tempo diretamente do Signal do Node.js, sem fazer nenhuma conta!
-  timeLeft = input.required<number | null>();
+  timeLeft = input.required<number>();
   roundStatus = input.required<string | null>();
   isRoundActive = computed(() => this.roundStatus() !== RoundStatus.Preparing );
 

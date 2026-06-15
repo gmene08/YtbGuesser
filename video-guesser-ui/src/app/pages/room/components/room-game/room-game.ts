@@ -88,6 +88,10 @@ export class RoomGame implements OnInit, OnDestroy {
     return roundDetails.playersScore;
   });
 
+  activityLogs = computed(()=>{
+    return this.gameService.activityLogs();
+  })
+
   isRoundActive = computed(
     () => this.matchData()?.currentRound.roundStatus === RoundStatus.Guessing,
   );
@@ -100,14 +104,13 @@ export class RoomGame implements OnInit, OnDestroy {
   onLeaveRoom = output<void>();
   private previousStatus: RoundStatus | null = null;
   videoStartTime = signal<number>(0);
-  activityLogs = signal<LogMessage[]>([]);
 
   constructor() {}
 
   ngOnDestroy(): void {
     const roomCode = this.roomData()?.code;
     if (roomCode) {
-      this.gameService.leaveGameEngine(roomCode);
+      this.gameService.leaveGame(roomCode);
     }
   }
 

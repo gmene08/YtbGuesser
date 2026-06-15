@@ -11,7 +11,7 @@ let io;
 function init(server) {
   io = new Server(server, {
     cors: {
-      origin: 'http://localhost:4200',
+      origin: process.env.FRONTEND_URL || 'http://localhost:4200',
       methods: ['GET', 'POST'],
       credentials: true
     }

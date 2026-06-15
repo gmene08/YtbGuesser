@@ -71,12 +71,14 @@ export class Room implements OnInit, OnDestroy {
 
       const room = this.roomData();
 
+      if(!room) return;
+
       const IsUserStillInRoom =
         room?.players.some((player) => player.userId === this.currentUserId()) ?? false;
       if (!IsUserStillInRoom) {
         console.log('User not in this room');
-        this.lobbyWs.disconnect();
-        this.gameWs.disconnect();
+        this.lobbyWs.leaveLobby();
+        //this.gameWs.leaveGame(room.code);
         this.rt.navigate(['/']);
       }
     });
@@ -89,7 +91,7 @@ export class Room implements OnInit, OnDestroy {
     this.lobbyWebSocket.disconnectFromLobby();
     this.coreWebSocket.disconnect();*/
 
-    this.lobbyWs.disconnect();
+    this.lobbyWs.leaveLobby();
   }
 
   ngOnInit(): void {
@@ -147,7 +149,7 @@ export class Room implements OnInit, OnDestroy {
         //this.lobbyWebSocket.disconnectFromLobby();
         //this.coreWebSocket.disconnect();
 
-        this.lobbyWs.disconnect();
+        this.lobbyWs.leaveLobby();
 
         this.rt.navigate(['/']);
       },

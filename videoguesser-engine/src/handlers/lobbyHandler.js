@@ -2,6 +2,9 @@
 const activeLobbies = new Map();
 const disconnectTimeouts = new Map();
 
+const JAVA_API = process.env.JAVA_BACKEND_URL || 'http://localhost:8080';
+const JAVA_BACKEND_URL = process.env.JAVA_BACKEND_URL || 'http://localhost:8080';
+
 module.exports = (io, socket, activeLobbies) => {
 
     socket.on('joinLobbyRoom', ({roomCode})=>{
@@ -20,8 +23,8 @@ module.exports = (io, socket, activeLobbies) => {
                 
                 console.log(`🔌 ${socket.nickname} reconectou-se a tempo na sala [${roomCode}]!`);
             }
-            console.log(`🔌 ${socket.nickname} conectou-se na sala [${roomCode}]!`);
         
+            console.log(`🔌 ${socket.nickname} conectou-se na sala [${roomCode}]!`);
         } 
     }); 
  
@@ -40,15 +43,15 @@ module.exports = (io, socket, activeLobbies) => {
             io.to(`${socket.roomCode}-lobby`).emit('lobbyUpdate', lobby);
             const timeoutId = setTimeout(()=>{
                 disconnectTimeouts.delete(socket.userId);
-
-                fetch(`http://localhost:8080/api/engine/disconnect?userId=${socket.userId}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json' }
-                }).then(()=>{
-                    if(lobby){
+                
+                if(lobby){
                         lobby.playersWhoDisconnected = lobby.playersWhoDisconnected.filter(id =>  id !== socket.userId);
                         console.log(`⚠️ ${socket.nickname} não voltou a tempo... tirando da sala`);
-                    } 
+                } 
+
+                fetch(`${JAVA_BACKEND_URL}/api/engine/disconnect?userId=${socket.userId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
                 })
                 .catch(err => console.error(`❌ Erro no DELETE status:`, err.message));
             }, 5000) 

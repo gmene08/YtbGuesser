@@ -14,10 +14,6 @@ import { LobbyWebsocketService } from '../../services/websocket/lobby-websocket'
   standalone: true,
 })
 export class NavBar {
-  private lobbyWebSocket = inject(StompLobbyWebsocket);
-  private gameWebSocket = inject(GameWebsocketService);
-  private coreWebSocket = inject(CoreWebsocket);
-  private coreWs = inject(CoreWebsocket);
   private lobbyWs = inject(LobbyWebsocketService);
   private gameWs = inject(GameWebsocketService);
   private authService = inject(Auth);
@@ -36,8 +32,7 @@ export class NavBar {
         //this.gameWebSocket.disconnect();
         //this.lobbyWebSocket.disconnectFromLobby();
         //this.coreWebSocket.disconnect();
-        this.lobbyWs.disconnect();
-        this.gameWs.disconnect();
+        this.lobbyWs.leaveLobby();
         this.router.navigate(['/']);
       },
       error: (response) => {

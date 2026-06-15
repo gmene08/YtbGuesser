@@ -209,7 +209,7 @@ public class RoomService {
 
         // if the room is in PLAYING status, remove the user from the match
         if (roomLeaving.getStatus() == RoomStatus.PLAYING) {
-            UserMatch userMatchLeaving = userMatchRepository.findByUserIdAndRoomIdAndStatus(userLeaving.getId(), roomLeaving.getId(), MatchStatus.PLAYING)
+            UserMatch userMatchLeaving = userMatchRepository.findByUserIdAndRoomIdAndStatusNot(userLeaving.getId(), roomLeaving.getId(), MatchStatus.FINISHED)
                     .orElseThrow(()-> new ResourceNotFoundException("UserMatch not found"));
             userMatchRepository.delete(userMatchLeaving);
             userMatchRepository.flush();

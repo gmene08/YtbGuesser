@@ -11,7 +11,7 @@
           [ownerId]="room.ownerId"
           [playerId]="player.userId"
           [playerNickname]="player.nickname"
-          [isDisconnected] ="room.playersWhoDisconnected?.includes(player.userId)"
+          [isDisconnected] ="isDisconnected(player.userId)"
           [currentUserId]="currentUserId()"
           (onKickPlayer)="handleKickPlayer($event)"
         ></app-player-card>

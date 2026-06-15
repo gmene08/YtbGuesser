@@ -13,12 +13,33 @@ export class LobbyWebsocketService {
 
   public roomData = signal<RoomState | null>(null);
 
+  private isListening = false;
+
+  constructor() {
+    this.coreWs.onDisconnect$.subscribe(() => {
+      this.isListening = false;
+    })
+  }
+
   connectToLobby(roomCode: string) {
     this.coreWs.connect();
 
+    this.coreWs.send('joinLobbyRoom', { roomCode });
+
+    if(this.isListening){
+      return;
+    }
+
+    this.isListening = true;
+
     this.coreWs.on('connect', () => {
       console.log('⚡ Connected to Engine Node.js!:');
-      this.coreWs.send('joinLobbyRoom', { roomCode });
+
+      //if internet dies
+      const currentRoom = this.roomData()?.code;
+      if (currentRoom) {
+        this.coreWs.send('joinLobbyRoom', { roomCode: currentRoom });
+      }
     });
 
     this.coreWs.on('lobbyUpdate', (data) => {
@@ -30,8 +51,9 @@ export class LobbyWebsocketService {
 
   }
 
-  disconnect() {
+  leaveLobby() {
     this.coreWs.disconnect();
+    this.isListening = false;
     this.roomData.set(null);
   }
 }

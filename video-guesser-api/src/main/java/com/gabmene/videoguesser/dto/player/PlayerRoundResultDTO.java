@@ -9,9 +9,11 @@ import lombok.Getter;
 public class PlayerRoundResultDTO extends PlayerDTO {
 
     private final Integer pointsScored;
+    private final Long lastGuess;
 
-    public PlayerRoundResultDTO(Integer userId, String nickname, Integer pointsScored) {
+    public PlayerRoundResultDTO(Integer userId, String nickname, Long lastGuess,  Integer pointsScored) {
         super(userId, nickname);
+        this.lastGuess = lastGuess;
         this.pointsScored = pointsScored;
     }
 
@@ -19,6 +21,7 @@ public class PlayerRoundResultDTO extends PlayerDTO {
         return new PlayerRoundResultDTO(
                 userRound.getUser().getId(),
                 userRound.getUser().getNickname(),
+                userRound.getLastGuess(),
                 userRound.getPointsEarned()
         );
     }

@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { PlayerCard } from '../player-card/player-card';
 import { RoomState } from '../../../../models/room.state';
 
@@ -19,6 +19,10 @@ export class RoomPlayerList {
   room = input.required<RoomState | null>();
   isOwner = input.required<boolean>();
   currentUserId = input.required<number | null>();
+
+  isDisconnected (playerId: number){
+    return this.room()?.playersWhoDisconnected?.includes(playerId);
+  }
 
   onKickPlayer = output<number>();
   onLeaveRoom = output<void>();

@@ -1,7 +1,10 @@
 const ioConfig = require('../config/socket');
-
+const {redisClient} = require('../config/redis');
+const {addActivityLog} = require('../services/logService');
 
 const activeTimers = new Map();
+
+const JAVA_BACKEND_URL = process.env.JAVA_BACKEND_URL || 'http://localhost:8080';
 
 function runCountdown(roomCode, durationInSeconds, currentStatus) {
   return new Promise((resolve) => {
@@ -40,29 +43,32 @@ async function startRoundSequence(roomCode, activeLobbies, prepDurationSeconds, 
     // === TIMER DE PREPARAÇÃO ===
     match.currentRound.status = 'PREPARING';
     console.log(`⏳ Round ${match.currentRound.number} na sala [${roomCode}]: PREPARING (${prepDurationSeconds}s)`);
+    await addActivityLog(roomCode, io, 'SYSTEM', `Round ${match.currentRound.number} is about to start.`);
     await runCountdown(roomCode, prepDurationSeconds, 'PREPARING');
 
     // === MUDANÇA PARA GUESSING ===
-    await fetch(`http://localhost:8080/api/engine/${roomCode}/status`, {
+    await fetch(`${JAVA_BACKEND_URL}/api/engine/${roomCode}/status`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'GUESSING' })
     });
     match.currentRound.status = 'GUESSING';
+
     io.to(`${roomCode}-game`).emit('guessingStarted', {
       roundNumber: match.currentRound.number,
       roundStatus: match.currentRound.status,
       totalTime: guessingDurationSeconds
     
     });
-    console.log(`⏳ Round ${match.currentRound.number} na sala [${roomCode}]: GUESSING (${guessingDurationSeconds}s)`);
 
+    console.log(`⏳ Round ${match.currentRound.number} na sala [${roomCode}]: GUESSING (${guessingDurationSeconds}s)`);
+    await addActivityLog(roomCode, io, 'SYSTEM', `Round ${match.currentRound.number} has started! Players can now submit their guesses.`);
     // === TIMER DE GUESSING ===
     await runCountdown(roomCode, guessingDurationSeconds, 'GUESSING');
 
     // === MUDANÇA PARA FINISHED ===
     const reportPayload = { roomCode, guesses: match.currentRound.guesses };
-    const res = await fetch('http://localhost:8080/api/engine/end-round', {
+    const res = await fetch(`${JAVA_BACKEND_URL}/api/engine/end-round`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(reportPayload)
@@ -70,14 +76,27 @@ async function startRoundSequence(roomCode, activeLobbies, prepDurationSeconds, 
     if (!res.ok) throw new Error('Erro no Java ao terminar round');
     const engineResponse = await res.json();
     match.currentRound.status = 'FINISHED';
+
     io.to(`${roomCode}-game`).emit('roundResults', engineResponse);
     console.log(`⏳ Round ${match.currentRound.number} na sala [${roomCode}]: FINISHED (${finishedDurationSeconds}s)`);
+
+    await addActivityLog(roomCode, io, 'SYSTEM', `Round ${match.currentRound.number} has finished.`);
+
+    const roundDetails = engineResponse.currentRound?.roundDetails || {};
+    const playersScore = roundDetails.playersScore || [];
+
+    // 3. Usamos for...of para que o Node respeite o 'await' de cada mensagem
+    for (const result of playersScore) {
+      const logMessage = `🏆 ${result.nickname} chutou ${result.lastGuess} views e ganhou ${result.pointsScored} pontos!`;
+      
+      await addActivityLog(roomCode, io, 'RESULT', logMessage);
+    }
 
     // === TIMER DE FINISHED ===
     await runCountdown(roomCode, finishedDurationSeconds, 'FINISHED');
 
     // === MUDANÇA PARA PRÓXIMO ROUND OU FIM DE JOGO ===
-    const changeRes = await fetch(`http://localhost:8080/api/engine/${roomCode}/change-round`, { method: 'PATCH' });
+    const changeRes = await fetch(`${JAVA_BACKEND_URL}/api/engine/${roomCode}/change-round`, { method: 'PATCH' });
     if (!changeRes.ok) throw new Error('Erro no Java ao mudar round');
     const changeResponse = await changeRes.json();
 
@@ -90,10 +109,12 @@ async function startRoundSequence(roomCode, activeLobbies, prepDurationSeconds, 
 
     if (match.status === 'PLAYING') {
       console.log(`⏳ Sala [${roomCode}] mudou para round ${match.currentRound.number}!`);
+
       if (match.currentRound.number <= match.maxRounds) {
         startRoundSequence(roomCode, activeLobbies, prepDurationSeconds, guessingDurationSeconds, finishedDurationSeconds);
       }
     } else {
+      await addActivityLog(roomCode, io, 'SYSTEM', `Game has ended after round ${match.currentRound.number}.`);
       console.log(`🏁 Jogo na sala [${roomCode}] terminou!`);
     }
   }

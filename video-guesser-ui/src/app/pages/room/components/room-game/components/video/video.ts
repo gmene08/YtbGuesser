@@ -27,7 +27,7 @@ export class Video {
   roundStatus = input.required<string | null>();
   videoUrl = input.required<string | null>();
   videoStartTime = input.required<number | null>();
-  prepTimeLeft = input.required<number | null>();
+  prepTimeLeft = input.required<number>();
 
   volume = signal<number>(100);
   isMuted = signal(true);
