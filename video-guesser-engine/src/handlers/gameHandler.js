@@ -30,6 +30,12 @@ module.exports = (io, socket, activeLobbies) => {
       const gameConnectionName = `${roomCode}-game`;
       socket.leave(gameConnectionName); // Sai apenas do canal de jogo
       console.log(`🚪 Jogador ${socket.nickname} saiu dos eventos da PARTIDA [${roomCode}]`);
+
+      // Como apenas o lobby contem os jogadores que estao na sala, e o front end mostra a leaderboard que e um campo de match, o lobbyUpdate nao atualiza a leaderboard, entao precisamos emitir um evento específico para atualizar a leaderboard quando um jogador sai durante a partida. O ideal seria refatorar isso futuramente para ter uma fonte de verdade única, mas por enquanto vamos manter a estrutura atual e emitir esse evento específico.
+      io.to(gameConnectionName).emit('playerLeftGame', { 
+        userId: socket.userId, 
+        nickname: socket.nickname 
+      });
   });
 
   // Quando o jogador envia um palpite (Guess)

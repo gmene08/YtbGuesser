@@ -1,6 +1,7 @@
 package com.gabmene.videoguesser.dto.round;
 
 
+import com.gabmene.videoguesser.constants.AppConstants;
 import com.gabmene.videoguesser.entity.Round;
 import com.gabmene.videoguesser.entity.Video;
 import com.gabmene.videoguesser.enums.RoundStatus;
@@ -26,6 +27,7 @@ public class ActiveRoundResponseDTO {
     private ActiveVideoResponseDTO video;
     private Instant endsAt;
     private Instant serverTime;
+    private Integer totalGuessingTimeInSeconds;
     private Integer videoStartsAtSecond;
 
     private RoundResultResponseDTO roundDetails;
@@ -49,7 +51,7 @@ public class ActiveRoundResponseDTO {
                 round.getStatus(),
                 guesses,
                 video, round.getEndsAt(),
-                Instant.now(),
+                Instant.now(),AppConstants.ROUND_GUESSING_DURATION_SECONDS,
                 round.getVideoStartsAtSecond(),
                 roundResult );
     }

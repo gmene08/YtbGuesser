@@ -41,6 +41,7 @@ export class Video {
     mute: 1,
     controls: 0,
     disablekb: 1,
+    start: Math.floor(this.videoStartTime() || 0)
   }));
 
   constructor() {

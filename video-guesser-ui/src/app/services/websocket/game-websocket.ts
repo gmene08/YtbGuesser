@@ -12,22 +12,28 @@ export class GameWebsocketService {
   private coreWs = inject(CoreWebsocket);
 
   timeLeft = signal<number>(0);
+  totalGuessingTime = signal<number>(0);
   activityLogs = signal<LogMessage[]>([]);
   latestMatchData = signal<MatchState | null>(null);
+  latestRoomCode = signal<string | null>(null);
 
   private isListening = false;
 
   constructor() {
     this.coreWs.onDisconnect$.subscribe(() => {
+      const roomCode = this.latestRoomCode();
+      if(!roomCode) return;
+
+      this.leaveGame(roomCode);
+      this.latestRoomCode.set(null);
       this.isListening = false;
-      this.activityLogs.set([]);
-      this.latestMatchData.set(null);
     })
   }
 
   connectToGameEngine(roomCode: string) {
     this.coreWs.connect();
     this.coreWs.send('joinGameRoom', { roomCode });
+    this.latestRoomCode.set(roomCode);
 
     if(this.isListening){
       return;
@@ -52,6 +58,7 @@ export class GameWebsocketService {
       });
 
       this.timeLeft.set(data.totalTime);
+      this.totalGuessingTime.set(data.totalTime);
     });
 
     this.coreWs.on('logHistory', (logs: LogMessage[]) => {
@@ -127,8 +134,29 @@ export class GameWebsocketService {
       this.latestMatchData.set(data);
     });
 
-    this.coreWs.on('gameEnded', ( )=> {
+    this.coreWs.on('gameEnded', () => {
       this.leaveGame(roomCode);
+    });
+
+    this.coreWs.on('playerLeftGame', (data: { userId: number; nickname: string }) => {
+      console.log(`👋 ${data.nickname} saiu da partida! Removendo da Leaderboard...`);
+
+      this.latestMatchData.update((match) => {
+        if (!match) return match;
+
+        return {
+          ...match,
+          // remove the player from leaderboard
+          playerLeaderboard: match.playerLeaderboard.filter((p) => p.userId !== data.userId),
+
+          currentRound: {
+            ...match.currentRound,
+            playersWhoGuessed: match.currentRound.playersWhoGuessed.filter(
+              (id) => id !== data.userId,
+            ),
+          },
+        };
+      });
     });
 
     this.coreWs.on('disconnect', () => {

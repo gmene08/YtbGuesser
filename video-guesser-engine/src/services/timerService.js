@@ -116,6 +116,7 @@ async function startRoundSequence(roomCode, activeLobbies, prepDurationSeconds, 
     match.currentRound.guesses = [];
     match.status = changeResponse.status;
 
+    // Poderia nao enviar a resposta inteira e optimizar melhor essa parte no geral.
     io.to(`${roomCode}-game`).emit('changeOfRounds', changeResponse);
 
     if (match.status === 'PLAYING') {

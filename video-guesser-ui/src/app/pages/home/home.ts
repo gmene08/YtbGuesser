@@ -37,7 +37,15 @@ export class Home {
       next: (response) => {
         console.log('Session check response: ', response);
 
-        this.roomUserIsIn.set(response.roomIsIn || null);
+        const justLeft = sessionStorage.getItem('justLeft');
+
+        if (justLeft) {
+          this.roomUserIsIn.set(null);
+          sessionStorage.removeItem('justLeft');
+        } else {
+          this.roomUserIsIn.set(response.roomIsIn || null);
+        }
+
         this.isLoading.set(false);
       },
       error: () => {

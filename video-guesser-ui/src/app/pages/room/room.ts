@@ -23,7 +23,6 @@ import { LobbyWebsocketService } from '../../services/websocket/lobby-websocket'
   standalone: true,
 })
 export class Room implements OnInit, OnDestroy {
-
   private authService = inject(Auth);
   private roomService = inject(RoomService);
 
@@ -33,17 +32,17 @@ export class Room implements OnInit, OnDestroy {
 
   private lobbyWs = inject(LobbyWebsocketService);
   private coreWs = inject(CoreWebsocket);
-  private gameWs = inject(GameWebsocketService)
+  private gameWs = inject(GameWebsocketService);
 
   private router = inject(ActivatedRoute);
   private rt = inject(Router);
 
-  currentUserId = computed(()=>{
+  currentUserId = computed(() => {
     return this.authService.currentUser()?.id || -1;
-  })
-  currentUserNickname = computed(()=>{
+  });
+  currentUserNickname = computed(() => {
     return this.authService.currentUser()?.nickname || '';
-  })
+  });
 
   roomData = computed(() => {
     const room = this.lobbyWs.roomData();
@@ -53,9 +52,9 @@ export class Room implements OnInit, OnDestroy {
       players: this.sortPlayers(room.players, room.ownerId),
     };
   });
-  hasLoadedInitialRoomData = computed(()=>{
-    return !!this.roomData()
-  })
+  hasLoadedInitialRoomData = computed(() => {
+    return !!this.roomData();
+  });
 
   roomCode = signal<string>('');
 
@@ -72,7 +71,7 @@ export class Room implements OnInit, OnDestroy {
 
       const room = this.roomData();
 
-      if(!room) return;
+      if (!room) return;
 
       const IsUserStillInRoom =
         room?.players.some((player) => player.userId === this.currentUserId()) ?? false;
@@ -89,9 +88,8 @@ export class Room implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     console.log('Room component destroyed. Running safety cleanup...');
 
-    /*this.gameWebSocket.disconnect();
-    this.lobbyWebSocket.disconnectFromLobby();
-    this.coreWebSocket.disconnect();*/
+    sessionStorage.setItem('justLeft', 'true');
+    setTimeout(() => sessionStorage.removeItem('justLeft'), 3000);
 
     this.coreWs.disconnect();
   }
@@ -133,7 +131,6 @@ export class Room implements OnInit, OnDestroy {
           }
           this.lobbyWs.roomData.set(response);
           this.lobbyWs.connectToLobby(code);
-
         },
         error: (error) => {
           console.error('Error fetching room data: ', error);
@@ -152,7 +149,7 @@ export class Room implements OnInit, OnDestroy {
         //this.coreWebSocket.disconnect();
 
         this.coreWs.disconnect();
-
+        this.lobbyWs.roomData.set(null);
         this.rt.navigate(['/']);
       },
       error: (error) => {

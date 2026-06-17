@@ -5,8 +5,10 @@ import {
   inject,
   input,
   OnDestroy,
-  OnInit, output,
+  OnInit,
+  output,
   signal,
+  untracked,
   ViewChild,
 } from '@angular/core';
 import { MatchService } from '../../../../services/match';
@@ -88,9 +90,9 @@ export class RoomGame implements OnInit, OnDestroy {
     return roundDetails.playersScore;
   });
 
-  activityLogs = computed(()=>{
+  activityLogs = computed(() => {
     return this.gameService.activityLogs();
-  })
+  });
 
   isRoundActive = computed(
     () => this.matchData()?.currentRound.roundStatus === RoundStatus.Guessing,
@@ -103,9 +105,28 @@ export class RoomGame implements OnInit, OnDestroy {
   kickPlayer = output<number>();
   onLeaveRoom = output<void>();
   private previousStatus: RoundStatus | null = null;
-  videoStartTime = signal<number>(0);
 
-  constructor() {}
+  videoStartTime = signal<number>(0)
+
+  constructor() {
+    effect(() => {
+      const status = this.roundStatus();
+
+      if (status === RoundStatus.Guessing) {
+        const videoStartsAt = untracked(this.roundData)?.videoStartsAtSecond || 0;
+        const left = untracked(this.timeLeft);
+        const total = untracked(this.gameService.totalGuessingTime);
+
+        const elapsedSeconds = total - left;
+
+        const videoStartTime = videoStartsAt + elapsedSeconds;
+        this.videoStartTime.set(videoStartTime > 0 ? videoStartTime : 0);
+
+      } else {
+        this.videoStartTime.set(0);
+      }
+    });
+  }
 
   ngOnDestroy(): void {
     const roomCode = this.roomData()?.code;
@@ -151,6 +172,11 @@ export class RoomGame implements OnInit, OnDestroy {
             1000;
 
           this.gameService.timeLeft.set(Math.round(timeRemaining));
+
+          if (response.currentRound.roundStatus === RoundStatus.Guessing) {
+            this.gameService.totalGuessingTime.set(response.currentRound.totalGuessingTimeInSeconds);
+          }
+
           this.gameService.connectToGameEngine(roomCode);
         },
 

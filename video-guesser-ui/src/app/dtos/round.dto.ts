@@ -9,6 +9,7 @@ export interface ActiveRoundResponse {
   video: ActiveVideoResponse;
   endsAt: string;
   serverTime: string;
+  totalGuessingTimeInSeconds: number;
   videoStartsAtSecond: number;
 
   roundDetails?: EndOfRoundResponse | null;
