@@ -3,6 +3,7 @@
   [class.opacity-0]="!isRoundActive()"
   [class.opacity-100]="isRoundActive()"
 >
+  @if(roundStatus() == RoundStatus.Guessing){
   <div class="w-full h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner relative">
     <div
       class="h-full ease-linear"
@@ -20,4 +21,5 @@
       00:{{ timeLeft() < 10 ? '0' + timeLeft() : timeLeft() }}
     </span>
   </div>
+  }
 </div>

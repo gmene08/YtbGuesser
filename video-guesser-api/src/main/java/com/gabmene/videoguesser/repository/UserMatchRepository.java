@@ -22,8 +22,8 @@ public interface UserMatchRepository extends JpaRepository<UserMatch,Integer> {
     @Query("SELECT um FROM UserMatch um WHERE um.user.id = :userId AND um.match.id = :matchId")
     Optional<UserMatch> findByUserIdAndMatchId(@Param("userId") Integer userId, @Param("matchId") Integer matchId);
 
-    @Query("SELECT um FROM UserMatch um WHERE um.user.id = :userId AND um.match.room.id = :roomId AND um.match.status = :status")
-    Optional<UserMatch> findByUserIdAndRoomIdAndStatus(@Param("userId") Integer userId, @Param("roomId") Integer roomId, MatchStatus status);
+    @Query("SELECT um FROM UserMatch um WHERE um.user.id = :userId AND um.match.room.id = :roomId AND um.match.status != :status")
+    Optional<UserMatch> findByUserIdAndRoomIdAndStatusNot(@Param("userId") Integer userId, @Param("roomId") Integer roomId, MatchStatus status);
 
     List<UserMatch> findAllByMatchOrderByCurrentScoreDesc(Match match);
 }

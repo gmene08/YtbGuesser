@@ -1,37 +1,55 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
+import { RoundStatus } from '../../enums/round-status.enum';
+import { MatchState } from '../../models/match.state';
+import { EndOfRoundResponse } from '../../dtos/round.dto';
 import { CoreWebsocket } from './core-websocket';
-import { RoomResponse } from '../../dtos/room.dto';
 import { RoomState } from '../../models/room.state';
 
 @Injectable({
   providedIn: 'root',
 })
-export class LobbyWebsocket {
-  private core = inject(CoreWebsocket);
+export class LobbyWebsocketService {
+  private coreWs = inject(CoreWebsocket);
 
   public roomData = signal<RoomState | null>(null);
 
-  private lobbySubscription: any = null;
+  private isListening = false;
 
-  connectToLobby(roomCode: string){
-    this.core.connect(); // make sure the connection is established
-
-   this.lobbySubscription =  this.core.subscribe(`/topic/room/${roomCode}/lobby`, (message) => {
-      const data = JSON.parse(message.body);
-      console.log('Received room data: ', data);
-
-      this.roomData.set(data);
+  constructor() {
+    this.coreWs.onDisconnect$.subscribe(() => {
+      this.isListening = false;
+      this.roomData.set(null);
     })
   }
-  disconnectFromLobby(){
-    if(this.lobbySubscription){
-      this.lobbySubscription.unsubscribe();
-      this.lobbySubscription = null;
+
+  connectToLobby(roomCode: string) {
+    this.coreWs.connect();
+
+    this.coreWs.send('joinLobbyRoom', { roomCode });
+
+    if(this.isListening){
+      return;
     }
-    this.roomData.set(null);
+
+    this.isListening = true;
+
+    this.coreWs.on('connect', () => {
+      console.log('⚡ Connected to Engine Node.js!:');
+
+      //if internet dies
+      const currentRoom = this.roomData()?.code;
+      if (currentRoom) {
+        this.coreWs.send('joinLobbyRoom', { roomCode: currentRoom });
+      }
+    });
+
+    this.coreWs.on('lobbyUpdate', (data) => {
+      console.log('Lobby updated with data: ', data);
+      if(data){
+        this.roomData.set(data);
+      }
+    })
+
   }
 
-  setRoomData(data: RoomResponse){
-    this.roomData.set(data);
-  }
 }

@@ -1,9 +1,9 @@
 import { Component, effect, ElementRef, input, ViewChild } from '@angular/core';
 
 export interface LogMessage {
-  text: string;
-  type: 'info' | 'error' | 'success';
-  time: string;
+  message: string;
+  type: 'SYSTEM' | 'GUESS' | 'RESULT';
+  timestamp: string;
 }
 
 @Component({

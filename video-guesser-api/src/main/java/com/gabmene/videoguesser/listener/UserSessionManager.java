@@ -1,7 +1,12 @@
-package com.gabmene.videoguesser.listener;
+/* package com.gabmene.videoguesser.listener;
+
+    ***** UNUSED - KEEPING IT FOR EDUCATIONAL PURPOSES *****
+
+    - This was made before migrating the WebSocket stuff fully to the node engine
 
 import com.gabmene.videoguesser.constants.AppConstants;
 import com.gabmene.videoguesser.event.UserLeftRoomEvent;
+import com.gabmene.videoguesser.listener.UserConnectionRegistry;
 import com.gabmene.videoguesser.repository.RoomRepository;
 import com.gabmene.videoguesser.service.RoomService;
 import com.gabmene.videoguesser.service.UserService;
@@ -205,6 +210,4 @@ public class UserSessionManager {
         clearUserDeletionTimer(userId);
         log.warn("Cleaned up all memory timers for logging out user: {}", userId);
     }
-
-
-}
+} */

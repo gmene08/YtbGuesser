@@ -1,10 +1,12 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, Input, input, output } from '@angular/core';
 import { PlayerScore } from '../player-score/player-score';
 import { RoundStatus } from '../../../../../../enums/round-status.enum';
 import { RoomState } from '../../../../../../models/room.state';
 import { MatchState } from '../../../../../../models/match.state';
 import { PlayerCard } from '../../../player-card/player-card';
 import { RoundState } from '../../../../../../models/round.state';
+import { EndOfRoundResponse } from '../../../../../../dtos/round.dto';
+import { PlayerResultResponse } from '../../../../../../dtos/player.dto';
 
 @Component({
   selector: 'app-player-leaderboard',
@@ -15,26 +17,31 @@ import { RoundState } from '../../../../../../models/round.state';
 })
 export class PlayerLeaderboard {
   roomData = input.required<RoomState | null>();
-  playersWhoGuessed = input.required<number[]>();
+  playersWhoGuessed = input.required<number[] | null>();
   matchData = input.required<MatchState | null>();
   roundData = input.required<RoundState | null>();
+  playersScore = input.required<PlayerResultResponse[] | null>();
   currentUserId = input.required<number | null>();
   isUserOwner = input.required<boolean>();
+  isGuessing = computed(()=>{
+    return !!this.roundData()?.roundStatus && this.roundData()?.roundStatus !== RoundStatus.Finished ;
+  })
 
   kickPlayer = output<number>();
 
   playerHasGuessed (playerId: number){
-    return this.playersWhoGuessed().includes(playerId);
+    const pwg = this.playersWhoGuessed();
+    if (!pwg) return false;
+    return pwg.includes(playerId);
   }
 
   getPlayerRoundScore(userId: number):number{
-    const match = this.matchData();
 
-    if(!match?.currentRound?.roundDetails?.playersScore){
+    if (!this.playersScore()) {
       return 0;
     }
 
-    const result = match.currentRound.roundDetails.playersScore.find(player => player.userId === userId);
+    const result = this.playersScore()?.find((player) => player.userId === userId);
 
     return result?.pointsScored || 0;
 

@@ -1,130 +1,150 @@
-import { inject, Injectable, signal, computed } from '@angular/core';
-import { ActiveRoundResponse, EndOfRoundResponse, UserGuessRequest } from '../../dtos/round.dto';
-import { CoreWebsocket } from './core-websocket';
-import { MatchDataResponse } from '../../dtos/match.dto';
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { RoundStatus } from '../../enums/round-status.enum';
 import { MatchState } from '../../models/match.state';
+import { EndOfRoundResponse } from '../../dtos/round.dto';
+import { CoreWebsocket } from './core-websocket';
+import { LogMessage } from '../../pages/room/components/room-game/components/chat-box/chat-box';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GameWebsocketService {
-  private core = inject(CoreWebsocket);
+  private coreWs = inject(CoreWebsocket);
 
-  matchData = signal<MatchState | null>(null);
-  roundData = computed(()=>{
-    const match = this.matchData();
-    if(!match) return null;
-    return match.currentRound;
-  });
+  timeLeft = signal<number>(0);
+  activityLogs = signal<LogMessage[]>([]);
+  latestMatchData = signal<MatchState | null>(null);
 
-  private currentRoundSubscriptions: any[] = [];
-  private matchSubscription: any = null;
+  private isListening = false;
 
-  connectToMatch(initialRoundId: number, matchId:number) {
-    this.core.connect(); // make sure the connection is established
-
-    this.matchSubscription = this.core.subscribe(`/topic/game/match/${matchId}/match-data`, (message) => {
-      const data = JSON.parse(message.body);
-      const newMatchData = data as MatchDataResponse;
-
-      // keep track of the old round ID
-      const oldRoundId = this.matchData()?.currentRound?.roundId;
-
-      this.matchData.set(newMatchData);
-
-      // If the round ID has changed, subscribe to the new round
-      if (oldRoundId && oldRoundId !== newMatchData?.currentRound?.roundId) {
-        console.log('Round changed, unsubscribing from old round');
-        this.subscribeToRound(newMatchData.currentRound.roundId);
-      }
-    });
-
-    // First time connecting, so subscribe to the initial round
-    this.subscribeToRound(initialRoundId);
-
+  constructor() {
+    this.coreWs.onDisconnect$.subscribe(() => {
+      this.isListening = false;
+      this.activityLogs.set([]);
+      this.latestMatchData.set(null);
+    })
   }
 
-  subscribeToRound(roundId: number) {
-    // Unsubscribe from any previous subscriptions
-    this.currentRoundSubscriptions.forEach(sub => sub.unsubscribe());
-    this.currentRoundSubscriptions = [];
+  connectToGameEngine(roomCode: string) {
+    this.coreWs.connect();
+    this.coreWs.send('joinGameRoom', { roomCode });
 
-    console.log('Subscribing to round: ', roundId);
-
-    const subGuess = this.core.subscribe(`/topic/game/round/${roundId}/guessed-status`, (message) => {
-      const data = JSON.parse(message.body);
-      if (data.hasGuessed) {
-        //onPlayerGuessed?.(data.userId);
-        this.matchData.update((match) => {
-          if (!match) return null;
-          return {
-            ...match,
-            currentRound: {
-              ...match.currentRound,
-              playersWhoGuessed: [...match.currentRound.playersWhoGuessed, data.userId],
-            },
-          };
-        });
-      }
-    });
-
-    const subStatus = this.core.subscribe(
-      `/topic/game/round/${roundId}/round-status`,
-      (message) => {
-        const data = JSON.parse(message.body);
-        const roundUpdated = data as ActiveRoundResponse;
-        this.matchData.update((match) => {
-          if (!match) return null;
-
-          return {
-            ...match,
-            currentRound: {
-              ...match.currentRound,
-              ...roundUpdated,
-            },
-          };
-        });
-      },
-    );
-
-    const subResults = this.core.subscribe(
-      `/topic/game/round/${roundId}/round-results`,
-      (message) => {
-        const data = JSON.parse(message.body);
-        const roundResults = data as EndOfRoundResponse;
-        console.log('Round results: ', roundResults);
-        this.matchData.update((match) => {
-          if (!match) return null;
-
-          return {
-            ...match,
-            currentRound: {
-              ...match.currentRound,
-              roundDetails: roundResults,
-            },
-          };
-        });
-      },
-    );
-
-    this.currentRoundSubscriptions.push(subGuess, subStatus, subResults);
-  }
-
-  sendGuess(roundId: number, userGuess: UserGuessRequest) {
-    this.core.publish(`/app/game/${roundId}/guess`, userGuess);
-  }
-
-  disconnect() {
-    this.currentRoundSubscriptions.forEach(sub => sub.unsubscribe());
-    this.currentRoundSubscriptions = [];
-
-    if(this.matchSubscription){
-      this.matchSubscription.unsubscribe();
-      this.matchSubscription = null;
+    if(this.isListening){
+      return;
     }
 
-    this.matchData.set(null);
+    this.isListening = true;
 
+    this.coreWs.on('guessingStarted', (data) => {
+      console.log('▶️ Round started with time:', data.totalTime);
+
+      this.latestMatchData.update((match) => {
+        if (!match) return match;
+        return {
+          ...match,
+          currentRound: {
+            ...match.currentRound,
+            roundStatus: data.roundStatus,
+            roundDetails: null,
+            roundNumber: data.roundNumber,
+          },
+        };
+      });
+
+      this.timeLeft.set(data.totalTime);
+    });
+
+    this.coreWs.on('logHistory', (logs: LogMessage[]) => {
+      this.activityLogs.set(logs);
+    })
+
+    this.coreWs.on('newLogEntry', (newLog: LogMessage) => {
+      this.activityLogs.update(logs =>{
+        return [...logs, newLog];
+      })
+    })
+
+    this.coreWs.on('timeUpdate', (data) => {
+      this.timeLeft.set(data.timeLeft);
+    });
+
+    this.coreWs.on('playerGuessed', (data: { userId: number }) => {
+      this.latestMatchData.update((match) => {
+        if (!match) return match;
+        return {
+          ...match,
+          currentRound: {
+            ...match.currentRound,
+            playersWhoGuessed: [...match.currentRound.playersWhoGuessed, data.userId],
+          },
+        };
+      });
+    });
+
+    this.coreWs.on('syncMatchState', (data)=>{
+
+      this.latestMatchData.update((match)=>{
+
+        if (!match) return data;
+
+        return {
+          ...match,
+          ...data,
+          currentRound: {
+            ...match.currentRound,
+            ...data.currentRound,
+          }
+        }
+      });
+    })
+
+    this.coreWs.on('roundEnded', (data) => {
+      console.log("Round's over", data.reason);
+
+      this.latestMatchData.update((match) => {
+        if (!match) return match;
+        return {
+          ...match,
+          currentRound: {
+            ...match.currentRound,
+            status: RoundStatus.Finished,
+          },
+        };
+      });
+    });
+
+    this.coreWs.on('roundResults', (data) => {
+      console.log('🏆 Round results received:', data);
+
+      if (data) {
+        this.latestMatchData.set(data); // TODO: reduce unnecessary data transfer later
+      }
+    });
+
+    this.coreWs.on('changeOfRounds', (data) => {
+      console.log('🔄 Mudando para o próximo round!', data);
+
+      this.latestMatchData.set(data);
+    });
+
+    this.coreWs.on('gameEnded', ( )=> {
+      this.leaveGame(roomCode);
+    });
+
+    this.coreWs.on('disconnect', () => {
+      console.warn('❌ Disconnected from Engine Node.js');
+    });
+  }
+
+  sendGuess(roomCode: string, userId: number, guessValue: number) {
+    this.coreWs.send('submitGuess', { roomCode, userId, guessValue });
+    console.log(`🚀 Guess of ${guessValue} sent!`);
+  }
+
+  leaveGame(roomCode: string) {
+    this.coreWs.send('leaveGameRoom', { roomCode });
+    this.activityLogs.set([]);
+    this.latestMatchData.set(null);
   }
 
 }

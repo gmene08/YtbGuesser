@@ -4,7 +4,7 @@
   </h2>
 </div>
 
-<div class="grid grid-cols-1 sm:grid-cols-1 gap-4">
+<div class="grid grid-cols-1 gap-4">
   @if (matchData(); as match) {
     @for (player of match.playerLeaderboard; track player.userId) {
       <app-player-card
@@ -14,20 +14,14 @@
         [currentUserId]="currentUserId()"
         [isOwner]="isUserOwner()"
         [isDisconnected]="roomData()?.playersWhoDisconnected?.includes(player.userId)"
+        [hasGuessed]="playerHasGuessed(player.userId)"
+        [isGuessing]="isGuessing()"
         (onKickPlayer)="handleKickPlayer($event)"
       >
-        <div status-slot>
-          @if (playerHasGuessed(player.userId)) {
-            <span class="text-green-500 animate-bounce">✅</span>
-          } @else if (roundData()?.roundStatus === RoundStatus.Finished) {
-            <span class="text-gray-400">❌</span>
-          } @else {
-            <span class="text-gray-400 animate-pulse">🤔</span>
-          }
-        </div>
-
         <div score-slot class="flex items-center gap-2">
-          <span class="text-gray-500">+{{ getPlayerRoundScore(player.userId) }}</span>
+          @if(roundData()?.roundStatus === RoundStatus.Finished){
+            <span class="text-sm text-gray-400">+{{ getPlayerRoundScore(player.userId) }}</span>
+          }
           <span class="text-xl font-black">{{ player.totalScore }}</span>
         </div>
       </app-player-card>

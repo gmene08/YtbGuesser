@@ -1,90 +1,53 @@
 import { Injectable } from '@angular/core';
-import { Client } from '@stomp/stompjs';
+import { io, Socket } from 'socket.io-client';
+import { Subject } from 'rxjs';
+
 
 @Injectable({
   providedIn: 'root',
 })
 export class CoreWebsocket {
-  private client: Client;
-  private isConnected = false;
+  private socket: Socket | null = null;
+  public onDisconnect$ = new Subject<void>();
+  isLocal = window.location.hostname === 'localhost';
 
-  private connectionQueue: (() => void)[] = [];
+  socketUrl = this.isLocal ? 'http://localhost:3000' : '/';
 
-  constructor() {
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  connect() {
+    if (!this.socket) {
+      this.socket = io(this.socketUrl, {
+        withCredentials: true,
+        transports: ['websocket']
+      });
 
-    const dynamicBrokerUrl = `${wsProtocol}//${window.location.host}/ws`;
+      this.socket.on('disconnect', (reason) => {
+        console.warn('Disconnected from server, reason: ', reason);
+        this.onDisconnect$.next();
+      });
 
-    this.client = new Client({
-      brokerURL: dynamicBrokerUrl,
-      reconnectDelay: 5000,
-      debug: (str) => console.log('[STOMP Core]', str),
-
-      onConnect: () => {
-        console.log('Connected to WebSocket server');
-        this.isConnected = true;
-
-        this.connectionQueue.forEach((callback) => callback());
-        this.connectionQueue = [];
-      },
-
-      onDisconnect: () => {
-        this.isConnected = false;
-        console.log('Disconnected from WebSocket server');
-      },
-    });
-  }
-
-  public connect() {
-    if (!this.client.active) this.client.activate();
-  }
-
-  public disconnect() {
-    if (this.client.active) this.client.deactivate();
-  }
-
-  public subscribe(destination: string, callback: (message: any) => void) {
-    // variable to store the subscription
-    let stompSubscription: any = null;
-
-    const action = () => {
-      stompSubscription = this.client.subscribe(destination, callback);
-      console.log(`[STOMP Core] Subscribed to ${destination}`);
-    };
-
-    // if it is already connected, execute the action immediately. Otherwise, queue it up.
-    if (this.isConnected) {
-      action();
-    } else {
-      this.connectionQueue.push(action);
+      this.socket.on('reconnect', () => {
+        console.log('🔄 Reconnected to server with success');
+      });
     }
+  }
+  disconnect() {
+    if (this.socket) {
+      this.onDisconnect$.next();
 
-    // return an unsubscribe function
-    return {
-      unsubscribe: () => {
-        // if the subscription is already active, unsubscribe. Otherwise, remove it from the queue.
-        if (stompSubscription) {
-          stompSubscription.unsubscribe();
-          console.log(`[STOMP Core] Unsubscribed from ${destination}`);
-        } else {
-          const index = this.connectionQueue.indexOf(action);
-          if (index > -1) {
-            this.connectionQueue.splice(index, 1);
-            console.log(
-              `[STOMP Core] Removed queued subscription for ${destination} (was not connected yet)`,
-            );
-          }
-        }
-      },
-    };
+      this.socket.removeAllListeners();
+      this.socket.disconnect();
+      this.socket = null;
+    }
+  }
+  send(event: string, data: any) {
+    if (this.socket) {
+      this.socket.emit(event, data);
+    }
   }
 
-  public publish(destination: string, body: any) {
-    if (!this.isConnected) {
-      console.error('[STOMP Core] WebSocket is not connected');
-      return;
+  on(event: string, callback: (data: any) => void) {
+    if (this.socket) {
+      this.socket.on(event, callback);
     }
-    this.client.publish({ destination: destination, body: JSON.stringify(body) });
-    console.log(`[STOMP Core] Published to ${destination}:`, body);
   }
 }

@@ -1,4 +1,6 @@
-package com.gabmene.videoguesser.listener;
+/*package com.gabmene.videoguesser.listener;
+
+   // ***** Unused, keeping it for educational purposes *****
 
 import com.gabmene.videoguesser.dto.room.RoomResponseDTO;
 import com.gabmene.videoguesser.entity.Room;
@@ -45,7 +47,8 @@ public class UserConnectionRegistry {
         roomRepository.findRoomByUserId(userId).ifPresent(room -> {
             // Get the list of users that were disconnected in the room.
             List<Integer> disconnectedInRoom = room.getUsers().stream().map(User::getId).filter(disconnectedUsers::contains).toList();
-            gameNotificationService.sendRoomUpdate(RoomResponseDTO.from(room, disconnectedInRoom));
+            //gameNotificationService.sendRoomUpdate(RoomResponseDTO.from(room, disconnectedInRoom));
         });
     }
 }
+*/

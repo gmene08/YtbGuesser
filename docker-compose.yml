@@ -29,7 +29,11 @@ services:
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=root
       - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+
       - YOUTUBE_API_KEY=${YOUTUBE_API_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - APP_ENGINE_URL=http://engine:3000
+
       #Limitis Java RAM usage
       - JAVA_TOOL_OPTIONS=-Xmx350m -Xms150m -XX:+UseSerialGC
     depends_on:
@@ -48,6 +52,34 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - backend
+  
+  # 4. Redis
+  redis:
+    image: redis:alpine
+    container_name: youtube_guesser_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  # 5. Node engine 
+  engine:
+    build:
+      context: ./video-guesser-engine 
+    container_name: video-guesser-engine
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - JAVA_BACKEND_URL=http://backend:8080 
+    depends_on:
+      - redis
+      - backend
 
 volumes:
   mysql_data:
+  redis_data:

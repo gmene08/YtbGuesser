@@ -17,8 +17,9 @@ export class PlayerCard {
   ownerId = input.required<number | undefined>();
   currentUserId = input.required<number | null>();
   isDisconnected = input.required<boolean | undefined | null>();
+  hasGuessed = input<boolean>(false);
+  isGuessing = input<boolean>(false);
   onKickPlayer = output<number>();
-
 
   handleKickPlayer() {
     this.onKickPlayer.emit(this.playerId());

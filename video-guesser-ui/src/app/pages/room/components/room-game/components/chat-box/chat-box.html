@@ -15,12 +15,19 @@
 
     @for (log of logs(); track $index) {
       <div class="text-sm p-3 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-1"
-           [class.bg-blue-50]="log.type === 'info'"
-           [class.bg-green-50]="log.type === 'success'"
-           [class.bg-yellow-50]="log.type === 'error'">
+           [class.bg-blue-50]="log.type === 'SYSTEM'"
+           [class.bg-orange-50]="log.type === 'GUESS'"
+           [class.bg-green-50]="log.type === 'RESULT'">
 
-        <span class="text-[10px] text-gray-400 font-bold">{{ log.time }}</span>
-        <span class="text-gray-700 font-medium">{{ log.text }}</span>
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] text-gray-400 font-bold">{{ log.timestamp }}</span>
+
+          @if (log.type === 'SYSTEM') { <span class="text-blue-500 text-xs">⚙️</span> }
+          @if (log.type === 'GUESS') { <span class="text-orange-500 text-xs">🎯</span> }
+          @if (log.type === 'RESULT') { <span class="text-green-500 text-xs">🏆</span> }
+        </div>
+
+        <span class="text-gray-700 font-medium">{{ log.message }}</span>
 
       </div>
     }

@@ -1,4 +1,5 @@
 import { Component, computed, input, output, signal } from '@angular/core';
+import { RoundStatus } from '../../../../../../enums/round-status.enum';
 
 @Component({
   selector: 'app-guess-input',
@@ -6,10 +7,12 @@ import { Component, computed, input, output, signal } from '@angular/core';
   templateUrl: './guess-input.html',
 })
 export class GuessInput {
-  isRoundActive = input.required<boolean>();
-  hasGuessed = input.required<boolean>();
+  hasGuessed = input.required<boolean | undefined>();
   isOwner = input.required<boolean>();
-  roundFinished = input.required<boolean>();
+  roundStatus = input.required<string | null>();
+  timeLeft = input.required<number>();
+
+  isRoundActive = computed(() => this.roundStatus() !== RoundStatus.Finished);
 
   guess = output<number>();
   nextRound = output<void>();
@@ -61,4 +64,6 @@ export class GuessInput {
   resetInput() {
     this.userGuess.set(0);
   }
+
+  protected readonly RoundStatus = RoundStatus;
 }

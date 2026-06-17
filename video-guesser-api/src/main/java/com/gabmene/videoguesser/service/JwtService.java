@@ -3,14 +3,17 @@ package com.gabmene.videoguesser.service;
 import com.gabmene.videoguesser.constants.AppConstants;
 import com.gabmene.videoguesser.entity.User;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
@@ -19,25 +22,33 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class JwtService {
-    private final Key secretKey = Jwts.SIG.HS256.key().build();
-    private final long jwtExpirationTime = AppConstants.JWT_EXPIRATION_TIME_SECONDS * 1000L;
+    @Value("${jwt.secret}")
+    private String jwtSecretString;
+
+    private Key getSigningKey() {
+        byte[] keyBytes = this.jwtSecretString.getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
 
     public String generateToken(Integer userId, String username){
         Map<String, Object> claims = new HashMap<>();
         claims.put("nickname", username);
 
+        //private final Key secretKey = Jwts.SIG.HS256.key().build();
+        long jwtExpirationTime = AppConstants.JWT_EXPIRATION_TIME_SECONDS * 1000L;
         return Jwts.builder()
                 .claims(claims)
                 .subject(String.valueOf(userId))
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + jwtExpirationTime))
-                .signWith(secretKey)
+                .signWith(this.getSigningKey())
                 .compact();
     }
 
     public boolean validateToken(String token){
         try{
-            Jwts.parser().verifyWith((SecretKey) secretKey).build().parseSignedClaims(token);
+            Jwts.parser().verifyWith((SecretKey)this.getSigningKey()).build().parseSignedClaims(token);
             return true;
         } catch (Exception e) {
             return false;
@@ -45,7 +56,7 @@ public class JwtService {
     }
 
     public Integer getUserIdFromToken(String token){
-        Claims claims = Jwts.parser().verifyWith((SecretKey) secretKey).build().parseSignedClaims(token).getBody();
+        Claims claims = Jwts.parser().verifyWith((SecretKey) this.getSigningKey()).build().parseSignedClaims(token).getPayload();
         return Integer.parseInt(claims.getSubject());
     }
 

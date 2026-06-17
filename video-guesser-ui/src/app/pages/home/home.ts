@@ -114,7 +114,7 @@ export class Home {
   handleReconnect() {
     const roomCode = this.roomUserIsIn();
     if (!roomCode) return;
-    this.handleJoinRoom(roomCode);
+    this.router.navigate(['/room', roomCode]);
   }
 
   protected readonly signal = signal;

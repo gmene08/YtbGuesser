@@ -23,7 +23,7 @@ import java.util.List;
 public class RoomController {
 
     private final RoomService roomService;
-    private final SimpMessagingTemplate messagingTemplate;
+    //private final SimpMessagingTemplate messagingTemplate;
 
     @PostMapping("/{ownerId}")
     public ResponseEntity<RoomResponseDTO> createRoom(@PathVariable Integer ownerId) {

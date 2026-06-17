@@ -29,10 +29,11 @@ public class MatchService {
     private final MatchRepository matchRepository;
     private final RoomRepository roomRepository;
     private final UserMatchRepository userMatchRepository;
-    private final SimpMessagingTemplate messagingTemplate;
+    //private final SimpMessagingTemplate messagingTemplate;
 
     private final RoundService roundService;
-    private final GameNotificationService gameNotificationService;
+    private final EngineService engineService;
+    //private final GameNotificationService gameNotificationService;
 
 
     @Transactional
@@ -90,15 +91,11 @@ public class MatchService {
     }
 
     @Transactional
-    public Match changeToNextRound(Integer matchId, Integer userId){
-        Match match = matchRepository.findById(matchId).orElseThrow(()-> new ResourceNotFoundException("Match not Found"));
+    public MatchResponseDTO changeToNextRound(String roomCode){
+        Match match = matchRepository.findByRoomCode(roomCode).orElseThrow(()-> new ResourceNotFoundException("Match not Found"));
 
         if(match.getStatus() != MatchStatus.PLAYING) {
             throw new BusinessException("Match is not in PLAYING status");
-        }
-
-        if(!Objects.equals(match.getRoom().getOwner().getId(), userId)) {
-            throw new BusinessException("User is not the owner of the room");
         }
 
         // if the current round is the last round, set the match status to FINISHED -- otherwise, increment the current round
@@ -113,9 +110,9 @@ public class MatchService {
         // save the match
         Match savedMatch = matchRepository.save(match);
 
-        gameNotificationService.sendMatchUpdate(this.buildMatchResponseDTO(savedMatch));
+        //gameNotificationService.sendMatchUpdate(this.buildMatchResponseDTO(savedMatch));
 
-        return savedMatch;
+        return this.buildMatchResponseDTO(savedMatch);
     }
 
     public Match getMatchByRoomCode(String roomCode){
@@ -150,9 +147,11 @@ public class MatchService {
             room.setStatus(RoomStatus.WAITING);
             Room roomSaved = roomRepository.save(room);
 
-            gameNotificationService.sendRoomUpdate(RoomResponseDTO.from(roomSaved));
+            //gameNotificationService.sendRoomUpdate(RoomResponseDTO.from(roomSaved));
+            engineService.syncLobbyInEngine(RoomResponseDTO.from(roomSaved));
         }
 
+        engineService.stopMatchInEngine(room.getCode());
         matchRepository.delete(match); // delete the match to save database space for now
 
 

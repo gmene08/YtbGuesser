@@ -19,5 +19,5 @@ youtube-player {
 
   /* A MÁGICA ENTRA AQUI: */
   pointer-events: none !important; /* Ignora o mouse do jogador */
-  transform: scale(1.2); /* Dá um zoom de 30% para empurrar o título para fora da tela */
+  transform: scale(1.0); /* Dá um zoom de 30% para empurrar o título para fora da tela */
 }

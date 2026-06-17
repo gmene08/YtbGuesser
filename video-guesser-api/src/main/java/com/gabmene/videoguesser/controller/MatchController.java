@@ -25,12 +25,6 @@ public class MatchController {
         return ResponseEntity.ok(matchService.buildMatchResponseDTO(match));
     }
 
-    @PatchMapping("/{matchId}/nextRound")
-    public ResponseEntity<MatchResponseDTO> nextRound(@PathVariable Integer matchId, @RequestParam Integer userId){
-        Match match = matchService.changeToNextRound(matchId, userId);
-        return ResponseEntity.ok(matchService.buildMatchResponseDTO(match));
-    }
-
     @DeleteMapping("/{matchId}/end")
     public ResponseEntity<Void> endMatch(@PathVariable Integer matchId, @RequestParam Integer userId){
         matchService.endMatch(matchId, userId);

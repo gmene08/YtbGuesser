@@ -16,7 +16,6 @@ import com.gabmene.videoguesser.exception.BusinessException;
 import com.gabmene.videoguesser.exception.ConflictException;
 import com.gabmene.videoguesser.exception.ForbiddenException;
 import com.gabmene.videoguesser.exception.ResourceNotFoundException;
-import com.gabmene.videoguesser.listener.UserConnectionRegistry;
 import com.gabmene.videoguesser.repository.RoomRepository;
 import com.gabmene.videoguesser.repository.UserMatchRepository;
 import com.gabmene.videoguesser.repository.UserRepository;
@@ -38,9 +37,10 @@ public class RoomService {
     private final MatchService matchService;
     private final UserMatchRepository userMatchRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final EngineService engineService;
 
-    private final GameNotificationService gameNotificationService;
-    private final UserConnectionRegistry userConnectionRegistry;
+    //private final GameNotificationService gameNotificationService;
+    //private final UserConnectionRegistry userConnectionRegistry;
 
     @Transactional
     public Room createRoom(Integer ownerId) {
@@ -67,6 +67,8 @@ public class RoomService {
         // synchronous save
         Room savedRoom = roomRepository.save(room);
         owner.setRoom(savedRoom);
+
+        engineService.syncLobbyInEngine(this.buildRoomResponseDTO(savedRoom));
 
         return savedRoom;
     }
@@ -125,7 +127,8 @@ public class RoomService {
         roomJoined.addUser(userJoining);
         Room roomSaved = roomRepository.save(roomJoined);
 
-        gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
+        //gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
+        engineService.syncLobbyInEngine(this.buildRoomResponseDTO(roomSaved));
 
         return roomSaved;
     }
@@ -162,15 +165,19 @@ public class RoomService {
         // Match is created right when the room starts
         matchService.createMatch(roomStarting, request);
 
+        engineService.startMatchInEngine(roomStarting, request);
+
         roomStarting.setStatus(RoomStatus.PLAYING);
         Room roomSaved = roomRepository.save(roomStarting);
-        gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
+        //gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
+        engineService.syncLobbyInEngine(this.buildRoomResponseDTO(roomSaved));
         return roomSaved;
 
     }
 
     @Transactional
     public Room leaveRoom(String roomCode, Integer userLeavingId) {
+        System.out.println("User "+ userLeavingId + " leaving room: " + roomCode);
 
         User userLeaving = userRepository.findById(userLeavingId).orElseThrow(()-> new ResourceNotFoundException("User not found"));
 
@@ -202,13 +209,13 @@ public class RoomService {
 
         // if the room is in PLAYING status, remove the user from the match
         if (roomLeaving.getStatus() == RoomStatus.PLAYING) {
-            UserMatch userMatchLeaving = userMatchRepository.findByUserIdAndRoomIdAndStatus(userLeaving.getId(), roomLeaving.getId(), MatchStatus.PLAYING)
+            UserMatch userMatchLeaving = userMatchRepository.findByUserIdAndRoomIdAndStatusNot(userLeaving.getId(), roomLeaving.getId(), MatchStatus.FINISHED)
                     .orElseThrow(()-> new ResourceNotFoundException("UserMatch not found"));
             userMatchRepository.delete(userMatchLeaving);
             userMatchRepository.flush();
 
             Match matchLeaving = userMatchLeaving.getMatch();
-            gameNotificationService.sendMatchUpdate(matchService.buildMatchResponseDTO(matchLeaving));
+            //gameNotificationService.sendMatchUpdate(matchService.buildMatchResponseDTO(matchLeaving));
 
         }
 
@@ -216,8 +223,8 @@ public class RoomService {
 
         // if the room is empty, delete it - if the owner leaves, assign a new owner
         if(playersInRoom.isEmpty()) {
-
             roomRepository.delete(roomLeaving);
+            engineService.deleteLobbyInEngine(roomCode);
             return null;
 
         }
@@ -231,15 +238,15 @@ public class RoomService {
 
         }
 
-        if(this.userConnectionRegistry.isDisconnected(userLeaving.getId())) {
-            userConnectionRegistry.markAsConnected(userLeaving.getId(), false);
-        }
+        /*if(this.userConnectionRegistry.isDisconnected(userLeaving.getId())) {
+            userConnectionRegistry.markAsConnected(userLeaving.getId(), false);  //old code
+        }*/
 
         eventPublisher.publishEvent(new UserLeftRoomEvent(userLeaving.getId()));
 
         Room roomSaved = roomRepository.save(roomLeaving);
-        gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
-
+        //gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved)); // old code
+        engineService.syncLobbyInEngine(this.buildRoomResponseDTO(roomSaved));
         return roomSaved;
     }
 
@@ -276,14 +283,14 @@ public class RoomService {
         roomToBeUpdated.setMaxPlayers(request.getMaxPlayers());
 
         Room roomSaved = roomRepository.save(roomToBeUpdated);
-        gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
+       //gameNotificationService.sendRoomUpdate(buildRoomResponseDTO(roomSaved));
+        engineService.syncLobbyInEngine(this.buildRoomResponseDTO(roomSaved));
 
         return roomSaved;
     }
 
     public RoomResponseDTO buildRoomResponseDTO(Room room) {
-        List<Integer> disconnectedUsers = userConnectionRegistry.getDisconnectedUsersInRoom(room);
-        return RoomResponseDTO.from(room, disconnectedUsers);
+        return RoomResponseDTO.from(room);
     }
 
     @Transactional
@@ -295,4 +302,5 @@ public class RoomService {
 
         });
     }
+
 }
