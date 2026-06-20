@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -18,4 +19,6 @@ public interface VideoRepository extends JpaRepository<Video,Integer> {
 
     @Query(value = "SELECT * FROM video v WHERE v.category_id IN :categoryIds ORDER BY RAND() LIMIT 1", nativeQuery = true)
     Optional<Video> findRandomVideoByCategories(@Param("categoryIds") List<Integer> categoryIds);
+
+    List<Video> findTop50ByUpdatedAtBeforeOrderByUpdatedAtAsc(LocalDateTime date);
 }

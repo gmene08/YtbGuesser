@@ -50,8 +50,10 @@ public class VideoService {
             return response.getNextPageToken();
         }
 
+        Map<String, YoutubeVideoDetailsResponseDTO.VideoDetailItemDTO> detailsMap = getVideosDetailsMap(videosToSave);
+
         // get the statistics for each video using 'videos' API and merge the view counts with the videos
-        enrichVideosWithViewCounts(videosToSave);
+        enrichVideosWithDetails(videosToSave, detailsMap);
 
         // save the videos to the database
         videoRepository.saveAll(videosToSave);
@@ -89,24 +91,7 @@ public class VideoService {
         }).toList();
     }
 
-    private void enrichVideosWithViewCounts(List<Video> videosToSave) {
-        // get the video details for each video using the video ID
-        List<String> videoIds = videosToSave.stream().map(Video::getYoutubeId).toList();
-        String videoIdsString = String.join(",", videoIds);
-        YoutubeVideoDetailsResponseDTO detailsResponse = youtubeClient.getVideosDetails("statistics,contentDetails", videoIdsString, apiKey);
-
-        if(detailsResponse == null || detailsResponse.getItems() == null || detailsResponse.getItems().isEmpty()){
-            throw new BusinessException("Error fetching videos");
-        }
-
-        // transform the response to a map of video details
-        Map<String, YoutubeVideoDetailsResponseDTO.VideoDetailItemDTO> detailsMap = detailsResponse.getItems().stream()
-                .filter(item -> item.getId() != null) // ignore videos without an ID
-                .collect(Collectors.toMap(
-                item -> item.getId(),
-                item -> item,
-                (item1, item2) -> item1 // if ID is already present, keep the existing value
-                ));
+    private void enrichVideosWithDetails(List<Video> videosToSave, Map<String, YoutubeVideoDetailsResponseDTO.VideoDetailItemDTO> detailsMap) {
 
         Iterator<Video> videoIterator = videosToSave.iterator();
 
@@ -141,10 +126,59 @@ public class VideoService {
                     video.setDurationSeconds(0);
                 }
 
-
+            } else {
+                System.out.println("Video " + video.getTitle() + " not found in the details map, removing it from the list");
+                videoIterator.remove();
             }
         }
     }
+
+    @Transactional
+    public void updateOldVideoViews(Collection<Video> videosToUpdate){
+        Map<String, YoutubeVideoDetailsResponseDTO.VideoDetailItemDTO> detailsMap = getVideosDetailsMap(videosToUpdate.stream().toList());
+
+        Iterator<Video> videoIterator = videosToUpdate.iterator();
+        while(videoIterator.hasNext()){
+            Video video = videoIterator.next();
+            YoutubeVideoDetailsResponseDTO.VideoDetailItemDTO details = detailsMap.get(video.getYoutubeId());
+
+            // if video got updated, update the view count
+            if(details != null){
+                video.setViewCount(details.getStatistics().getViewCount());
+                video.setUpdatedAt(LocalDateTime.now());
+            }
+
+            // if video got removed, remove it from the list
+            if(details == null){
+                videoRepository.delete(video);
+                videoIterator.remove();
+            }
+        }
+
+        videoRepository.saveAll(videosToUpdate);
+
+    }
+
+    private Map<String, YoutubeVideoDetailsResponseDTO.VideoDetailItemDTO> getVideosDetailsMap(List<Video> videos) {
+        List<String> videoIds = videos.stream().map(Video::getYoutubeId).toList();
+        String videoIdsString = String.join(",", videoIds);
+        YoutubeVideoDetailsResponseDTO detailsResponse = youtubeClient.getVideosDetails("statistics,contentDetails", videoIdsString, apiKey);
+
+        if(detailsResponse == null || detailsResponse.getItems() == null || detailsResponse.getItems().isEmpty()){
+            throw new BusinessException("Error fetching videos");
+        }
+
+        // transform the response to a map of video details
+        return detailsResponse.getItems().stream()
+                .filter(item -> item.getId() != null) // ignore videos without an ID
+                .collect(Collectors.toMap(
+                        YoutubeVideoDetailsResponseDTO.VideoDetailItemDTO::getId,
+                        item -> item,
+                        (item1, item2) -> item1 // if ID is already present, keep the existing value
+                ));
+    }
+
+
 }
 
 

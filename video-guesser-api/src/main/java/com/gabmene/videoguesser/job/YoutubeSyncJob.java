@@ -1,11 +1,17 @@
 package com.gabmene.videoguesser.job;
 
 import com.gabmene.videoguesser.entity.Category;
+import com.gabmene.videoguesser.entity.Video;
 import com.gabmene.videoguesser.enums.MatchCategory;
+import com.gabmene.videoguesser.repository.VideoRepository;
 import com.gabmene.videoguesser.service.VideoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -13,8 +19,9 @@ import org.springframework.stereotype.Component;
 public class YoutubeSyncJob {
 
     private final VideoService videoService;
+    private final VideoRepository videoRepository;
 
-    @Scheduled(initialDelay = 0,fixedRate = 3600000)
+    @Scheduled(initialDelay = 43200000,fixedRate = 43200000)
     public void syncVideosJob() {
 
         System.out.println("Initializing Youtube Sync Job");
@@ -49,5 +56,22 @@ public class YoutubeSyncJob {
         }
         System.out.println("Youtube Sync Job completed");
 
+    }
+
+    @Scheduled(initialDelay = 86400000,fixedRate = 86400000)
+    public void updateVideosViewCount(){
+
+        LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
+        List<Video> videosToUpdate = videoRepository.findTop50ByUpdatedAtBeforeOrderByUpdatedAtAsc(sevenDaysAgo);
+        while (!videosToUpdate.isEmpty()){
+            try {
+                videoService.updateOldVideoViews(videosToUpdate);
+                videosToUpdate = videoRepository.findTop50ByUpdatedAtBeforeOrderByUpdatedAtAsc(sevenDaysAgo);
+            } catch (Exception e) {
+                System.out.println("Error updating videos: " + e.getMessage());
+            }
+        }
+
+        System.out.println("Daily view count update completed");
     }
 }

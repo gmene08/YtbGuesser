@@ -118,7 +118,7 @@ async function startRoundSequence(roomCode, activeLobbies, prepDurationSeconds, 
 
     // Poderia nao enviar a resposta inteira e optimizar melhor essa parte no geral.
     io.to(`${roomCode}-game`).emit('changeOfRounds', changeResponse);
-
+    
     if (match.status === 'PLAYING') {
       console.log(`⏳ Sala [${roomCode}] mudou para round ${match.currentRound.number}!`);
 
