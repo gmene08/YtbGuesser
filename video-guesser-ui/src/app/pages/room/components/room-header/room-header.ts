@@ -13,10 +13,11 @@ export class RoomHeader {
 
   copyCode() {
     const roomCode = this.roomCode();
+    const entireLink = `${window.location.origin}/room/${roomCode}`;
 
     if (roomCode) {
       navigator.clipboard
-        .writeText(roomCode)
+        .writeText(entireLink)
         .then(() => {
           this.isCodeCopied.set(true);
           setTimeout(() => {

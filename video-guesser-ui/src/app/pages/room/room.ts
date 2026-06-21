@@ -1,4 +1,13 @@
-import { Component, computed, effect, inject, OnDestroy, OnInit, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RoomSettings } from './components/room-settings/room-settings';
 import { RoomService } from '../../services/room';
@@ -14,10 +23,11 @@ import { GameWebsocketService } from '../../services/websocket/game-websocket';
 import { CoreWebsocket } from '../../services/websocket/core-websocket';
 import { Auth } from '../../services/auth';
 import { LobbyWebsocketService } from '../../services/websocket/lobby-websocket';
+import { Login } from '../home/components/login/login';
 
 @Component({
   selector: 'app-room',
-  imports: [RoomSettings, RoomPlayerList, NavBar, RoomHeader, RoomGame],
+  imports: [RoomSettings, RoomPlayerList, NavBar, RoomHeader, RoomGame, Login],
   templateUrl: './room.html',
   styleUrl: './room.css',
   standalone: true,
@@ -26,16 +36,13 @@ export class Room implements OnInit, OnDestroy {
   private authService = inject(Auth);
   private roomService = inject(RoomService);
 
-  private lobbyWebSocket = inject(StompLobbyWebsocket);
-  private gameWebSocket = inject(GameWebsocketService);
-  private coreWebSocket = inject(CoreWebsocket);
-
   private lobbyWs = inject(LobbyWebsocketService);
   private coreWs = inject(CoreWebsocket);
-  private gameWs = inject(GameWebsocketService);
 
   private router = inject(ActivatedRoute);
   private rt = inject(Router);
+
+  loginComponent = viewChild(Login);
 
   currentUserId = computed(() => {
     return this.authService.currentUser()?.id || -1;
@@ -95,22 +102,37 @@ export class Room implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Redirect to home if not logged in
-    if (this.currentUserId() === -1) {
-      console.log('User not logged in');
-      this.rt.navigate(['/']);
-      return;
-    }
-
-    // Get the room code from the URL
     const code = this.router.snapshot.paramMap.get('code');
-    if (code) {
-      this.loadRoomData(code);
-    } else {
-      console.error('Room code not found in URL');
+    if (!code) {
       this.rt.navigate(['/']);
       return;
     }
+    this.roomCode.set(code);
+
+    if (this.currentUserId() !== -1) {
+      this.loadRoomData(code);
+    }
+  }
+
+  handleLoginFromLink(nickname: string) {
+    this.authService.createGuest(nickname).subscribe({
+      next: () => {
+        this.roomService.joinRoom(this.roomCode()).subscribe({
+          next: () => {
+            this.loadRoomData(this.roomCode());
+          },
+          error: (joinError) => {
+            alert(joinError.error?.message || 'Error joining room');
+            this.rt.navigate(['/']);
+          },
+        });
+      },
+      error: (authError) => {
+        this.loginComponent()
+          ?.errorMsgComponent()
+          ?.errorMessage.set(authError.error?.message || 'Error creating nickname');
+      },
+    });
   }
 
   loadRoomData(code: string) {

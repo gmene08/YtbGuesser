@@ -1,5 +1,26 @@
 @if(!hasLoadedInitialRoomData()){
-  carregando
+  @if(currentUserId() === -1) {
+    <div class="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div class="bg-white p-8 md:p-12 rounded-3xl shadow-2xl flex flex-col items-center gap-6 max-w-md w-full text-center">
+        <h1 class="text-3xl md:text-4xl font-black tracking-tight text-gray-800 uppercase select-none">
+          Ytb <span class="text-red-600">Guesser</span>
+        </h1>
+        <h2 class="text-2xl font-black text-gray-800">Choose a nickname to join room <span class="font-bold text-red-600">{{ roomCode() }}</span></h2>
+
+        <div class="w-full ">
+          <app-login
+            [isUserLoggedIn]="false"
+            [userNickname]="null"
+            (onLogin)="handleLoginFromLink($event)"
+          ></app-login>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="min-h-screen flex items-center justify-center bg-gray-50">
+      <span class="text-red-600 font-bold text-2xl animate-pulse">Loading room...</span>
+    </div>
+  }
 } @else{
   <div class="min-h-screen flex flex-col bg-gray-50">
     @if (!startedGame()) {
