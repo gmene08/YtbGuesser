@@ -16,12 +16,12 @@
   </div>
 
   @if (matchData()?.status === MatchStatus.Playing) {
-  <div
-    class="px-6 py-2 bg-red-100 text-red-700 font-black rounded-full text-xl border-2 border-red-200 shadow-sm"
-  >
-    ROUND {{ matchData()?.roundNumber }}
-    <span class="opacity-50 font-bold">/ {{ matchData()?.maxRounds }}</span>
-  </div>
+    <div
+      class="flex items-center gap-1 px-3 py-1 sm:px-6 sm:py-2 bg-red-100 text-red-700 font-black rounded-full text-sm sm:text-xl border-2 border-red-200 shadow-sm whitespace-nowrap"
+    >
+      <span>ROUND {{ matchData()?.roundNumber }}</span>
+      <span class="opacity-50 font-bold">/ {{ matchData()?.maxRounds }}</span>
+    </div>
   }
 </header>
 
@@ -85,7 +85,7 @@
         [videoDetails]="videoDetails()"
       ></app-video-details>
 
-      <div class="flex-1 relative min-h-0 w-full">
+      <div class="relative w-full h-[350px] xl:h-auto xl:flex-1 xl:min-h-0">
 
         <app-chat-box
           class="absolute inset-0 bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col p-4 pt-4 overflow-hidden w-full h-full"

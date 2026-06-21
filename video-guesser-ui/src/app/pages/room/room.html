@@ -1,53 +1,53 @@
 @if(!hasLoadedInitialRoomData()){
   carregando
 } @else{
-<div class="min-h-screen flex flex-col bg-gray-50">
-  @if (!startedGame()) {
-    <app-nav-bar></app-nav-bar>
-    <div class="flex-grow p-12 pt-4">
-      <header>
-        <app-room-header
-          class="flex flex-col items-center gap-1 mb-10 group"
-          [roomCode]="roomData()?.code"
-        >
-        </app-room-header>
-      </header>
-
-      <main
-        class="flex gap-0 flex-row w-full max-w-5xl mx-auto border-2 border-gray-200 rounded-[2rem] overflow-hidden bg-white shadow-2xl"
-      >
-        <section class="flex flex-col flex-grow pt-10 p-4 items-center text-red-700">
-          <app-room-player-list
-            class="flex flex-col justify-between w-full flex-grow"
-            [room]="roomData()"
-            [isOwner]="isUserOwner()"
-            [currentUserId]="currentUserId()"
-            (onKickPlayer)="kickPlayer($event)"
-            (onLeaveRoom)="leaveRoom()"
+  <div class="min-h-screen flex flex-col bg-gray-50">
+    @if (!startedGame()) {
+      <app-nav-bar></app-nav-bar>
+      <div class="flex-grow p-4 md:p-12 pt-4">
+        <header>
+          <app-room-header
+            class="flex flex-col items-center gap-1 mb-6 md:mb-10 group"
+            [roomCode]="roomData()?.code"
           >
-          </app-room-player-list>
-        </section>
+          </app-room-header>
+        </header>
 
-        <aside class="w-96 bg-gray-50 border-l-4 border-gray-200">
-          <app-room-settings
-            [room]="roomData()"
-            [isOwner]="isUserOwner()"
-            [startGameErrorMessage]="startGameErrorMessage()"
-            [saveMaxPlayersErrorMessage]="saveMaxPlayersErrorMessage()"
-            (onStartGame)="startGame($event)"
-            (onSaveMaxPlayers)="updateMaxPlayers($event)"
-          ></app-room-settings>
-        </aside>
-      </main>
-    </div>
-  } @else {
-    <app-room-game
-      class="h-full flex flex-col flex-grow items-center p-6 gap-6"
-      [roomData]="roomData()"
-      (kickPlayer)="kickPlayer($event)"
-      (onLeaveRoom)="leaveRoom()"
-    >
-    </app-room-game>
-  }
-</div>
+        <main
+          class="flex flex-col md:flex-row w-full max-w-5xl mx-auto border-2 border-gray-200 rounded-[2rem] overflow-hidden bg-white shadow-2xl"
+        >
+          <section class="flex flex-col flex-grow pt-10 p-4 items-center text-red-700">
+            <app-room-player-list
+              class="flex flex-col justify-between w-full flex-grow"
+              [room]="roomData()"
+              [isOwner]="isUserOwner()"
+              [currentUserId]="currentUserId()"
+              (onKickPlayer)="kickPlayer($event)"
+              (onLeaveRoom)="leaveRoom()"
+            >
+            </app-room-player-list>
+          </section>
+
+          <aside class="w-full md:w-96 bg-gray-50 border-t-4 md:border-t-0 md:border-l-4 border-gray-200">
+            <app-room-settings
+              [room]="roomData()"
+              [isOwner]="isUserOwner()"
+              [startGameErrorMessage]="startGameErrorMessage()"
+              [saveMaxPlayersErrorMessage]="saveMaxPlayersErrorMessage()"
+              (onStartGame)="startGame($event)"
+              (onSaveMaxPlayers)="updateMaxPlayers($event)"
+            ></app-room-settings>
+          </aside>
+        </main>
+      </div>
+    } @else {
+      <app-room-game
+        class="h-full flex flex-col flex-grow items-center p-2 md:p-6 gap-6"
+        [roomData]="roomData()"
+        (kickPlayer)="kickPlayer($event)"
+        (onLeaveRoom)="leaveRoom()"
+      >
+      </app-room-game>
+    }
+  </div>
 }
