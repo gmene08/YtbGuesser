@@ -139,7 +139,6 @@ export class GameWebsocketService {
     });
 
     this.coreWs.on('playerLeftGame', (data: { userId: number; nickname: string }) => {
-      console.log(`👋 ${data.nickname} saiu da partida! Removendo da Leaderboard...`);
 
       this.latestMatchData.update((match) => {
         if (!match) return match;

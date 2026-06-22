@@ -20,7 +20,7 @@
            [class.bg-green-50]="log.type === 'RESULT'">
 
         <div class="flex items-center gap-2">
-          <span class="text-[10px] text-gray-400 font-bold">{{ log.timestamp }}</span>
+          <span class="text-[10px] text-gray-400 font-bold">{{ log.timestamp | date:'shortTime' }}</span>
 
           @if (log.type === 'SYSTEM') { <span class="text-blue-500 text-xs">⚙️</span> }
           @if (log.type === 'GUESS') { <span class="text-orange-500 text-xs">🎯</span> }

@@ -2,19 +2,20 @@ const {redisClient} = require('../config/redis');
 
 async function addActivityLog(roomCode, io, type, logMessage) {
     const logKey = `room:${roomCode}:logs`;
-    const timestamp = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    
+    const timestamp = new Date().toISOString(); 
+    
     const logEntry = { timestamp, type, message: logMessage };
     try{
         await redisClient.lPush(logKey, JSON.stringify(logEntry));
 
-        await redisClient.expire(logKey, 7200); // Expira em 2 horas para evitar acúmulo de logs antigos
+        await redisClient.expire(logKey, 7200); 
 
         io.to(`${roomCode}-game`).emit('newLogEntry', logEntry);
     }
     catch(err){
         console.error(`❌ Erro ao adicionar log da sala [${roomCode}] no Redis:`, err.message);
     }
-
 }
 
 async function getActivityLogs(roomCode) {

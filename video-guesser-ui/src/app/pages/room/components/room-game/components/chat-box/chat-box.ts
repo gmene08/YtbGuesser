@@ -1,4 +1,5 @@
 import { Component, effect, ElementRef, input, ViewChild } from '@angular/core';
+import { DatePipe } from '@angular/common';
 
 export interface LogMessage {
   message: string;
@@ -8,7 +9,7 @@ export interface LogMessage {
 
 @Component({
   selector: 'app-chat-box',
-  imports: [],
+  imports: [DatePipe],
   templateUrl: './chat-box.html',
   styleUrl: './chat-box.css',
 })
@@ -18,19 +19,16 @@ export class ChatBox {
   @ViewChild('scrollContainer') private scrollContainer!: ElementRef;
 
   constructor() {
-
-    effect(()=>{
+    effect(() => {
       const currentLogs = this.logs();
-      setTimeout(()=>
-        this.scrollToBottom(),10);
-
-    })
+      setTimeout(() => this.scrollToBottom(), 10);
+    });
   }
 
   private scrollToBottom() {
     try {
-      this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
+      this.scrollContainer.nativeElement.scrollTop =
+        this.scrollContainer.nativeElement.scrollHeight;
     } catch (error) {}
   }
-
 }
