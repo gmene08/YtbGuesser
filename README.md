@@ -7,8 +7,8 @@
 ![AWS](https://img.shields.io/badge/AWS-%23FF9900.svg?style=for-the-badge&logo=amazon-aws&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 
-### 🌐 Play Live: [ytbguesser.com.br](https://ytbguesser.com.br)
-(Off for now, free AWS plan expired 😅)
+### 🌐 Play Live: [ytbguesser.com.br](https://ytbguesser.com.br) (Off for now, free AWS plan expired 😅)
+
 
 YouTube Guesser is a real-time multiplayer game where players compete to guess the exact view count of random YouTube videos. Built with a distributed architecture to handle high-frequency real-time events and persistent state synchronization.
 
